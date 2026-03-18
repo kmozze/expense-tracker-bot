@@ -1,0 +1,17 @@
+### Build & Dependency Managers ###
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+/out/
+/bin/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+
+### OS Files ###
+.DS_Store
+Thumbs.db
