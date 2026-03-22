@@ -23,17 +23,32 @@ class ExpenseTrackerBot (
             val chatId = update.message.chatId.toString()
             val text = update.message.text
 
-            logger.info("Received message from chat [$chatId]: $text")
+            logger.info("Message from [{}]: {}", chatId, text)
 
-            val sendMessage = SendMessage(chatId, text)
-
-            try {
-                execute(sendMessage)
-                logger.info("Successfully send message to chat [$chatId]: $text")
-            } catch (e: TelegramApiException) {
-                logger.error("Failed send message to chat [$chatId]! Reason: ${e.message}", e)
+            if (text.startsWith("/")) {
+                handleCommand(chatId, text)
+            } else {
+                sendNotification(chatId, "Я не умею распозновать текст!\nВведи /help, чтобы ознакомиться со списком доступных команд.")
             }
         }
     }
 
+    private fun handleCommand(chatId: String, text: String) {
+        val response = when (text.split(" ")[0]) {
+            "/start" -> "Добро пожаловать в менеджер расходов.\nВведи /help, чтобы ознакомиться со списком доступных команд."
+            "/help" -> "Доступные команды:\n/start - запустить бота\n/help - список команд"
+            else -> "Неизвестная команда. Введи /help, чтобы ознакомиться со списком доступных команд."
+        }
+        sendNotification(chatId, response)
+    }
+
+    private fun sendNotification(chatId: String, text: String) {
+        val response = SendMessage(chatId, text)
+        try {
+            execute(response)
+            logger.info("Response sent to [{}]", chatId)
+        } catch (e: TelegramApiException) {
+            logger.error("Error sending message to [{}]: {}", chatId, e.message)
+        }
+    }
 }
