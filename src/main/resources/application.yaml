@@ -3,5 +3,5 @@ spring:
     name: expense-tracker-bot
 
 bot:
-  name: kmozze_ExpenseTrackerBot
+  name: ${BOT_NAME}
   token: ${BOT_TOKEN}
