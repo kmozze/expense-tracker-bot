@@ -1,5 +1,8 @@
 package me.kmozze.expensetracker.bot
 
+
+import me.kmozze.expensetracker.exception.BusinessException
+import me.kmozze.expensetracker.service.ExpenseService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -12,6 +15,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 class ExpenseTrackerBot (
     @param:Value("\${bot.token}") private val botToken: String,
     @param:Value("\${bot.name}") private val botName: String,
+    private val expenseService: ExpenseService,
 ) : TelegramLongPollingBot(botToken) {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -28,7 +32,7 @@ class ExpenseTrackerBot (
             if (text.startsWith("/")) {
                 handleCommand(chatId, text)
             } else {
-                sendNotification(chatId, "Я не умею распозновать текст!\nВведи /help, чтобы ознакомиться со списком доступных команд.")
+                handleAddExpense(chatId, text)
             }
         }
     }
@@ -36,10 +40,24 @@ class ExpenseTrackerBot (
     private fun handleCommand(chatId: String, text: String) {
         val response = when (text.split(" ")[0]) {
             "/start" -> "Добро пожаловать в менеджер расходов.\nВведи /help, чтобы ознакомиться со списком доступных команд."
-            "/help" -> "Доступные команды:\n/start - запустить бота\n/help - список команд"
+            "/help" -> "Доступные команды:\n/start - запустить бота\n/help - список команд\nМожешь добавить расходы просто написав 'еда 100' или '100 еда'"
             else -> "Неизвестная команда. Введи /help, чтобы ознакомиться со списком доступных команд."
         }
         sendNotification(chatId, response)
+    }
+
+    private fun handleAddExpense (chatId: String, text: String) {
+        try {
+            val expense = expenseService.addExpense(text)
+            sendNotification(chatId, "Сохранено!\nКатегория: ${expense.category}\nСумма: ${expense.amount}")
+
+        } catch (e: BusinessException) {
+            logger.warn("User input error [{}]: {}", chatId, e.message)
+            sendNotification(chatId, "Не понимаю, попробуй так:\n'100 продукты' или 'продукты 100'")
+        } catch (e: Exception) {
+            logger.error("Unexpected error for {}: ", chatId, e)
+            sendNotification(chatId, "Произошла ошибка на сервере. Попробуйте позже.")
+        }
     }
 
     private fun sendNotification(chatId: String, text: String) {
