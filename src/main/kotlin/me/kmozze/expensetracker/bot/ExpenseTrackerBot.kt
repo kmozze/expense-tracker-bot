@@ -6,23 +6,31 @@ import me.kmozze.expensetracker.service.ExpenseService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import org.telegram.telegrambots.bots.TelegramLongPollingBot
+import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient
+import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer
+import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot
+import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
+import org.telegram.telegrambots.meta.generics.TelegramClient
 
 @Component
 class ExpenseTrackerBot (
     @param:Value("\${bot.token}") private val botToken: String,
     @param:Value("\${bot.name}") private val botName: String,
     private val expenseService: ExpenseService,
-) : TelegramLongPollingBot(botToken) {
+) : SpringLongPollingBot, LongPollingSingleThreadUpdateConsumer {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    override fun getBotUsername(): String = botName
+    private val telegramClient: TelegramClient = OkHttpTelegramClient(botToken)
 
-    override fun onUpdateReceived(update: Update) {
+    override fun getBotToken(): String = botToken
+
+    override fun getUpdatesConsumer(): LongPollingUpdateConsumer = this
+
+    override fun consume(update: Update) {
         if (update.hasMessage() && update.message.hasText()) {
             val chatId = update.message.chatId.toString()
             val text = update.message.text
@@ -63,7 +71,7 @@ class ExpenseTrackerBot (
     private fun sendNotification(chatId: String, text: String) {
         val response = SendMessage(chatId, text)
         try {
-            execute(response)
+            telegramClient.execute(response)
             logger.info("Response sent to [{}]", chatId)
         } catch (e: TelegramApiException) {
             logger.error("Error sending message to [{}]: {}", chatId, e.message)
