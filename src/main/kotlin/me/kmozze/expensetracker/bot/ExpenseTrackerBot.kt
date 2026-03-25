@@ -16,7 +16,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import org.telegram.telegrambots.meta.generics.TelegramClient
 
 @Component
-class ExpenseTrackerBot (
+class ExpenseTrackerBot(
     @param:Value("\${bot.token}") private val botToken: String,
     @param:Value("\${bot.name}") private val botName: String,
     private val expenseService: ExpenseService,
@@ -54,7 +54,7 @@ class ExpenseTrackerBot (
         sendNotification(chatId, response)
     }
 
-    private fun handleAddExpense (chatId: String, text: String) {
+    private fun handleAddExpense(chatId: String, text: String) {
         try {
             val expense = expenseService.addExpense(text)
             sendNotification(chatId, "Сохранено!\nКатегория: ${expense.category}\nСумма: ${expense.amount}")

@@ -14,17 +14,18 @@ class InputExpenseParsingService {
 
         if (words.size < 2) throw ExpenseInvalidFormatException(text)
 
+        val amountFirst = parseAmountOrNull(words.first())
+        val amountLast = parseAmountOrNull(words.last())
+
         return when {
-            parseAmountOrNull(words.first()) != null -> {
-                val amount = parseAmountOrNull(words.first())!!
+            amountFirst != null -> {
                 val category = words.drop(1).joinToString(" ")
-                createExpense(category, amount)
+                createExpense(category, amountFirst)
             }
 
-            parseAmountOrNull(words.last()) != null -> {
-                val amount = parseAmountOrNull(words.last())!!
+            amountLast != null -> {
                 val category = words.dropLast(1).joinToString(" ")
-                createExpense(category, amount)
+                createExpense(category, amountLast)
             }
 
             else -> throw ExpenseInvalidFormatException(text)
@@ -34,7 +35,7 @@ class InputExpenseParsingService {
     private fun parseAmountOrNull(word: String): BigDecimal? {
         return try {
             BigDecimal(word.replace(',', '.'))
-        } catch (e: Exception) {
+        } catch (e: NumberFormatException) {
             null
         }
     }
