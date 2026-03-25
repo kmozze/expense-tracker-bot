@@ -2,7 +2,6 @@ package me.kmozze.expensetracker.service.parser
 
 import me.kmozze.expensetracker.exception.ExpenseInvalidFormatException
 import me.kmozze.expensetracker.exception.ExpenseValidationException
-import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -40,7 +39,7 @@ class InputExpenseParsingServiceTest {
     companion object {
         @JvmStatic
         fun validInputs(): Stream<Arguments> = Stream.of(
-            Arguments.arguments("150.50 Coffee", "Coffee", BigDecimal("150.50")),
+            Arguments.arguments("150.50 Кофе", "Кофе", BigDecimal("150.50")),
             Arguments.arguments("10,50 Milk", "Milk", BigDecimal("10.50")),
             Arguments.arguments("Lunch 500", "Lunch", BigDecimal("500")),
             Arguments.arguments("  Taxi   400  ", "Taxi", BigDecimal("400")),
