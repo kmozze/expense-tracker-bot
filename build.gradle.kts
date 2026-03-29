@@ -42,6 +42,7 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
+    dependsOn("jooqCodegen")
     compilerOptions {
         freeCompilerArgs.add("-Xjsr305=strict")
         jvmTarget.set(JvmTarget.JVM_21)

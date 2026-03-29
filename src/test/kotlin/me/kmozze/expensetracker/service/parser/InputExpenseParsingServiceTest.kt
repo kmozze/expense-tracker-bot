@@ -13,7 +13,7 @@ class InputExpenseParsingServiceTest {
 
     private val service = InputExpenseParsingService()
 
-    @ParameterizedTest(name = "{0}")
+    @ParameterizedTest(name = "input: \"{0}\"")
     @MethodSource("validInputs")
     fun `should parse valid inputs`(input: String, expectedCategory: String, expectedAmount: BigDecimal) {
         val result = service.parse(input)
@@ -22,14 +22,14 @@ class InputExpenseParsingServiceTest {
         Assertions.assertThat(result.amount).isEqualByComparingTo(expectedAmount)
     }
 
-    @ParameterizedTest(name = "{0}")
+    @ParameterizedTest(name = "input: \"{0}\"")
     @MethodSource("invalidFormatInputs")
     fun `should throw format exception`(input: String) {
         Assertions.assertThatThrownBy { service.parse(input) }
             .isInstanceOf(ExpenseInvalidFormatException::class.java)
     }
 
-    @ParameterizedTest(name = "{0}")
+    @ParameterizedTest(name = "input: \"{0}\"")
     @MethodSource("invalidAmountInputs")
     fun `should throw validation exception`(input: String) {
         Assertions.assertThatThrownBy { service.parse(input) }
