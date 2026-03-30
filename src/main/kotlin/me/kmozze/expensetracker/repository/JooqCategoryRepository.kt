@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.repository
 
 
 import me.kmozze.expense.tracker.jooq.Tables.CATEGORY
-import me.kmozze.expense.tracker.jooq.Tables.EXPENSE
+import me.kmozze.expense.tracker.jooq.tables.records.CategoryRecord
 import me.kmozze.expensetracker.model.Category
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository
@@ -13,26 +13,37 @@ class JooqCategoryRepository (
     private val dsl: DSLContext,
 ) : ICategoryRepository {
 
+    private fun CategoryRecord.toDomain(): Category = Category(
+        id = this.id,
+        name = this.name,
+        chatId = this.chatId,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt
+    )
+
     override fun findById(id: UUID): Category? {
         return dsl.selectFrom(CATEGORY)
             .where(CATEGORY.ID.eq(id))
-            .fetchOneInto(Category::class.java)
+            .fetchOne()
+            ?.toDomain()
     }
 
     override fun findByNameAndChatId(name: String, chatId: Long): Category? {
         return dsl.selectFrom(CATEGORY)
             .where(CATEGORY.NAME.eq(name))
             .and(CATEGORY.CHAT_ID.eq(chatId))
-            .fetchOneInto(Category::class.java)
+            .fetchOne()
+            ?.toDomain()
     }
 
-    override fun save(category: Category): Category? {
+    override fun create(category: Category): Category? {
         return dsl.insertInto(CATEGORY)
             .set(CATEGORY.ID, category.id)
             .set(CATEGORY.NAME, category.name)
             .set(CATEGORY.CHAT_ID, category.chatId)
             .returning()
-            .fetchOneInto(Category::class.java)
+            .fetchOne()
+            ?.toDomain()
     }
 
     override fun update(category: Category): Category? {
@@ -40,7 +51,8 @@ class JooqCategoryRepository (
             .set(CATEGORY.NAME, category.name)
             .where(CATEGORY.ID.eq(category.id))
             .returning()
-            .fetchOneInto(Category::class.java)
+            .fetchOne()
+            ?.toDomain()
     }
 
     override fun delete(id: UUID) {
@@ -48,12 +60,4 @@ class JooqCategoryRepository (
             .where(CATEGORY.ID.eq(id))
             .execute()
     }
-
-    override fun hasExpenses(categoryId: UUID): Boolean {
-        return dsl.fetchExists(
-            dsl.selectFrom(EXPENSE)
-                .where(EXPENSE.CATEGORY_ID.eq(categoryId))
-        )
-    }
-
 }
