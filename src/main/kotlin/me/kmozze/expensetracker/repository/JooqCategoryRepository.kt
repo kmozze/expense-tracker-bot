@@ -62,9 +62,14 @@ class JooqCategoryRepository(
             ?: throw EntityNotFoundException("Category not found for update with id: ${category.id}")
 
     override fun delete(id: UUID) {
-        dsl
-            .deleteFrom(CATEGORY)
-            .where(CATEGORY.ID.eq(id))
-            .execute()
+        val affectedRows =
+            dsl
+                .deleteFrom(CATEGORY)
+                .where(CATEGORY.ID.eq(id))
+                .execute()
+
+        if (affectedRows == 0) {
+            throw EntityNotFoundException("Category with id $id not found, nothing to delete")
+        }
     }
 }

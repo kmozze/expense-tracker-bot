@@ -57,10 +57,15 @@ class JooqExpenseRepository(
             ?: throw EntityNotFoundException("Expense not found for update with id: ${expense.id}")
 
     override fun delete(id: UUID) {
-        dsl
-            .deleteFrom(EXPENSE)
-            .where(EXPENSE.ID.eq(id))
-            .execute()
+        val affectedRows =
+            dsl
+                .deleteFrom(EXPENSE)
+                .where(EXPENSE.ID.eq(id))
+                .execute()
+
+        if (affectedRows == 0) {
+            throw EntityNotFoundException("Expense with id $id not found, nothing to delete")
+        }
     }
 
     override fun findAllByChatIdAndPeriod(
