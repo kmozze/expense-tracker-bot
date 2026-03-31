@@ -8,5 +8,5 @@ data class Category(
     val name: String,
     val chatId: Long,
     val createdAt: OffsetDateTime? = null,
-    val updatedAt: OffsetDateTime? = null
+    val updatedAt: OffsetDateTime? = null,
 )

@@ -10,5 +10,5 @@ data class Expense(
     val amount: BigDecimal,
     val chatId: Long,
     val description: String? = null,
-    val createdAt: OffsetDateTime? = null
+    val createdAt: OffsetDateTime? = null,
 )

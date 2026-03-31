@@ -1,6 +1,5 @@
 package me.kmozze.expensetracker.bot
 
-
 import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.service.ExpenseService
 import org.slf4j.LoggerFactory
@@ -20,8 +19,8 @@ class ExpenseTrackerBot(
     @param:Value("\${bot.token}") private val botToken: String,
     @param:Value("\${bot.name}") private val botName: String,
     private val expenseService: ExpenseService,
-) : SpringLongPollingBot, LongPollingSingleThreadUpdateConsumer {
-
+) : SpringLongPollingBot,
+    LongPollingSingleThreadUpdateConsumer {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     private val telegramClient: TelegramClient = OkHttpTelegramClient(botToken)
@@ -45,20 +44,38 @@ class ExpenseTrackerBot(
         }
     }
 
-    private fun handleCommand(chatId: String, text: String) {
-        val response = when (text.split(" ")[0]) {
-            "/start" -> "Добро пожаловать в менеджер расходов.\nВведи /help, чтобы ознакомиться со списком доступных команд."
-            "/help" -> "Доступные команды:\n/start - запустить бота\n/help - список команд\nМожешь добавить расходы просто написав 'еда 100' или '100 еда'"
-            else -> "Неизвестная команда. Введи /help, чтобы ознакомиться со списком доступных команд."
-        }
+    private fun handleCommand(
+        chatId: String,
+        text: String,
+    ) {
+        val response =
+            when (text.split(" ")[0]) {
+                "/start" ->
+                    """
+                    Добро пожаловать в менеджер расходов.
+                    Введи /help, чтобы ознакомиться со списком доступных команд.
+                    """.trimIndent()
+
+                "/help" ->
+                    """
+                    Доступные команды:
+                    /start - запустить бота
+                    /help - список команд
+                    Можешь добавить расходы просто написав 'еда 100' или '100 еда'
+                    """.trimIndent()
+
+                else -> "Неизвестная команда. Введи /help, чтобы ознакомиться со списком доступных команд."
+            }
         sendNotification(chatId, response)
     }
 
-    private fun handleAddExpense(chatId: String, text: String) {
+    private fun handleAddExpense(
+        chatId: String,
+        text: String,
+    ) {
         try {
             val expense = expenseService.addExpense(text)
             sendNotification(chatId, "Сохранено!\nКатегория: ${expense.category}\nСумма: ${expense.amount}")
-
         } catch (e: BusinessException) {
             logger.warn("User input error [{}]: {}", chatId, e.message)
             sendNotification(chatId, "Не понимаю, попробуй так:\n'100 продукты' или 'продукты 100'")
@@ -68,7 +85,10 @@ class ExpenseTrackerBot(
         }
     }
 
-    private fun sendNotification(chatId: String, text: String) {
+    private fun sendNotification(
+        chatId: String,
+        text: String,
+    ) {
         val response = SendMessage(chatId, text)
         try {
             telegramClient.execute(response)
