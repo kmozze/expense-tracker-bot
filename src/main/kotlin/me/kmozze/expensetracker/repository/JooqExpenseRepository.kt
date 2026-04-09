@@ -2,9 +2,7 @@ package me.kmozze.expensetracker.repository
 
 import me.kmozze.expense.tracker.jooq.tables.records.ExpenseRecord
 import me.kmozze.expense.tracker.jooq.tables.references.EXPENSE
-import me.kmozze.expensetracker.exception.DatabaseOperationException
-import me.kmozze.expensetracker.exception.EntityNotFoundException
-import me.kmozze.expensetracker.model.Expense
+import me.kmozze.expensetracker.model.entity.Expense
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository
 import java.time.OffsetDateTime
@@ -19,17 +17,17 @@ class JooqExpenseRepository(
             id = this.id,
             categoryId = this.categoryId,
             amount = this.amount,
-            chatId = this.chatId,
+            userId = this.userId,
             description = this.description,
             createdAt = this.createdAt,
         )
 
-    override fun findById(id: UUID): Expense? =
+    override fun findById(id: UUID): Expense =
         dsl
             .selectFrom(EXPENSE)
             .where(EXPENSE.ID.eq(id))
-            .fetchOne()
-            ?.toDomain()
+            .fetchSingle()
+            .toDomain()
 
     override fun create(expense: Expense): Expense =
         dsl
@@ -37,12 +35,11 @@ class JooqExpenseRepository(
             .set(EXPENSE.ID, expense.id)
             .set(EXPENSE.AMOUNT, expense.amount)
             .set(EXPENSE.CATEGORY_ID, expense.categoryId)
-            .set(EXPENSE.CHAT_ID, expense.chatId)
+            .set(EXPENSE.USER_ID, expense.userId)
             .set(EXPENSE.DESCRIPTION, expense.description)
             .returning()
-            .fetchOne()
-            ?.toDomain()
-            ?: throw DatabaseOperationException("Failed to create expense: $expense")
+            .fetchSingle()
+            .toDomain()
 
     override fun update(expense: Expense): Expense =
         dsl
@@ -52,30 +49,24 @@ class JooqExpenseRepository(
             .set(EXPENSE.DESCRIPTION, expense.description)
             .where(EXPENSE.ID.eq(expense.id))
             .returning()
-            .fetchOne()
-            ?.toDomain()
-            ?: throw EntityNotFoundException("Expense not found for update with id: ${expense.id}")
+            .fetchSingle()
+            .toDomain()
 
     override fun delete(id: UUID) {
-        val affectedRows =
-            dsl
-                .deleteFrom(EXPENSE)
-                .where(EXPENSE.ID.eq(id))
-                .execute()
-
-        if (affectedRows == 0) {
-            throw EntityNotFoundException("Expense with id $id not found, nothing to delete")
-        }
+        dsl
+            .deleteFrom(EXPENSE)
+            .where(EXPENSE.ID.eq(id))
+            .execute()
     }
 
-    override fun findAllByChatIdAndPeriod(
-        chatId: Long,
+    override fun findAllByUserIdAndPeriod(
+        userId: Long,
         from: OffsetDateTime,
         to: OffsetDateTime,
     ): List<Expense> =
         dsl
             .selectFrom(EXPENSE)
-            .where(EXPENSE.CHAT_ID.eq(chatId))
+            .where(EXPENSE.USER_ID.eq(userId))
             .and(EXPENSE.CREATED_AT.ge(from))
             .and(EXPENSE.CREATED_AT.lt(to))
             .fetch()

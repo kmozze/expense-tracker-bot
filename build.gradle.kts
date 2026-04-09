@@ -85,8 +85,18 @@ jooq {
                         key = "sort"
                         value = "semantic"
                     }
+                    property {
+                        key = "unqualifiedSchema"
+                        value = "none"
+                    }
+                    property {
+                        key = "defaultNameCase"
+                        value = "lower"
+                    }
                 }
+                isRegexMatchesPartialQualification = true
             }
+
             target {
                 packageName = "me.kmozze.expense.tracker.jooq"
                 directory = "build/generated-sources/jooq"

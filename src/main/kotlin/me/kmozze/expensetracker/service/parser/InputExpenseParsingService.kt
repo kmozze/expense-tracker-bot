@@ -1,8 +1,8 @@
 package me.kmozze.expensetracker.service.parser
 
-import me.kmozze.expensetracker.exception.ExpenseInvalidFormatException
-import me.kmozze.expensetracker.exception.ExpenseValidationException
-import me.kmozze.expensetracker.model.ParsedExpense
+import me.kmozze.expensetracker.exception.BusinessErrorCode
+import me.kmozze.expensetracker.exception.exception
+import me.kmozze.expensetracker.model.domain.ParsedExpense
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -11,7 +11,7 @@ class InputExpenseParsingService {
     fun parse(text: String): ParsedExpense {
         val words = text.split(Regex("""\s+""")).filter { it.isNotBlank() }
 
-        if (words.size < 2) throw ExpenseInvalidFormatException(text)
+        if (words.size < 2) throw BusinessErrorCode.EXPENSE_INVALID_FORMAT.exception()
 
         val amountFirst = parseAmountOrNull(words.first())
         val amountLast = parseAmountOrNull(words.last())
@@ -27,7 +27,7 @@ class InputExpenseParsingService {
                 createExpense(category, amountLast)
             }
 
-            else -> throw ExpenseInvalidFormatException(text)
+            else -> throw BusinessErrorCode.EXPENSE_INVALID_FORMAT.exception()
         }
     }
 
@@ -43,7 +43,7 @@ class InputExpenseParsingService {
         amount: BigDecimal,
     ): ParsedExpense {
         if (amount <= BigDecimal.ZERO) {
-            throw ExpenseValidationException("Amount must be positive: $amount")
+            throw BusinessErrorCode.INVALID_AMOUNT.exception()
         }
         return ParsedExpense(category.trim(), amount)
     }

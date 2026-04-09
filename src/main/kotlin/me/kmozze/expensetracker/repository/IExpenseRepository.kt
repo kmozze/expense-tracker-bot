@@ -1,6 +1,6 @@
 package me.kmozze.expensetracker.repository
 
-import me.kmozze.expensetracker.model.Expense
+import me.kmozze.expensetracker.model.entity.Expense
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -11,10 +11,10 @@ interface IExpenseRepository {
 
     fun delete(id: UUID)
 
-    fun findById(id: UUID): Expense?
+    fun findById(id: UUID): Expense
 
-    fun findAllByChatIdAndPeriod(
-        chatId: Long,
+    fun findAllByUserIdAndPeriod(
+        userId: Long,
         from: OffsetDateTime,
         to: OffsetDateTime,
     ): List<Expense>

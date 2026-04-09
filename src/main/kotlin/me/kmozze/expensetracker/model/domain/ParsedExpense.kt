@@ -1,4 +1,4 @@
-package me.kmozze.expensetracker.model
+package me.kmozze.expensetracker.model.domain
 
 import java.math.BigDecimal
 
