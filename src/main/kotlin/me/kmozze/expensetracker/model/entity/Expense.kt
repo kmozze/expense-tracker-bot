@@ -1,4 +1,4 @@
-package me.kmozze.expensetracker.model
+package me.kmozze.expensetracker.model.entity
 
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -8,7 +8,7 @@ data class Expense(
     val id: UUID = UUID.randomUUID(),
     val categoryId: UUID,
     val amount: BigDecimal,
-    val chatId: Long,
+    val userId: Long,
     val description: String? = null,
     val createdAt: OffsetDateTime? = null,
 )

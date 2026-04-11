@@ -6,11 +6,11 @@
 CREATE TABLE category (
     id         UUID PRIMARY KEY,
     name       VARCHAR(255) NOT NULL,
-    chat_id    BIGINT       NOT NULL,
+    user_id    BIGINT       NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT unique_category_per_user UNIQUE (chat_id, name)
+    CONSTRAINT unique_category_per_user UNIQUE (user_id, name)
 );
 
 -- changeset kmozze:2
@@ -19,7 +19,7 @@ CREATE TABLE expense (
     id          UUID PRIMARY KEY,
     amount      DECIMAL(19, 2) NOT NULL,
     category_id UUID           NOT NULL,
-    chat_id     BIGINT         NOT NULL,
+    user_id     BIGINT         NOT NULL,
     description TEXT,
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -30,6 +30,6 @@ CREATE TABLE expense (
 
 -- changeset kmozze:3
 -- comment: indexes
-CREATE INDEX idx_category_chat_id ON category(chat_id);
-CREATE INDEX idx_expense_chat_id ON expense(chat_id);
+CREATE INDEX idx_category_user_id ON category(user_id);
+CREATE INDEX idx_expense_user_id ON expense(user_id);
 CREATE INDEX idx_expense_category_id ON expense(category_id);
