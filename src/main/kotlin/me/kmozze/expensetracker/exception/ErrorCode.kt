@@ -25,7 +25,7 @@ enum class SystemErrorCode(
     override val code: String get() = name
 }
 
-fun BusinessErrorCode.exception(customMessage: String? = null): BusinessException = BusinessException(this, message)
+fun BusinessErrorCode.exception(customMessage: String? = null): BusinessException = BusinessException(this, customMessage)
 
 fun SystemErrorCode.exception(
     customMessage: String? = null,

@@ -4,13 +4,13 @@ import me.kmozze.expensetracker.model.entity.Category
 import java.util.UUID
 
 interface ICategoryRepository {
-    fun findById(id: UUID): Category
+    fun findById(id: UUID): Category?
 
     fun create(category: Category): Category
 
     fun update(category: Category): Category
 
-    fun delete(id: UUID)
+    fun delete(id: UUID): Boolean
 
     fun existsByUserId(userId: Long): Boolean
 }

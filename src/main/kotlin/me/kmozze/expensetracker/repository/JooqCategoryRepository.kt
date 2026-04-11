@@ -20,12 +20,12 @@ class JooqCategoryRepository(
             updatedAt = this.updatedAt,
         )
 
-    override fun findById(id: UUID): Category =
+    override fun findById(id: UUID): Category? =
         dsl
             .selectFrom(CATEGORY)
             .where(CATEGORY.ID.eq(id))
-            .fetchSingle()
-            .toDomain()
+            .fetchOne()
+            ?.toDomain()
 
     override fun create(category: Category): Category =
         dsl
@@ -46,11 +46,13 @@ class JooqCategoryRepository(
             .fetchSingle()
             .toDomain()
 
-    override fun delete(id: UUID) {
-        dsl
-            .deleteFrom(CATEGORY)
-            .where(CATEGORY.ID.eq(id))
-            .execute()
+    override fun delete(id: UUID): Boolean {
+        val affectedRows =
+            dsl
+                .deleteFrom(CATEGORY)
+                .where(CATEGORY.ID.eq(id))
+                .execute()
+        return affectedRows > 0
     }
 
     override fun existsByUserId(userId: Long): Boolean =

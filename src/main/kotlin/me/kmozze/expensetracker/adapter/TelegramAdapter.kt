@@ -6,7 +6,6 @@ import me.kmozze.expensetracker.model.domain.Action
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Message
 import me.kmozze.expensetracker.model.domain.UserInput
-import me.kmozze.expensetracker.service.ExpenseService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -23,7 +22,6 @@ class TelegramAdapter(
     @param:Value("\${bot.token}") private val botToken: String,
     @param:Value("\${bot.name}") private val botName: String,
     private val dialogueRouter: DialogueRouter,
-    private val expenseService: ExpenseService,
 ) : SpringLongPollingBot,
     LongPollingSingleThreadUpdateConsumer {
     private val logger = LoggerFactory.getLogger(this::class.java)

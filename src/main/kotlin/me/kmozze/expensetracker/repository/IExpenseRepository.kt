@@ -9,9 +9,9 @@ interface IExpenseRepository {
 
     fun update(expense: Expense): Expense
 
-    fun delete(id: UUID)
+    fun delete(id: UUID): Boolean
 
-    fun findById(id: UUID): Expense
+    fun findById(id: UUID): Expense?
 
     fun findAllByUserIdAndPeriod(
         userId: Long,
