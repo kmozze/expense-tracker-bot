@@ -15,6 +15,5 @@ spring:
   jooq:
     sql-dialect: POSTGRES
 
-bot:
-  name: ${BOT_NAME}
-  token: ${BOT_TOKEN}
+telegrambots:
+    enabled: false

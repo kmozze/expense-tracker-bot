@@ -1,7 +1,8 @@
-package me.kmozze.expensetracker.service.parser
+package me.kmozze.expensetracker.unit.service.parser
 
-import me.kmozze.expensetracker.exception.ExpenseInvalidFormatException
-import me.kmozze.expensetracker.exception.ExpenseValidationException
+import me.kmozze.expensetracker.exception.BusinessErrorCode
+import me.kmozze.expensetracker.exception.BusinessException
+import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -30,7 +31,9 @@ class InputExpenseParsingServiceTest {
     fun `should throw format exception`(input: String) {
         Assertions
             .assertThatThrownBy { service.parse(input) }
-            .isInstanceOf(ExpenseInvalidFormatException::class.java)
+            .isInstanceOf(BusinessException::class.java)
+            .extracting("error")
+            .isEqualTo(BusinessErrorCode.EXPENSE_INVALID_FORMAT)
     }
 
     @ParameterizedTest(name = "input: \"{0}\"")
@@ -38,7 +41,9 @@ class InputExpenseParsingServiceTest {
     fun `should throw validation exception`(input: String) {
         Assertions
             .assertThatThrownBy { service.parse(input) }
-            .isInstanceOf(ExpenseValidationException::class.java)
+            .isInstanceOf(BusinessException::class.java)
+            .extracting("error")
+            .isEqualTo(BusinessErrorCode.INVALID_AMOUNT)
     }
 
     companion object {
