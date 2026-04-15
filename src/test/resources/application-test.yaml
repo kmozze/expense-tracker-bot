@@ -1,0 +1,12 @@
+bot:
+    name: test-bot
+    token: 123456:TEST_TOKEN
+
+spring:
+    liquibase:
+        enabled: true
+    main:
+        web-application-type: none
+
+telegrambots:
+    enabled: false
