@@ -25,7 +25,6 @@ class CategoryServiceTest {
 
     @BeforeEach
     fun setUp() {
-        clearAllMocks()
         service = CategoryService(categoryRepository)
     }
 
