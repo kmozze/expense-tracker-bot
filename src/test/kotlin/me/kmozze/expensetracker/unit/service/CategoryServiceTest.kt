@@ -1,6 +1,5 @@
 package me.kmozze.expensetracker.unit.service
 
-import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk

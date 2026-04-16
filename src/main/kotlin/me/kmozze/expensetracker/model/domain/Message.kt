@@ -6,4 +6,8 @@ sealed class Message {
     data object WelcomeBack : Message()
 
     data object UnknownCommand : Message()
+
+    data class Error(
+        val text: String,
+    ) : Message()
 }

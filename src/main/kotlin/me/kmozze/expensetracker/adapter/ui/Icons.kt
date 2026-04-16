@@ -8,4 +8,5 @@ object Icons {
     const val PLUS = "➕"
     const val LIST = "📋"
     const val STATS = "📊"
+    const val CHECKMARK = "✓"
 }
