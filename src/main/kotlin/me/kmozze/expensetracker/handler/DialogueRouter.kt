@@ -26,22 +26,19 @@ class DialogueRouter(
                 return startCommandHandler.handle(input)
             }
 
-            val currentState = userSessionService.getCurrentState(input.userId)
+            val currentState = userSessionService.getState(input.userId)
 
             val handler = handlersByState[currentState::class] ?: unknownCommandHandler
 
             val result = handler.handle(input)
 
-            userSessionService.setNextState(input.userId, result.nextState)
+            if (result.nextState != null) {
+                userSessionService.setState(input.userId, result.nextState)
+            }
 
             result
         } catch (e: Exception) {
-            // ловим всё одним catch
             errorHandler.handle(input.userId, e)
         }
-    }
-
-    fun commitSuccessfulSend(userId: Long) {
-        userSessionService.applyNextState(userId)
     }
 }
