@@ -37,20 +37,14 @@ class TelegramAdapter(
     override fun getUpdatesConsumer(): LongPollingUpdateConsumer = this
 
     override fun consume(update: Update) {
-        val userInput = extractUserInput(update) ?: return
-
         if (update.hasCallbackQuery()) {
             acknowledgeCallback(update.callbackQuery)
         }
 
+        val userInput = extractUserInput(update) ?: return
+
         val outcome: HandlerResult = dialogueRouter.process(userInput)
         val sentSuccessfully = sendResponse(userInput.chatId, outcome.response)
-
-        if (sentSuccessfully) {
-            dialogueRouter.commitSuccessfulSend(userInput.userId)
-        } else {
-            logger.warn("Message was NOT sent to user {}. State change was skipped.", userInput.userId)
-        }
     }
 
     private fun extractUserInput(update: Update): UserInput? {
@@ -89,12 +83,14 @@ class TelegramAdapter(
         }
     }
 
-    private fun acknowledgeCallback(callbackQuery: org.telegram.telegrambots.meta.api.objects.CallbackQuery) {
-        val answer =
-            AnswerCallbackQuery(callbackQuery.id).apply {
-                text = Icons.CHECKMARK
-                showAlert = false
-            }
+    private fun acknowledgeCallback(
+        callbackQuery: org.telegram.telegrambots.meta.api.objects.CallbackQuery,
+        notificationText: String? = null
+    ) {
+        val answer = AnswerCallbackQuery(callbackQuery.id).apply {
+            text = notificationText
+            showAlert = false
+        }
         try {
             telegramClient.execute(answer)
             logger.debug("Callback {} acknowledged", callbackQuery.id)
@@ -109,10 +105,7 @@ class TelegramAdapter(
     ): Boolean {
         val text = messageFormatter.format(response.message)
 
-        val sendMessage =
-            SendMessage(chatId.toString(), text).apply {
-                parseMode = "Markdown"
-            }
+        val sendMessage = SendMessage(chatId.toString(), text)
 
         keyboardApplier.apply(sendMessage, response.actions)
 

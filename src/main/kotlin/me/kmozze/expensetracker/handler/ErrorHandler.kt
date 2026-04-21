@@ -1,6 +1,7 @@
 package me.kmozze.expensetracker.handler
 
 import me.kmozze.expensetracker.exception.AppException
+import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.model.domain.Action
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
@@ -20,12 +21,12 @@ class ErrorHandler {
         val errorMessage =
             when (exception) {
                 is AppException -> {
-                    logger.warn("AppException for user {}: {}", userId, exception.error.message, exception)
-                    Message.Error(exception.error.message)
+                    logger.warn("AppException for user {}: {}", userId, exception.message, exception)
+                    Message.Error(exception.errorCode)
                 }
                 else -> {
                     logger.error("Unexpected exception for user {}", userId, exception)
-                    Message.Error("⚠️ Что-то пошло не так. Попробуйте позже.")
+                    Message.Error(SystemErrorCode.INTERNAL_ERROR)
                 }
             }
 

@@ -1,5 +1,7 @@
 package me.kmozze.expensetracker.model.domain
 
+import me.kmozze.expensetracker.exception.ErrorCode
+
 sealed class Message {
     data object WelcomeFirstTime : Message()
 
@@ -8,6 +10,6 @@ sealed class Message {
     data object UnknownCommand : Message()
 
     data class Error(
-        val text: String,
+        val errorCode: ErrorCode,
     ) : Message()
 }
