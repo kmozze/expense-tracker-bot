@@ -6,6 +6,7 @@ import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.UserSessionService
 import org.springframework.stereotype.Component
+import kotlin.reflect.KClass
 
 @Component
 class DialogueRouter(
@@ -15,8 +16,8 @@ class DialogueRouter(
     private val errorHandler: ErrorHandler,
     stateHandlers: List<StateHandler>,
 ) {
-    private val handlersByState: Map<UserState, StateHandler> =
-        stateHandlers.associateBy { it.supportedState }
+    private val handlersByState: Map<KClass<out UserState>, StateHandler> =
+        stateHandlers.associateBy { it.supportedStateClass }
 
     fun process(input: UserInput): HandlerResult {
         return try {
@@ -27,7 +28,7 @@ class DialogueRouter(
 
             val currentState = userSessionService.getCurrentState(input.userId)
 
-            val handler: UserInputHandler = handlersByState[currentState] ?: unknownCommandHandler
+            val handler = handlersByState[currentState::class] ?: unknownCommandHandler
 
             val result = handler.handle(input)
 
