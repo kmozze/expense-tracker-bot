@@ -1,10 +1,10 @@
 package me.kmozze.expensetracker.adapter
 
-import me.kmozze.expensetracker.adapter.ui.Keyboards
+import me.kmozze.expensetracker.adapter.ui.KeyboardApplier
+import me.kmozze.expensetracker.adapter.ui.MessageFormatter
 import me.kmozze.expensetracker.handler.DialogueRouter
-import me.kmozze.expensetracker.model.domain.Action
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.Message
+import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.UserInput
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -13,6 +13,7 @@ import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.generics.TelegramClient
@@ -22,6 +23,8 @@ class TelegramAdapter(
     @param:Value("\${bot.token}") private val botToken: String,
     @param:Value("\${bot.name}") private val botName: String,
     private val dialogueRouter: DialogueRouter,
+    private val messageFormatter: MessageFormatter,
+    private val keyboardApplier: KeyboardApplier,
 ) : SpringLongPollingBot,
     LongPollingSingleThreadUpdateConsumer {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -33,22 +36,66 @@ class TelegramAdapter(
     override fun getUpdatesConsumer(): LongPollingUpdateConsumer = this
 
     override fun consume(update: Update) {
-        if (update.hasMessage() && update.message.hasText()) {
-            val userId = update.message.from.id
-            val chatId = update.message.chatId
-            val text = update.message.text
+        if (update.hasCallbackQuery()) {
+            acknowledgeCallback(update.callbackQuery)
+        }
 
-            logger.info("Message from [{}]: {}", userId, text)
+        val userInput = extractUserInput(update) ?: return
 
-            val userInput =
+        val outcome: HandlerResult = dialogueRouter.process(userInput)
+        sendResponse(userInput.chatId, outcome.response)
+    }
+
+    private fun extractUserInput(update: Update): UserInput? {
+        return when {
+            update.hasMessage() && update.message.hasText() -> {
+                val msg = update.message
+                logger.info("Message from [{}]: {}", msg.from.id, msg.text)
                 UserInput(
-                    userId = userId,
-                    chatId = chatId,
-                    text = text,
+                    userId = msg.from.id,
+                    chatId = msg.chatId,
+                    text = msg.text,
+                    callbackData = null,
                 )
+            }
 
-            val response = dialogueRouter.process(userInput)
-            sendResponse(chatId, response)
+            update.hasCallbackQuery() -> {
+                val callbackQuery = update.callbackQuery
+                val msg = callbackQuery.message
+                if (msg == null) {
+                    logger.warn("Callback query without message from user {}", callbackQuery.from.id)
+                    return null
+                }
+                logger.info("Callback from [{}]: {}", callbackQuery.from.id, callbackQuery.data)
+                UserInput(
+                    userId = callbackQuery.from.id,
+                    chatId = msg.chatId,
+                    text = null,
+                    callbackData = callbackQuery.data,
+                )
+            }
+
+            else -> {
+                logger.debug("Unsupported update type: {}", update)
+                null
+            }
+        }
+    }
+
+    private fun acknowledgeCallback(
+        callbackQuery: org.telegram.telegrambots.meta.api.objects.CallbackQuery,
+        notificationText: String? = null,
+    ) {
+        val answer =
+            AnswerCallbackQuery(callbackQuery.id).apply {
+                text = notificationText
+                showAlert = false
+            }
+        try {
+            telegramClient.execute(answer)
+            logger.debug("Callback {} acknowledged", callbackQuery.id)
+        } catch (e: Exception) {
+            logger.error("Failed to acknowledge callback ${callbackQuery.id}: ${e.message}", e)
         }
     }
 
@@ -56,41 +103,17 @@ class TelegramAdapter(
         chatId: Long,
         response: HandlerResponse,
     ) {
-        val text = getText(response.message)
+        val text = messageFormatter.format(response.message)
 
         val sendMessage = SendMessage(chatId.toString(), text)
-        applyActions(sendMessage, response.actions)
+
+        keyboardApplier.apply(sendMessage, response.actions)
 
         try {
             telegramClient.execute(sendMessage)
-            logger.debug("Message sent to chat {}", chatId)
+            logger.info("Successful to send message to chat $chatId")
         } catch (e: Exception) {
             logger.error("Failed to send message to chat $chatId", e)
-        }
-    }
-
-    private fun getText(message: Message): String =
-        when (message) {
-            is Message.WelcomeFirstTime ->
-                "👋 Добро пожаловать! Я создал для тебя базовые категории расходов."
-
-            is Message.WelcomeBack ->
-                "С возвращением! 💸 Я готов записывать твои новые траты."
-
-            is Message.UnknownCommand ->
-                "Я не понял команду 😕\n Что бы вернуться в главное меню напиши /start"
-        }
-
-    private fun applyActions(
-        sendMessage: SendMessage,
-        actions: List<Action>,
-    ) {
-        actions.forEach { action ->
-            when (action) {
-                is Action.ShowMainMenu -> {
-                    sendMessage.replyMarkup = Keyboards.mainMenu()
-                }
-            }
         }
     }
 }

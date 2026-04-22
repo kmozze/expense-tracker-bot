@@ -2,24 +2,19 @@ package me.kmozze.expensetracker.exception
 
 interface ErrorCode {
     val code: String
-    val message: String
 }
 
-enum class BusinessErrorCode(
-    override val message: String,
-) : ErrorCode {
-    EXPENSE_INVALID_FORMAT("Неверный формат. Используйте: 'Еда 500' или '500 Еда'"),
-    INVALID_AMOUNT("Сумма должна быть больше нуля"),
+enum class BusinessErrorCode : ErrorCode {
+    EXPENSE_INVALID_FORMAT,
+    INVALID_AMOUNT,
     ;
 
     override val code: String get() = name
 }
 
-enum class SystemErrorCode(
-    override val message: String,
-) : ErrorCode {
-    DATABASE_ERROR("Ошибка базы данных"),
-    INTERNAL_ERROR("Непредвиденная системная ошибка"),
+enum class SystemErrorCode : ErrorCode {
+    DATABASE_ERROR,
+    INTERNAL_ERROR,
     ;
 
     override val code: String get() = name
