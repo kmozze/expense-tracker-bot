@@ -1,6 +1,5 @@
 package me.kmozze.expensetracker.adapter
 
-import me.kmozze.expensetracker.adapter.ui.Icons
 import me.kmozze.expensetracker.adapter.ui.KeyboardApplier
 import me.kmozze.expensetracker.adapter.ui.MessageFormatter
 import me.kmozze.expensetracker.handler.DialogueRouter
@@ -44,7 +43,7 @@ class TelegramAdapter(
         val userInput = extractUserInput(update) ?: return
 
         val outcome: HandlerResult = dialogueRouter.process(userInput)
-        val sentSuccessfully = sendResponse(userInput.chatId, outcome.response)
+        sendResponse(userInput.chatId, outcome.response)
     }
 
     private fun extractUserInput(update: Update): UserInput? {
@@ -85,12 +84,13 @@ class TelegramAdapter(
 
     private fun acknowledgeCallback(
         callbackQuery: org.telegram.telegrambots.meta.api.objects.CallbackQuery,
-        notificationText: String? = null
+        notificationText: String? = null,
     ) {
-        val answer = AnswerCallbackQuery(callbackQuery.id).apply {
-            text = notificationText
-            showAlert = false
-        }
+        val answer =
+            AnswerCallbackQuery(callbackQuery.id).apply {
+                text = notificationText
+                showAlert = false
+            }
         try {
             telegramClient.execute(answer)
             logger.debug("Callback {} acknowledged", callbackQuery.id)
@@ -102,19 +102,18 @@ class TelegramAdapter(
     private fun sendResponse(
         chatId: Long,
         response: HandlerResponse,
-    ): Boolean {
+    ) {
         val text = messageFormatter.format(response.message)
 
         val sendMessage = SendMessage(chatId.toString(), text)
 
         keyboardApplier.apply(sendMessage, response.actions)
 
-        return try {
+        try {
             telegramClient.execute(sendMessage)
-            true
+            logger.info("Successful to send message to chat $chatId")
         } catch (e: Exception) {
             logger.error("Failed to send message to chat $chatId", e)
-            false
         }
     }
 }

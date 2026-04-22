@@ -22,13 +22,12 @@ class MessageFormatter {
             is Message.Error -> "❌ ${formatError(message.errorCode)}"
         }
 
-    private fun formatError(errorCode: ErrorCode): String {
-        return when (errorCode) {
+    private fun formatError(errorCode: ErrorCode): String =
+        when (errorCode) {
             BusinessErrorCode.EXPENSE_INVALID_FORMAT -> "Неверный формат. Используйте: 'Еда 500' или '500 Еда'"
             BusinessErrorCode.INVALID_AMOUNT -> "Сумма должна быть больше нуля"
             SystemErrorCode.DATABASE_ERROR -> "Ошибка базы данных. Попробуйте позже."
             SystemErrorCode.INTERNAL_ERROR -> "Непредвиденная системная ошибка."
             else -> "Произошла неизвестная ошибка."
         }
-    }
 }
