@@ -9,4 +9,5 @@ object Icons {
     const val LIST = "📋"
     const val STATS = "📊"
     const val CHECKMARK = "✓"
+    const val CANCEL = "❌"
 }
