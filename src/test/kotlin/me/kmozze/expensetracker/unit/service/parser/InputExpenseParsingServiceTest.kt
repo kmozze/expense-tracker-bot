@@ -17,12 +17,12 @@ class InputExpenseParsingServiceTest {
     @MethodSource("validInputs")
     fun `should parse valid inputs`(
         input: String,
-        expectedCategory: String,
+        expectedDescription: String,
         expectedAmount: BigDecimal,
     ) {
         val result = service.parse(input)
 
-        Assertions.assertThat(result.category).isEqualTo(expectedCategory)
+        Assertions.assertThat(result.description).isEqualTo(expectedDescription)
         Assertions.assertThat(result.amount).isEqualByComparingTo(expectedAmount)
     }
 
@@ -32,7 +32,7 @@ class InputExpenseParsingServiceTest {
         Assertions
             .assertThatThrownBy { service.parse(input) }
             .isInstanceOf(BusinessException::class.java)
-            .extracting("error")
+            .extracting("errorCode")
             .isEqualTo(BusinessErrorCode.EXPENSE_INVALID_FORMAT)
     }
 
@@ -42,7 +42,7 @@ class InputExpenseParsingServiceTest {
         Assertions
             .assertThatThrownBy { service.parse(input) }
             .isInstanceOf(BusinessException::class.java)
-            .extracting("error")
+            .extracting("errorCode")
             .isEqualTo(BusinessErrorCode.INVALID_AMOUNT)
     }
 
