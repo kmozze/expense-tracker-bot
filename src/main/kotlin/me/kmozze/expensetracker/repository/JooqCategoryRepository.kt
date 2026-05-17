@@ -27,6 +27,14 @@ class JooqCategoryRepository(
             .fetchOne()
             ?.toDomain()
 
+    override fun findAllByUserId(userId: Long): List<Category> =
+        dsl
+            .selectFrom(CATEGORY)
+            .where(CATEGORY.USER_ID.eq(userId))
+            .orderBy(CATEGORY.NAME.asc())
+            .fetch()
+            .map { it.toDomain() }
+
     override fun create(category: Category): Category =
         dsl
             .insertInto(CATEGORY)
