@@ -28,9 +28,9 @@ class DialogueRouter(
 
             val currentState = userSessionService.getState(input.userId)
 
-            val handler = handlersByState[currentState::class] ?: unknownCommandHandler
+            val handler = handlersByState[currentState::class]
 
-            val result = handler.handle(input)
+            val result = handler?.handle(input, currentState) ?: unknownCommandHandler.handle(input)
 
             if (result.nextState != null) {
                 userSessionService.setState(input.userId, result.nextState)
