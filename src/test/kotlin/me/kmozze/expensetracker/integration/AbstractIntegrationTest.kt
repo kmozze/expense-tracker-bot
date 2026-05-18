@@ -5,20 +5,17 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 
-@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test")
 abstract class AbstractIntegrationTest {
     companion object {
-        @Container
         val postgresContainer =
             PostgreSQLContainer("postgres:16-alpine")
                 .withDatabaseName("expense_test_db")
                 .withUsername("test_user")
                 .withPassword("test_password")
+                .apply { start() }
 
         @JvmStatic
         @DynamicPropertySource
