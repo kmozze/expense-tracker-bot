@@ -1,20 +1,53 @@
 package me.kmozze.expensetracker.service
 
+import me.kmozze.expensetracker.exception.SystemErrorCode
+import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.model.domain.ParsedExpense
+import me.kmozze.expensetracker.model.entity.Expense
+import me.kmozze.expensetracker.repository.IExpenseRepository
 import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
+import org.jooq.exception.DataAccessException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 class ExpenseService(
     private val expenseTextParser: InputExpenseParsingService,
+    private val expenseRepository: IExpenseRepository,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    fun addExpense(text: String): ParsedExpense {
+    fun parseExpense(text: String): ParsedExpense {
         val parsedExpense = expenseTextParser.parse(text)
         logger.info("Expense parsed successfully: {}", parsedExpense)
 
         return parsedExpense
     }
+
+    @Transactional
+    fun saveExpense(
+        userId: Long,
+        categoryId: UUID,
+        parsedExpense: ParsedExpense,
+    ): Expense =
+        try {
+            val expense =
+                Expense(
+                    categoryId = categoryId,
+                    amount = parsedExpense.amount,
+                    userId = userId,
+                    description = parsedExpense.description,
+                )
+
+            expenseRepository.create(expense)
+        } catch (e: DataAccessException) {
+            logger.error("Failed to save expense for user $userId", e)
+
+            throw SystemErrorCode.DATABASE_ERROR.exception(
+                customMessage = "Ошибка при сохранении расхода пользователя $userId",
+                cause = e,
+            )
+        }
 }

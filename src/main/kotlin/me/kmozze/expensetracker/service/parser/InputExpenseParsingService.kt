@@ -18,13 +18,13 @@ class InputExpenseParsingService {
 
         return when {
             amountFirst != null -> {
-                val category = words.drop(1).joinToString(" ")
-                createExpense(category, amountFirst)
+                val description = words.drop(1).joinToString(" ")
+                createExpense(description, amountFirst)
             }
 
             amountLast != null -> {
-                val category = words.dropLast(1).joinToString(" ")
-                createExpense(category, amountLast)
+                val description = words.dropLast(1).joinToString(" ")
+                createExpense(description, amountLast)
             }
 
             else -> throw BusinessErrorCode.EXPENSE_INVALID_FORMAT.exception()
@@ -39,12 +39,12 @@ class InputExpenseParsingService {
         }
 
     private fun createExpense(
-        category: String,
+        description: String,
         amount: BigDecimal,
     ): ParsedExpense {
         if (amount <= BigDecimal.ZERO) {
             throw BusinessErrorCode.INVALID_AMOUNT.exception()
         }
-        return ParsedExpense(category.trim(), amount)
+        return ParsedExpense(amount, description.trim())
     }
 }
