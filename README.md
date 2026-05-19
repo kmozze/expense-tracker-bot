@@ -47,7 +47,6 @@ src/test/kotlin/me/kmozze/expensetracker/
   integration/
 ```
 
-Дополнительная карта проекта лежит в `docs/PROJECT_MAP.md`.
 План будущего UX и поведения бота лежит в `UI.md`.
 
 ## Локальный запуск с нуля
@@ -124,8 +123,6 @@ docker compose up -d
 ./gradlew test
 ```
 
-Последний локальный прогон на 2026-05-19: `./gradlew test` прошел успешно при доступном Docker.
-
 Для быстрой проверки unit-тестов:
 
 ```bash
@@ -140,7 +137,7 @@ docker compose up -d
 ./gradlew bootRun
 ```
 
-`jooqCodegen` нужен при первом локальном запуске, после очистки `build/` и после изменений схемы. Для этой проверки должны быть выставлены `DB_URL`, `DB_USER`, `DB_PASSWORD` и `BOT_TOKEN`. Успешный smoke-check - приложение стартовало без ошибок Spring context / Liquibase / Telegram long polling. Если этот же Telegram bot token уже используется другим запущенным экземпляром, long polling может конфликтовать.
+`jooqCodegen` нужен при первом локальном запуске, после очистки `build/` и после изменений схемы. Для этой проверки должны быть выставлены `DB_URL`, `DB_USER`, `DB_PASSWORD` и `BOT_TOKEN`. Успешный smoke-check - приложение стартовало без ошибок Spring context / Liquibase / Telegram long polling.
 
 ## Текущие ограничения
 
