@@ -6,6 +6,11 @@ import java.util.UUID
 interface ICategoryRepository {
     fun findById(id: UUID): Category?
 
+    fun findByIdForUser(
+        id: UUID,
+        userId: Long,
+    ): Category?
+
     fun findAllByUserId(userId: Long): List<Category>
 
     fun create(category: Category): Category

@@ -27,6 +27,16 @@ class JooqCategoryRepository(
             .fetchOne()
             ?.toDomain()
 
+    override fun findByIdForUser(
+        id: UUID,
+        userId: Long,
+    ): Category? =
+        dsl
+            .selectFrom(CATEGORY)
+            .where(CATEGORY.ID.eq(id).and(CATEGORY.USER_ID.eq(userId)))
+            .fetchOne()
+            ?.toDomain()
+
     override fun findAllByUserId(userId: Long): List<Category> =
         dsl
             .selectFrom(CATEGORY)

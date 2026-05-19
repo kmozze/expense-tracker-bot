@@ -76,7 +76,7 @@ class CategoryService(
     ): Category {
         val category =
             try {
-                categoryRepository.findById(categoryId)
+                categoryRepository.findByIdForUser(categoryId, userId)
             } catch (e: DataAccessException) {
                 logger.error("Failed to load category $categoryId for user $userId", e)
 
@@ -86,7 +86,7 @@ class CategoryService(
                 )
             }
 
-        if (category == null || category.userId != userId) {
+        if (category == null) {
             throw BusinessErrorCode.CATEGORY_NOT_FOUND.exception()
         }
 
