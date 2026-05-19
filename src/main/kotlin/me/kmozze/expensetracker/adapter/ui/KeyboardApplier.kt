@@ -1,6 +1,6 @@
 package me.kmozze.expensetracker.adapter.ui
 
-import me.kmozze.expensetracker.model.domain.Action
+import me.kmozze.expensetracker.model.domain.BotAction
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 
@@ -8,13 +8,13 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 class KeyboardApplier {
     fun apply(
         sendMessage: SendMessage,
-        actions: List<Action>,
+        actions: List<BotAction>,
     ) {
         actions.forEach { action ->
             when (action) {
-                is Action.ShowMainMenu ->
+                is BotAction.ShowMainMenu ->
                     sendMessage.replyMarkup = Keyboards.mainMenu()
-                is Action.ShowCategorySelection ->
+                is BotAction.ShowCategorySelection ->
                     sendMessage.replyMarkup = Keyboards.categorySelection(action.categories)
             }
         }

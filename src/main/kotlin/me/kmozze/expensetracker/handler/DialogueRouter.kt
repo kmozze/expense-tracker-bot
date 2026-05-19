@@ -2,6 +2,7 @@ package me.kmozze.expensetracker.handler
 
 import me.kmozze.expensetracker.handler.statehandler.StateHandler
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.UserSessionService
@@ -21,7 +22,7 @@ class DialogueRouter(
 
     fun process(input: UserInput): HandlerResult {
         return try {
-            if (input.text?.equals("/start", ignoreCase = true) == true) {
+            if (input.command == UserCommand.Start) {
                 userSessionService.clear(input.userId)
                 return startCommandHandler.handle(input)
             }

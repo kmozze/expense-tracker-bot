@@ -1,6 +1,6 @@
 package me.kmozze.expensetracker.model.domain
 
 data class HandlerResponse(
-    val message: Message,
-    val actions: List<Action>,
+    val message: BotMessage,
+    val actions: List<BotAction>,
 )

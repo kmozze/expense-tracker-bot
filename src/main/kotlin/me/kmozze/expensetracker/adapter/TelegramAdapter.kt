@@ -1,5 +1,6 @@
 package me.kmozze.expensetracker.adapter
 
+import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.adapter.ui.KeyboardApplier
 import me.kmozze.expensetracker.adapter.ui.MessageFormatter
 import me.kmozze.expensetracker.handler.DialogueRouter
@@ -56,6 +57,7 @@ class TelegramAdapter(
                     chatId = msg.chatId,
                     text = msg.text,
                     callbackData = null,
+                    command = UserCommandParser.parse(text = msg.text, callbackData = null),
                 )
             }
 
@@ -72,6 +74,7 @@ class TelegramAdapter(
                     chatId = msg.chatId,
                     text = null,
                     callbackData = callbackQuery.data,
+                    command = UserCommandParser.parse(text = null, callbackData = callbackQuery.data),
                 )
             }
 
