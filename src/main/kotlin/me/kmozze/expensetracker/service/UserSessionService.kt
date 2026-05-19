@@ -14,6 +14,10 @@ class UserSessionService {
         sessions.remove(userId)
     }
 
+    fun clearAll() {
+        sessions.clear()
+    }
+
     fun setState(
         userId: Long,
         state: UserState,
