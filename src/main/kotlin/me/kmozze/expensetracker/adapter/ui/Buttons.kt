@@ -5,4 +5,5 @@ object Buttons {
     const val VIEW_EXPENSES = "${Icons.LIST} Расходы"
     const val CATEGORIES = "${Icons.CATEGORY} Категории"
     const val STATISTICS = "${Icons.STATS} Статистика"
+    const val CANCEL = "${Icons.CANCEL} Отмена"
 }

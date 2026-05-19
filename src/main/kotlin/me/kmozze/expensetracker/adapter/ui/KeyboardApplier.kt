@@ -14,6 +14,8 @@ class KeyboardApplier {
             when (action) {
                 is Action.ShowMainMenu ->
                     sendMessage.replyMarkup = Keyboards.mainMenu()
+                is Action.ShowCategorySelection ->
+                    sendMessage.replyMarkup = Keyboards.categorySelection(action.categories)
             }
         }
     }

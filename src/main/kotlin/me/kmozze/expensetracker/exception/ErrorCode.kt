@@ -7,6 +7,8 @@ interface ErrorCode {
 enum class BusinessErrorCode : ErrorCode {
     EXPENSE_INVALID_FORMAT,
     INVALID_AMOUNT,
+    CATEGORY_NOT_FOUND,
+    INVALID_CATEGORY_SELECTION,
     ;
 
     override val code: String get() = name
