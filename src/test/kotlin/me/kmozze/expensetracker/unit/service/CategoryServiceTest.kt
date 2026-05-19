@@ -58,6 +58,6 @@ class CategoryServiceTest {
                 service.initDefaultCategories(123L)
             }
 
-        assertEquals(SystemErrorCode.DATABASE_ERROR, exception.error)
+        assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
     }
 }
