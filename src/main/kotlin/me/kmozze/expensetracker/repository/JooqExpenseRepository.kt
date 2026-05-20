@@ -2,6 +2,7 @@ package me.kmozze.expensetracker.repository
 
 import me.kmozze.expense.tracker.jooq.tables.records.ExpenseRecord
 import me.kmozze.expense.tracker.jooq.tables.references.EXPENSE
+import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.entity.Expense
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository
@@ -16,7 +17,7 @@ class JooqExpenseRepository(
         Expense(
             id = this.id,
             categoryId = this.categoryId,
-            amount = this.amount,
+            amount = Money.of(this.amount),
             userId = this.userId,
             description = this.description,
             createdAt = this.createdAt,
@@ -33,7 +34,7 @@ class JooqExpenseRepository(
         dsl
             .insertInto(EXPENSE)
             .set(EXPENSE.ID, expense.id)
-            .set(EXPENSE.AMOUNT, expense.amount)
+            .set(EXPENSE.AMOUNT, expense.amount.value)
             .set(EXPENSE.CATEGORY_ID, expense.categoryId)
             .set(EXPENSE.USER_ID, expense.userId)
             .set(EXPENSE.DESCRIPTION, expense.description)
@@ -44,7 +45,7 @@ class JooqExpenseRepository(
     override fun update(expense: Expense): Expense =
         dsl
             .update(EXPENSE)
-            .set(EXPENSE.AMOUNT, expense.amount)
+            .set(EXPENSE.AMOUNT, expense.amount.value)
             .set(EXPENSE.CATEGORY_ID, expense.categoryId)
             .set(EXPENSE.DESCRIPTION, expense.description)
             .where(EXPENSE.ID.eq(expense.id))

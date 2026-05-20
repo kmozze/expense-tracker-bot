@@ -23,11 +23,11 @@ class MessageFormatter {
                 "Введите сумму и описание одним сообщением.\nНапример: `500 такси` или  `такси 500`."
 
             is BotMessage.SelectCategory ->
-                "💰 *${message.amount} ₽*\n📝 ${message.description}\n\nКуда запишем?"
+                "💰 *${message.amount.format()} ₽*\n📝 ${message.description}\n\nКуда запишем?"
 
             is BotMessage.ExpenseSaved ->
                 "✅ Сохранено!\n" +
-                    "💰 Сумма: ${message.amount} ₽\n" +
+                    "💰 Сумма: ${message.amount.format()} ₽\n" +
                     "📂 Категория: ${message.categoryName}\n" +
                     "📝 Описание: ${message.description}"
 
