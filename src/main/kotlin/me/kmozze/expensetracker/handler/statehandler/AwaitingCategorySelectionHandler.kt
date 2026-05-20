@@ -1,7 +1,6 @@
 package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
-import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.model.domain.Action
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
@@ -65,19 +64,12 @@ class AwaitingCategorySelectionHandler(
                 ?: return invalidCategorySelection(input.userId, currentState)
 
         val category =
-            try {
-                categoryService.getCategoryForUser(categoryId, input.userId)
-            } catch (e: BusinessException) {
-                if (e.errorCode == BusinessErrorCode.CATEGORY_NOT_FOUND) {
-                    return categorySelectionError(
-                        userId = input.userId,
-                        currentState = currentState,
-                        errorCode = BusinessErrorCode.CATEGORY_NOT_FOUND,
-                    )
-                }
-
-                throw e
-            }
+            categoryService.findCategoryForUser(categoryId, input.userId)
+                ?: return categorySelectionError(
+                    userId = input.userId,
+                    currentState = currentState,
+                    errorCode = BusinessErrorCode.CATEGORY_NOT_FOUND,
+                )
 
         val expense =
             expenseService.saveExpense(

@@ -20,13 +20,6 @@ class JooqCategoryRepository(
             updatedAt = this.updatedAt,
         )
 
-    override fun findById(id: UUID): Category? =
-        dsl
-            .selectFrom(CATEGORY)
-            .where(CATEGORY.ID.eq(id))
-            .fetchOne()
-            ?.toDomain()
-
     override fun findByIdForUser(
         id: UUID,
         userId: Long,
