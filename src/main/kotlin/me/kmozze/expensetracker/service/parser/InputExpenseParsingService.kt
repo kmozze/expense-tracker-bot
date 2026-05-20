@@ -2,6 +2,7 @@ package me.kmozze.expensetracker.service.parser
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.exception
+import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.ParsedExpense
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -42,9 +43,11 @@ class InputExpenseParsingService {
         description: String,
         amount: BigDecimal,
     ): ParsedExpense {
-        if (amount <= BigDecimal.ZERO) {
+        val money = Money.of(amount)
+
+        if (money.value <= BigDecimal.ZERO) {
             throw BusinessErrorCode.INVALID_AMOUNT.exception()
         }
-        return ParsedExpense(amount, description.trim())
+        return ParsedExpense(money, description.trim())
     }
 }

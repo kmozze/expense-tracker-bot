@@ -2,6 +2,7 @@ package me.kmozze.expensetracker.unit.service.parser
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.BusinessException
+import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.assertThrows
@@ -24,7 +25,7 @@ class InputExpenseParsingServiceTest {
         val result = service.parse(input)
 
         Assertions.assertThat(result.description).isEqualTo(expectedDescription)
-        Assertions.assertThat(result.amount).isEqualByComparingTo(expectedAmount)
+        Assertions.assertThat(result.amount).isEqualTo(Money.of(expectedAmount))
     }
 
     @ParameterizedTest(name = "input: \"{0}\"")
@@ -55,9 +56,11 @@ class InputExpenseParsingServiceTest {
             Stream.of(
                 Arguments.arguments("150.50 Кофе", "Кофе", BigDecimal("150.50")),
                 Arguments.arguments("10,50 Milk", "Milk", BigDecimal("10.50")),
-                Arguments.arguments("Lunch 500", "Lunch", BigDecimal("500")),
-                Arguments.arguments("  Taxi   400  ", "Taxi", BigDecimal("400")),
-                Arguments.arguments("Dinner at restaurant 2500", "Dinner at restaurant", BigDecimal("2500")),
+                Arguments.arguments("Lunch 500", "Lunch", BigDecimal("500.00")),
+                Arguments.arguments("  Taxi   400  ", "Taxi", BigDecimal("400.00")),
+                Arguments.arguments("Dinner at restaurant 2500", "Dinner at restaurant", BigDecimal("2500.00")),
+                Arguments.arguments("Coffee 10.555", "Coffee", BigDecimal("10.56")),
+                Arguments.arguments("Snack 10.554", "Snack", BigDecimal("10.55")),
             )
 
         @JvmStatic
@@ -75,6 +78,7 @@ class InputExpenseParsingServiceTest {
         fun invalidAmountInputs(): Stream<String> =
             Stream.of(
                 "Coffee 0",
+                "Coffee 0.004",
                 "-10 Taxi",
                 "Gym -5.50",
                 "0.00 Gift",

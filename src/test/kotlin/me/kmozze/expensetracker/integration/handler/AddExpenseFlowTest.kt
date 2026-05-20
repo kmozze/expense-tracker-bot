@@ -8,6 +8,7 @@ import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.integration.AbstractIntegrationTest
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.ParsedExpense
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -67,9 +68,9 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
         val category = categorySelectionAction.categories.first()
 
         assertThat(parsedExpenseResult.response.message)
-            .isEqualTo(BotMessage.SelectCategory(BigDecimal("500"), "такси"))
+            .isEqualTo(BotMessage.SelectCategory(Money.of(BigDecimal("500.00")), "такси"))
         assertThat(parsedExpenseResult.nextState)
-            .isEqualTo(UserState.AwaitingCategorySelection(ParsedExpense(BigDecimal("500"), "такси")))
+            .isEqualTo(UserState.AwaitingCategorySelection(ParsedExpense(Money.of(BigDecimal("500.00")), "такси")))
 
         val savedExpenseResult =
             dialogueRouter.process(
@@ -81,13 +82,13 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
             )
 
         assertThat(savedExpenseResult.response.message)
-            .isEqualTo(BotMessage.ExpenseSaved(BigDecimal("500.00"), category.name, "такси"))
+            .isEqualTo(BotMessage.ExpenseSaved(Money.of(BigDecimal("500.00")), category.name, "такси"))
         assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
 
         val expenses = findExpenses(userId)
 
         assertThat(expenses).hasSize(1)
-        assertThat(expenses.single().amount).isEqualByComparingTo(BigDecimal("500"))
+        assertThat(expenses.single().amount).isEqualTo(Money.of(BigDecimal("500.00")))
         assertThat(expenses.single().categoryId).isEqualTo(category.id)
         assertThat(expenses.single().description).isEqualTo("такси")
     }
@@ -224,10 +225,10 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
             )
         val categorySelectionAction = result.response.actions.single() as BotAction.ShowCategorySelection
 
-        assertThat(result.response.message).isEqualTo(BotMessage.SelectCategory(BigDecimal("500"), "такси"))
+        assertThat(result.response.message).isEqualTo(BotMessage.SelectCategory(Money.of(BigDecimal("500.00")), "такси"))
         assertThat(categorySelectionAction.categories).isNotEmpty()
 
-        return ParsedExpense(BigDecimal("500"), "такси")
+        return ParsedExpense(Money.of(BigDecimal("500.00")), "такси")
     }
 
     private fun userInput(
