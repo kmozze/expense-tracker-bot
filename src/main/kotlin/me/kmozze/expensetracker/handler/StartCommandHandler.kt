@@ -1,9 +1,9 @@
 package me.kmozze.expensetracker.handler
 
-import me.kmozze.expensetracker.model.domain.Action
+import me.kmozze.expensetracker.model.domain.BotAction
+import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
-import me.kmozze.expensetracker.model.domain.Message
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.CategoryService
@@ -22,13 +22,13 @@ class StartCommandHandler(
 
         val isFirstTime = categoryService.initDefaultCategories(userId)
 
-        val welcomeText = if (isFirstTime) Message.WelcomeFirstTime else Message.WelcomeBack
+        val welcomeText = if (isFirstTime) BotMessage.WelcomeFirstTime else BotMessage.WelcomeBack
 
         return HandlerResult(
             response =
                 HandlerResponse(
                     message = welcomeText,
-                    actions = listOf(Action.ShowMainMenu),
+                    actions = listOf(BotAction.ShowMainMenu),
                 ),
             nextState = UserState.Idle,
         )

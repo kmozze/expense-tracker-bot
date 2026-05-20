@@ -1,10 +1,11 @@
 package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
-import me.kmozze.expensetracker.model.domain.Action
+import me.kmozze.expensetracker.model.domain.BotAction
+import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
-import me.kmozze.expensetracker.model.domain.Message
+import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.CategoryService
@@ -28,41 +29,36 @@ class AwaitingCategorySelectionHandler(
             "AwaitingCategorySelectionHandler requires AwaitingCategorySelection state"
         }
 
-        val callbackData = input.callbackData
-
-        if (callbackData == CANCEL_CALLBACK) {
-            return HandlerResult(
-                response =
-                    HandlerResponse(
-                        message = Message.ExpenseCanceled,
-                        actions = listOf(Action.ShowMainMenu),
-                    ),
-                nextState = UserState.Idle,
-            )
+        return when (val command = input.command) {
+            UserCommand.Cancel -> cancelExpenseCreation()
+            is UserCommand.SelectCategory ->
+                saveExpense(
+                    input = input,
+                    currentState = currentState,
+                    categoryId = command.categoryId,
+                )
+            UserCommand.InvalidCategorySelection ->
+                categorySelectionError(
+                    userId = input.userId,
+                    currentState = currentState,
+                    errorCode = BusinessErrorCode.INVALID_CATEGORY_SELECTION,
+                )
+            UserCommand.Unsupported,
+            UserCommand.Start,
+            UserCommand.AddExpense,
+            UserCommand.ViewExpenses,
+            UserCommand.Categories,
+            UserCommand.Statistics,
+            is UserCommand.PlainText,
+            -> repeatCategorySelection(input.userId, currentState)
         }
+    }
 
-        if (callbackData == null || !callbackData.startsWith(SELECT_CATEGORY_PREFIX)) {
-            val categories = categoryService.getCategories(input.userId)
-            return HandlerResult(
-                response =
-                    HandlerResponse(
-                        message =
-                            Message.SelectCategory(
-                                amount = currentState.parsedExpense.amount,
-                                description = currentState.parsedExpense.description,
-                            ),
-                        actions = listOf(Action.ShowCategorySelection(categories)),
-                    ),
-                nextState = currentState,
-            )
-        }
-
-        val categoryId =
-            callbackData
-                .removePrefix(SELECT_CATEGORY_PREFIX)
-                .let { runCatching { UUID.fromString(it) }.getOrNull() }
-                ?: return invalidCategorySelection(input.userId, currentState)
-
+    private fun saveExpense(
+        input: UserInput,
+        currentState: UserState.AwaitingCategorySelection,
+        categoryId: UUID,
+    ): HandlerResult {
         val category =
             categoryService.findCategoryForUser(categoryId, input.userId)
                 ?: return categorySelectionError(
@@ -82,26 +78,46 @@ class AwaitingCategorySelectionHandler(
             response =
                 HandlerResponse(
                     message =
-                        Message.ExpenseSaved(
+                        BotMessage.ExpenseSaved(
                             amount = expense.amount,
                             categoryName = category.name,
                             description = expense.description.orEmpty(),
                         ),
-                    actions = listOf(Action.ShowMainMenu),
+                    actions = listOf(BotAction.ShowMainMenu),
                 ),
             nextState = UserState.Idle,
         )
     }
 
-    private fun invalidCategorySelection(
+    private fun cancelExpenseCreation(): HandlerResult =
+        HandlerResult(
+            response =
+                HandlerResponse(
+                    message = BotMessage.ExpenseCanceled,
+                    actions = listOf(BotAction.ShowMainMenu),
+                ),
+            nextState = UserState.Idle,
+        )
+
+    private fun repeatCategorySelection(
         userId: Long,
         currentState: UserState.AwaitingCategorySelection,
-    ): HandlerResult =
-        categorySelectionError(
-            userId = userId,
-            currentState = currentState,
-            errorCode = BusinessErrorCode.INVALID_CATEGORY_SELECTION,
+    ): HandlerResult {
+        val categories = categoryService.getCategories(userId)
+
+        return HandlerResult(
+            response =
+                HandlerResponse(
+                    message =
+                        BotMessage.SelectCategory(
+                            amount = currentState.parsedExpense.amount,
+                            description = currentState.parsedExpense.description,
+                        ),
+                    actions = listOf(BotAction.ShowCategorySelection(categories)),
+                ),
+            nextState = currentState,
         )
+    }
 
     private fun categorySelectionError(
         userId: Long,
@@ -113,15 +129,10 @@ class AwaitingCategorySelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = Message.Error(errorCode),
-                    actions = listOf(Action.ShowCategorySelection(categories)),
+                    message = BotMessage.Error(errorCode),
+                    actions = listOf(BotAction.ShowCategorySelection(categories)),
                 ),
             nextState = currentState,
         )
-    }
-
-    private companion object {
-        const val SELECT_CATEGORY_PREFIX = "select_category:"
-        const val CANCEL_CALLBACK = "cancel"
     }
 }

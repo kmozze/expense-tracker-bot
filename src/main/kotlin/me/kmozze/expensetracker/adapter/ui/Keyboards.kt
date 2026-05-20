@@ -1,5 +1,6 @@
 package me.kmozze.expensetracker.adapter.ui
 
+import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.model.entity.Category
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
@@ -30,7 +31,7 @@ object Keyboards {
                 InlineKeyboardButton
                     .builder()
                     .text(category.name)
-                    .callbackData("select_category:${category.id}")
+                    .callbackData(CallbackData.selectCategory(category.id))
                     .build()
             }
         val rows: List<InlineKeyboardRow> =
@@ -43,7 +44,7 @@ object Keyboards {
                             InlineKeyboardButton
                                 .builder()
                                 .text(Buttons.CANCEL)
-                                .callbackData("cancel")
+                                .callbackData(CallbackData.cancel())
                                 .build(),
                         ),
                     ),

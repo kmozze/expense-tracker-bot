@@ -1,11 +1,11 @@
 package me.kmozze.expensetracker.handler.statehandler
 
-import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.exception.BusinessException
-import me.kmozze.expensetracker.model.domain.Action
+import me.kmozze.expensetracker.model.domain.BotAction
+import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
-import me.kmozze.expensetracker.model.domain.Message
+import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.CategoryService
@@ -21,38 +21,16 @@ class AwaitingExpenseInputHandler(
     override val supportedStateClass: KClass<out UserState> = UserState.AwaitingExpenseInput::class
 
     override fun handle(input: UserInput): HandlerResult {
-        if (input.text == Buttons.ADD_EXPENSE) {
-            return HandlerResult(
-                response =
-                    HandlerResponse(
-                        message = Message.AddExpenseInstructions,
-                        actions = listOf(Action.ShowMainMenu),
-                    ),
-                nextState = UserState.AwaitingExpenseInput,
-            )
-        }
-
-        if (input.text in setOf(Buttons.VIEW_EXPENSES, Buttons.CATEGORIES, Buttons.STATISTICS)) {
-            return HandlerResult(
-                response =
-                    HandlerResponse(
-                        message = Message.FeatureInProgress,
-                        actions = listOf(Action.ShowMainMenu),
-                    ),
-                nextState = UserState.Idle,
-            )
-        }
-
         val text =
-            input.text
-                ?: return HandlerResult(
-                    response =
-                        HandlerResponse(
-                            message = Message.AddExpenseInstructions,
-                            actions = listOf(Action.ShowMainMenu),
-                        ),
-                    nextState = UserState.AwaitingExpenseInput,
-                )
+            when (val command = input.command) {
+                UserCommand.AddExpense -> return repeatExpenseInstructions()
+                UserCommand.ViewExpenses,
+                UserCommand.Categories,
+                UserCommand.Statistics,
+                -> return featureInProgress()
+                is UserCommand.PlainText -> command.value
+                else -> return repeatExpenseInstructions()
+            }
 
         val parsedExpense =
             try {
@@ -61,8 +39,8 @@ class AwaitingExpenseInputHandler(
                 return HandlerResult(
                     response =
                         HandlerResponse(
-                            message = Message.Error(e.errorCode),
-                            actions = listOf(Action.ShowMainMenu),
+                            message = BotMessage.Error(e.errorCode),
+                            actions = listOf(BotAction.ShowMainMenu),
                         ),
                     nextState = UserState.AwaitingExpenseInput,
                 )
@@ -78,13 +56,33 @@ class AwaitingExpenseInputHandler(
             response =
                 HandlerResponse(
                     message =
-                        Message.SelectCategory(
+                        BotMessage.SelectCategory(
                             amount = parsedExpense.amount,
                             description = parsedExpense.description,
                         ),
-                    actions = listOf(Action.ShowCategorySelection(categories)),
+                    actions = listOf(BotAction.ShowCategorySelection(categories)),
                 ),
             nextState = UserState.AwaitingCategorySelection(parsedExpense),
         )
     }
+
+    private fun repeatExpenseInstructions(): HandlerResult =
+        HandlerResult(
+            response =
+                HandlerResponse(
+                    message = BotMessage.AddExpenseInstructions,
+                    actions = listOf(BotAction.ShowMainMenu),
+                ),
+            nextState = UserState.AwaitingExpenseInput,
+        )
+
+    private fun featureInProgress(): HandlerResult =
+        HandlerResult(
+            response =
+                HandlerResponse(
+                    message = BotMessage.FeatureInProgress,
+                    actions = listOf(BotAction.ShowMainMenu),
+                ),
+            nextState = UserState.Idle,
+        )
 }
