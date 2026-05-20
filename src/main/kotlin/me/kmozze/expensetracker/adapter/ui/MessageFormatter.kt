@@ -34,6 +34,9 @@ class MessageFormatter {
             is BotMessage.ExpenseCanceled ->
                 "Добавление расхода отменено."
 
+            is BotMessage.NoCategories ->
+                "Вы ещё не создали категории. Пока расход некуда записать."
+
             is BotMessage.FeatureInProgress ->
                 "Этот раздел пока в работе."
 

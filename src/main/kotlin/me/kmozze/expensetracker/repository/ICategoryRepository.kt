@@ -13,6 +13,8 @@ interface ICategoryRepository {
 
     fun create(category: Category): Category
 
+    fun createIfAbsent(category: Category): Boolean
+
     fun update(category: Category): Category
 
     fun delete(id: UUID): Boolean

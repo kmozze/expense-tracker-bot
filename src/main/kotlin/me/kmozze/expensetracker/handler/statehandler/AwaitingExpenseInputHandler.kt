@@ -53,10 +53,9 @@ class AwaitingExpenseInputHandler(
                 )
             }
 
-        var categories = categoryService.getCategories(input.userId)
+        val categories = categoryService.getCategories(input.userId)
         if (categories.isEmpty()) {
-            categoryService.initDefaultCategories(input.userId)
-            categories = categoryService.getCategories(input.userId)
+            return noCategories()
         }
 
         return HandlerResult(
@@ -88,6 +87,16 @@ class AwaitingExpenseInputHandler(
             response =
                 HandlerResponse(
                     message = BotMessage.FeatureInProgress,
+                    actions = listOf(BotAction.ShowMainMenu),
+                ),
+            nextState = UserState.Idle,
+        )
+
+    private fun noCategories(): HandlerResult =
+        HandlerResult(
+            response =
+                HandlerResponse(
+                    message = BotMessage.NoCategories,
                     actions = listOf(BotAction.ShowMainMenu),
                 ),
             nextState = UserState.Idle,

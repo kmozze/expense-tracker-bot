@@ -48,6 +48,16 @@ class JooqCategoryRepository(
             .fetchSingle()
             .toDomain()
 
+    override fun createIfAbsent(category: Category): Boolean =
+        dsl
+            .insertInto(CATEGORY)
+            .set(CATEGORY.ID, category.id)
+            .set(CATEGORY.NAME, category.name)
+            .set(CATEGORY.USER_ID, category.userId)
+            .onConflict(CATEGORY.USER_ID, CATEGORY.NAME)
+            .doNothing()
+            .execute() > 0
+
     override fun update(category: Category): Category =
         dsl
             .update(CATEGORY)

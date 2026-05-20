@@ -35,18 +35,10 @@ class CategoryService(
 
             logger.info("Starting default categories initialization for user {}", userId)
 
-            defaultCategories.forEach { name ->
-                val category =
-                    Category(
-                        id = UUID.randomUUID(),
-                        name = name,
-                        userId = userId,
-                    )
-                categoryRepository.create(category)
-            }
+            val createdCount = createMissingDefaultCategories(userId)
 
-            logger.info("Successfully initialized {} categories for user {}", defaultCategories.size, userId)
-            true
+            logger.info("Successfully initialized {} categories for user {}", createdCount, userId)
+            createdCount > 0
         } catch (e: DataAccessException) {
             logger.error("Failed to initialize categories for user $userId", e)
 
@@ -82,5 +74,16 @@ class CategoryService(
                 customMessage = "Ошибка при получении категории $categoryId",
                 cause = e,
             )
+        }
+
+    private fun createMissingDefaultCategories(userId: Long): Int =
+        defaultCategories.count { name ->
+            val category =
+                Category(
+                    id = UUID.randomUUID(),
+                    name = name,
+                    userId = userId,
+                )
+            categoryRepository.createIfAbsent(category)
         }
 }
