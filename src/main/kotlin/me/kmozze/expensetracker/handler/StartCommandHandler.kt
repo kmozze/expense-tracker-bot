@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component
 @Component
 class StartCommandHandler(
     private val categoryService: CategoryService,
-) : UserInputHandler {
+) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun handle(input: UserInput): HandlerResult {
+    fun handle(input: UserInput): HandlerResult {
         val userId = input.userId
         logger.info("Initializing start sequence for user {}", userId)
 

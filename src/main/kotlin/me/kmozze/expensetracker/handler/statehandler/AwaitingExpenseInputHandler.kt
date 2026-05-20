@@ -20,7 +20,14 @@ class AwaitingExpenseInputHandler(
 ) : StateHandler {
     override val supportedStateClass: KClass<out UserState> = UserState.AwaitingExpenseInput::class
 
-    override fun handle(input: UserInput): HandlerResult {
+    override fun handle(
+        input: UserInput,
+        currentState: UserState,
+    ): HandlerResult {
+        require(currentState is UserState.AwaitingExpenseInput) {
+            "AwaitingExpenseInputHandler requires AwaitingExpenseInput state"
+        }
+
         val text =
             when (val command = input.command) {
                 UserCommand.AddExpense -> return repeatExpenseInstructions()

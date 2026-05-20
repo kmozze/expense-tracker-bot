@@ -7,8 +7,8 @@ import me.kmozze.expensetracker.model.domain.UserInput
 import org.springframework.stereotype.Component
 
 @Component
-class UnknownCommandHandler : UserInputHandler {
-    override fun handle(input: UserInput): HandlerResult =
+class UnknownCommandHandler {
+    fun handle(input: UserInput): HandlerResult =
         HandlerResult(
             response =
                 HandlerResponse(
