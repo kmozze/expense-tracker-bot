@@ -135,9 +135,10 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `foreign category callback returns category not found without saving expense`() {
+    fun `foreign category callback keeps category selection open without saving expense`() {
         val userId = 2004L
         val chatId = 3004L
+        val parsedExpense = startCategorySelection(userId, chatId)
         val foreignCategory =
             categoryRepository.create(
                 Category(
@@ -146,8 +147,6 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
                     userId = 9999L,
                 ),
             )
-
-        startCategorySelection(userId, chatId)
 
         val result =
             dialogueRouter.process(
@@ -159,7 +158,8 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
             )
 
         assertThat(result.response.message).isEqualTo(Message.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
+        assertThat(result.response.actions.single()).isInstanceOf(Action.ShowCategorySelection::class.java)
+        assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(parsedExpense))
         assertThat(findExpenses(userId)).isEmpty()
     }
 

@@ -14,6 +14,9 @@ class UserSessionService {
         sessions.remove(userId)
     }
 
+    /**
+     * Test-only helper for isolating integration tests that share the Spring context.
+     */
     fun clearAll() {
         sessions.clear()
     }

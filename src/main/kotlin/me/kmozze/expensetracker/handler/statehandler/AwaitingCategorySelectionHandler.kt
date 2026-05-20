@@ -1,6 +1,7 @@
 package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
+import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.model.domain.Action
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
@@ -63,7 +64,20 @@ class AwaitingCategorySelectionHandler(
                 .let { runCatching { UUID.fromString(it) }.getOrNull() }
                 ?: return invalidCategorySelection(input.userId, currentState)
 
-        val category = categoryService.getCategoryForUser(categoryId, input.userId)
+        val category =
+            try {
+                categoryService.getCategoryForUser(categoryId, input.userId)
+            } catch (e: BusinessException) {
+                if (e.errorCode == BusinessErrorCode.CATEGORY_NOT_FOUND) {
+                    return categorySelectionError(
+                        userId = input.userId,
+                        currentState = currentState,
+                        errorCode = BusinessErrorCode.CATEGORY_NOT_FOUND,
+                    )
+                }
+
+                throw e
+            }
 
         val expense =
             expenseService.saveExpense(
@@ -90,13 +104,24 @@ class AwaitingCategorySelectionHandler(
     private fun invalidCategorySelection(
         userId: Long,
         currentState: UserState.AwaitingCategorySelection,
+    ): HandlerResult =
+        categorySelectionError(
+            userId = userId,
+            currentState = currentState,
+            errorCode = BusinessErrorCode.INVALID_CATEGORY_SELECTION,
+        )
+
+    private fun categorySelectionError(
+        userId: Long,
+        currentState: UserState.AwaitingCategorySelection,
+        errorCode: BusinessErrorCode,
     ): HandlerResult {
         val categories = categoryService.getCategories(userId)
 
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = Message.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION),
+                    message = Message.Error(errorCode),
                     actions = listOf(Action.ShowCategorySelection(categories)),
                 ),
             nextState = currentState,
