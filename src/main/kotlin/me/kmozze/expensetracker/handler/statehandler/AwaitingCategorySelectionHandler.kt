@@ -31,15 +31,26 @@ class AwaitingCategorySelectionHandler(
 
         return when (val command = input.command) {
             UserCommand.Cancel -> cancelExpenseCreation()
-            UserCommand.Unsupported -> repeatCategorySelection(input.userId, currentState)
-            UserCommand.InvalidCategorySelection -> invalidCategorySelection(input.userId, currentState)
             is UserCommand.SelectCategory ->
                 saveExpense(
                     input = input,
                     currentState = currentState,
                     categoryId = command.categoryId,
                 )
-            else -> repeatCategorySelection(input.userId, currentState)
+            UserCommand.InvalidCategorySelection ->
+                categorySelectionError(
+                    userId = input.userId,
+                    currentState = currentState,
+                    errorCode = BusinessErrorCode.INVALID_CATEGORY_SELECTION,
+                )
+            UserCommand.Unsupported,
+            UserCommand.Start,
+            UserCommand.AddExpense,
+            UserCommand.ViewExpenses,
+            UserCommand.Categories,
+            UserCommand.Statistics,
+            is UserCommand.PlainText,
+            -> repeatCategorySelection(input.userId, currentState)
         }
     }
 
@@ -48,7 +59,13 @@ class AwaitingCategorySelectionHandler(
         currentState: UserState.AwaitingCategorySelection,
         categoryId: UUID,
     ): HandlerResult {
-        val category = categoryService.getCategoryForUser(categoryId, input.userId)
+        val category =
+            categoryService.findCategoryForUser(categoryId, input.userId)
+                ?: return categorySelectionError(
+                    userId = input.userId,
+                    currentState = currentState,
+                    errorCode = BusinessErrorCode.CATEGORY_NOT_FOUND,
+                )
 
         val expense =
             expenseService.saveExpense(
@@ -102,16 +119,17 @@ class AwaitingCategorySelectionHandler(
         )
     }
 
-    private fun invalidCategorySelection(
+    private fun categorySelectionError(
         userId: Long,
         currentState: UserState.AwaitingCategorySelection,
+        errorCode: BusinessErrorCode,
     ): HandlerResult {
         val categories = categoryService.getCategories(userId)
 
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION),
+                    message = BotMessage.Error(errorCode),
                     actions = listOf(BotAction.ShowCategorySelection(categories)),
                 ),
             nextState = currentState,

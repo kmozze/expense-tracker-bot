@@ -16,5 +16,4 @@ spring:
     sql-dialect: POSTGRES
 
 bot:
-    name: ${BOT_NAME}
-    token: ${BOT_TOKEN}
+  token: ${BOT_TOKEN}

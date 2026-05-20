@@ -1,6 +1,5 @@
 package me.kmozze.expensetracker.service
 
-import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.model.entity.Category
@@ -70,26 +69,18 @@ class CategoryService(
             )
         }
 
-    fun getCategoryForUser(
+    fun findCategoryForUser(
         categoryId: UUID,
         userId: Long,
-    ): Category {
-        val category =
-            try {
-                categoryRepository.findById(categoryId)
-            } catch (e: DataAccessException) {
-                logger.error("Failed to load category $categoryId for user $userId", e)
+    ): Category? =
+        try {
+            categoryRepository.findByIdForUser(categoryId, userId)
+        } catch (e: DataAccessException) {
+            logger.error("Failed to load category $categoryId for user $userId", e)
 
-                throw SystemErrorCode.DATABASE_ERROR.exception(
-                    customMessage = "Ошибка при получении категории $categoryId",
-                    cause = e,
-                )
-            }
-
-        if (category == null || category.userId != userId) {
-            throw BusinessErrorCode.CATEGORY_NOT_FOUND.exception()
+            throw SystemErrorCode.DATABASE_ERROR.exception(
+                customMessage = "Ошибка при получении категории $categoryId",
+                cause = e,
+            )
         }
-
-        return category
-    }
 }
