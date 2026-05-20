@@ -4,6 +4,7 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -29,21 +30,23 @@ class InputExpenseParsingServiceTest {
     @ParameterizedTest(name = "input: \"{0}\"")
     @MethodSource("invalidFormatInputs")
     fun `should throw format exception`(input: String) {
-        Assertions
-            .assertThatThrownBy { service.parse(input) }
-            .isInstanceOf(BusinessException::class.java)
-            .extracting("errorCode")
-            .isEqualTo(BusinessErrorCode.EXPENSE_INVALID_FORMAT)
+        val exception =
+            assertThrows<BusinessException> {
+                service.parse(input)
+            }
+
+        Assertions.assertThat(exception.errorCode).isEqualTo(BusinessErrorCode.EXPENSE_INVALID_FORMAT)
     }
 
     @ParameterizedTest(name = "input: \"{0}\"")
     @MethodSource("invalidAmountInputs")
     fun `should throw validation exception`(input: String) {
-        Assertions
-            .assertThatThrownBy { service.parse(input) }
-            .isInstanceOf(BusinessException::class.java)
-            .extracting("errorCode")
-            .isEqualTo(BusinessErrorCode.INVALID_AMOUNT)
+        val exception =
+            assertThrows<BusinessException> {
+                service.parse(input)
+            }
+
+        Assertions.assertThat(exception.errorCode).isEqualTo(BusinessErrorCode.INVALID_AMOUNT)
     }
 
     companion object {
