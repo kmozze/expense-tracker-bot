@@ -6,6 +6,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.SystemException
+import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.repository.ICategoryRepository
 import me.kmozze.expensetracker.service.CategoryService
 import org.jooq.exception.DataAccessException
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import java.util.UUID
 
 @ExtendWith(MockKExtension::class)
 class CategoryServiceTest {
@@ -59,5 +61,50 @@ class CategoryServiceTest {
             }
 
         assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
+    }
+
+    @Test
+    fun `find category for user returns category found by id in user scope`() {
+        val categoryId = UUID.randomUUID()
+        val userId = 123L
+        val category =
+            Category(
+                id = categoryId,
+                name = "Еда",
+                userId = userId,
+            )
+        every { categoryRepository.findByIdForUser(categoryId, userId) } returns category
+
+        val result = service.findCategoryForUser(categoryId, userId)
+
+        assertEquals(category, result)
+        verify(exactly = 1) { categoryRepository.findByIdForUser(categoryId, userId) }
+    }
+
+    @Test
+    fun `find category for user returns null when category does not belong to user`() {
+        val categoryId = UUID.randomUUID()
+        val userId = 123L
+        every { categoryRepository.findByIdForUser(categoryId, userId) } returns null
+
+        val result = service.findCategoryForUser(categoryId, userId)
+
+        assertEquals(null, result)
+    }
+
+    @Test
+    fun `find category for user wraps DataAccessException into SystemException`() {
+        val categoryId = UUID.randomUUID()
+        val userId = 123L
+        val cause = DataAccessException("DB connection failed")
+        every { categoryRepository.findByIdForUser(categoryId, userId) } throws cause
+
+        val exception =
+            assertThrows<SystemException> {
+                service.findCategoryForUser(categoryId, userId)
+            }
+
+        assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
+        assertEquals(cause, exception.cause)
     }
 }
