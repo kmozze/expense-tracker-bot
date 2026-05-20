@@ -1,6 +1,5 @@
 package me.kmozze.expensetracker.service
 
-import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.model.entity.Category
@@ -69,13 +68,6 @@ class CategoryService(
                 cause = e,
             )
         }
-
-    fun getCategoryForUser(
-        categoryId: UUID,
-        userId: Long,
-    ): Category =
-        findCategoryForUser(categoryId, userId)
-            ?: throw BusinessErrorCode.CATEGORY_NOT_FOUND.exception()
 
     fun findCategoryForUser(
         categoryId: UUID,
