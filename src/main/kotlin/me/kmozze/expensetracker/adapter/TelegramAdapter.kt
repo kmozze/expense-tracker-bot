@@ -21,7 +21,6 @@ import org.telegram.telegrambots.meta.generics.TelegramClient
 @Component
 class TelegramAdapter(
     @param:Value("\${bot.token}") private val botToken: String,
-    @param:Value("\${bot.name}") private val botName: String,
     private val dialogueRouter: DialogueRouter,
     private val messageFormatter: MessageFormatter,
     private val keyboardApplier: KeyboardApplier,
