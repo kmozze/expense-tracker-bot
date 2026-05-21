@@ -13,6 +13,9 @@ interface IExpenseRepository {
 
     fun findById(id: UUID): Expense?
 
+    /**
+     * Returns expenses from newest to oldest, including `from` and excluding `to`.
+     */
     fun findAllByUserIdAndPeriod(
         userId: Long,
         from: OffsetDateTime,

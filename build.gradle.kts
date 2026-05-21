@@ -69,6 +69,18 @@ tasks.withType<Test> {
     }
 }
 
+val prepareJooqDdl by tasks.registering(Copy::class) {
+    from("src/main/resources/db/changelog/changesets") {
+        include("*.sql")
+        exclude("002-triggers.sql")
+    }
+    into(layout.buildDirectory.dir("generated-resources/jooq-ddl"))
+}
+
+tasks.named("jooqCodegen") {
+    dependsOn(prepareJooqDdl)
+}
+
 jooq {
     configuration {
         generator {
@@ -84,7 +96,7 @@ jooq {
                 properties {
                     property {
                         key = "scripts"
-                        value = "src/main/resources/db/changelog/changesets/001-init-schema.sql"
+                        value = "build/generated-resources/jooq-ddl/*.sql"
                     }
                     property {
                         key = "sort"

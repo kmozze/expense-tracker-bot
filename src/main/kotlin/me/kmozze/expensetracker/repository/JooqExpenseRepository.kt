@@ -73,6 +73,7 @@ class JooqExpenseRepository(
             .where(EXPENSE.USER_ID.eq(userId))
             .and(EXPENSE.CREATED_AT.ge(from))
             .and(EXPENSE.CREATED_AT.lt(to))
+            .orderBy(EXPENSE.CREATED_AT.desc(), EXPENSE.ID.desc())
             .fetch()
             .map { it.toDomain() }
 
