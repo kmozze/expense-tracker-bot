@@ -76,14 +76,22 @@ class CategoryService(
             )
         }
 
-    private fun createMissingDefaultCategories(userId: Long): Int =
-        defaultCategories.count { name ->
+    private fun createMissingDefaultCategories(userId: Long): Int {
+        var createdCount = 0
+
+        for (name in defaultCategories) {
             val category =
                 Category(
                     id = UUID.randomUUID(),
                     name = name,
                     userId = userId,
                 )
-            categoryRepository.createIfAbsent(category)
+
+            if (categoryRepository.createIfAbsent(category)) {
+                createdCount++
+            }
         }
+
+        return createdCount
+    }
 }

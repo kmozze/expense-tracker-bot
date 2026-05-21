@@ -13,6 +13,9 @@ interface ICategoryRepository {
 
     fun create(category: Category): Category
 
+    /**
+     * Returns true if the category was inserted, false if the same user already has a category with this name.
+     */
     fun createIfAbsent(category: Category): Boolean
 
     fun update(category: Category): Category

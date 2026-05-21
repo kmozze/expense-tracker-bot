@@ -18,7 +18,7 @@ class IdleStateHandler : StateHandler {
         input: UserInput,
         currentState: UserState,
     ): HandlerResult {
-        require(currentState == UserState.Idle) {
+        require(currentState is UserState.Idle) {
             "IdleStateHandler requires Idle state"
         }
 
