@@ -15,13 +15,18 @@ class InputExpenseParsingService {
         if (words.isEmpty()) throw BusinessErrorCode.EXPENSE_INVALID_FORMAT.exception()
 
         val amountFirst = parseAmountOrNull(words.first())
+
+        if (words.size == 1) {
+            return if (amountFirst != null) {
+                createExpense(description = null, amountFirst)
+            } else {
+                throw BusinessErrorCode.EXPENSE_INVALID_FORMAT.exception()
+            }
+        }
+
         val amountLast = parseAmountOrNull(words.last())
 
         return when {
-            words.size == 1 && amountFirst != null -> createExpense(description = null, amountFirst)
-
-            words.size < 2 -> throw BusinessErrorCode.EXPENSE_INVALID_FORMAT.exception()
-
             amountFirst != null -> {
                 val description = words.drop(1).joinToString(" ")
                 createExpense(description, amountFirst)
