@@ -36,24 +36,24 @@ class CategoryServiceTest {
         val result = service.initDefaultCategories(123L)
 
         assertFalse(result, "Должен вернуть false при повторной инициализации")
-        verify(exactly = 0) { categoryRepository.create(any()) }
+        verify(exactly = 0) { categoryRepository.createIfAbsent(any()) }
     }
 
     @Test
     fun `create 5 default categories`() {
         every { categoryRepository.existsByUserId(123L) } returns false
-        every { categoryRepository.create(any()) } returns mockk()
+        every { categoryRepository.createIfAbsent(any()) } returns true
 
         val result = service.initDefaultCategories(123L)
 
         assertTrue(result, "Должен вернуть true при первом запуске")
-        verify(exactly = 5) { categoryRepository.create(any()) }
+        verify(exactly = 5) { categoryRepository.createIfAbsent(any()) }
     }
 
     @Test
     fun `wrap DataAccessException into SystemException`() {
         every { categoryRepository.existsByUserId(123L) } returns false
-        every { categoryRepository.create(any()) } throws DataAccessException("DB connection failed")
+        every { categoryRepository.createIfAbsent(any()) } throws DataAccessException("DB connection failed")
 
         val exception =
             assertThrows<SystemException> {

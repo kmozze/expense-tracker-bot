@@ -14,8 +14,15 @@ import kotlin.reflect.KClass
 class IdleStateHandler : StateHandler {
     override val supportedStateClass: KClass<out UserState> = UserState.Idle::class
 
-    override fun handle(input: UserInput): HandlerResult =
-        when (input.command) {
+    override fun handle(
+        input: UserInput,
+        currentState: UserState,
+    ): HandlerResult {
+        require(currentState is UserState.Idle) {
+            "IdleStateHandler requires Idle state"
+        }
+
+        return when (input.command) {
             UserCommand.AddExpense ->
                 HandlerResult(
                     response =
@@ -49,4 +56,5 @@ class IdleStateHandler : StateHandler {
                     nextState = UserState.Idle,
                 )
         }
+    }
 }

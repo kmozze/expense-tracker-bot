@@ -24,6 +24,8 @@ sealed class BotMessage {
 
     data object ExpenseCanceled : BotMessage()
 
+    data object NoCategories : BotMessage()
+
     data object FeatureInProgress : BotMessage()
 
     data class Error(

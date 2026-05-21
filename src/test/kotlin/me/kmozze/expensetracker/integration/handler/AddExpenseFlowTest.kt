@@ -188,6 +188,28 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
     }
 
     @Test
+    fun `expense input without categories returns no categories message without saving expense`() {
+        val userId = 2007L
+        val chatId = 3007L
+
+        dialogueRouter.process(userInput(userId = userId, chatId = chatId, text = Buttons.ADD_EXPENSE))
+
+        val result =
+            dialogueRouter.process(
+                userInput(
+                    userId = userId,
+                    chatId = chatId,
+                    text = "500 такси",
+                ),
+            )
+
+        assertThat(result.response.message).isEqualTo(BotMessage.NoCategories)
+        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(result.nextState).isEqualTo(UserState.Idle)
+        assertThat(findExpenses(userId)).isEmpty()
+    }
+
+    @Test
     fun `start command in the middle of add expense flow resets state without saving expense`() {
         val userId = 2006L
         val chatId = 3006L
