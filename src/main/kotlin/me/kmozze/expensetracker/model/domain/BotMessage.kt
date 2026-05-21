@@ -19,7 +19,7 @@ sealed class BotMessage {
     data class ExpenseSaved(
         val amount: Money,
         val categoryName: String,
-        val description: String,
+        val description: String?,
     ) : BotMessage()
 
     data object ExpenseCanceled : BotMessage()

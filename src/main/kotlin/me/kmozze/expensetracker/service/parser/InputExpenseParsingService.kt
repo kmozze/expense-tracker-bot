@@ -12,9 +12,18 @@ class InputExpenseParsingService {
     fun parse(text: String): ParsedExpense {
         val words = text.split(Regex("""\s+""")).filter { it.isNotBlank() }
 
-        if (words.size < 2) throw BusinessErrorCode.EXPENSE_INVALID_FORMAT.exception()
+        if (words.isEmpty()) throw BusinessErrorCode.EXPENSE_INVALID_FORMAT.exception()
 
         val amountFirst = parseAmountOrNull(words.first())
+
+        if (words.size == 1) {
+            return if (amountFirst != null) {
+                createExpense(description = null, amountFirst)
+            } else {
+                throw BusinessErrorCode.EXPENSE_INVALID_FORMAT.exception()
+            }
+        }
+
         val amountLast = parseAmountOrNull(words.last())
 
         return when {
@@ -40,7 +49,7 @@ class InputExpenseParsingService {
         }
 
     private fun createExpense(
-        description: String,
+        description: String?,
         amount: BigDecimal,
     ): ParsedExpense {
         val money = Money.of(amount)
@@ -48,6 +57,9 @@ class InputExpenseParsingService {
         if (money.value <= BigDecimal.ZERO) {
             throw BusinessErrorCode.INVALID_AMOUNT.exception()
         }
-        return ParsedExpense(money, description.trim())
+        return ParsedExpense(
+            amount = money,
+            description = description?.trim()?.takeIf { it.isNotEmpty() },
+        )
     }
 }

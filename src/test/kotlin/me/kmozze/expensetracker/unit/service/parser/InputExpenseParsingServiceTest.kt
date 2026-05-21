@@ -19,7 +19,7 @@ class InputExpenseParsingServiceTest {
     @MethodSource("validInputs")
     fun `should parse valid inputs`(
         input: String,
-        expectedDescription: String,
+        expectedDescription: String?,
         expectedAmount: BigDecimal,
     ) {
         val result = service.parse(input)
@@ -54,6 +54,7 @@ class InputExpenseParsingServiceTest {
         @JvmStatic
         fun validInputs(): Stream<Arguments> =
             Stream.of(
+                Arguments.arguments("500", null, BigDecimal("500.00")),
                 Arguments.arguments("150.50 Кофе", "Кофе", BigDecimal("150.50")),
                 Arguments.arguments("10,50 Milk", "Milk", BigDecimal("10.50")),
                 Arguments.arguments("Lunch 500", "Lunch", BigDecimal("500.00")),
@@ -69,7 +70,6 @@ class InputExpenseParsingServiceTest {
                 "",
                 "   ",
                 "Coffee",
-                "100",
                 "No digits",
                 "10.5.5 Bread",
             )
@@ -77,6 +77,7 @@ class InputExpenseParsingServiceTest {
         @JvmStatic
         fun invalidAmountInputs(): Stream<String> =
             Stream.of(
+                "0",
                 "Coffee 0",
                 "Coffee 0.004",
                 "-10 Taxi",

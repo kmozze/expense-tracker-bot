@@ -94,6 +94,50 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
     }
 
     @Test
+    fun `add expense flow saves expense without description`() {
+        val userId = 2008L
+        val chatId = 3008L
+
+        dialogueRouter.process(userInput(userId = userId, chatId = chatId, text = "/start"))
+        dialogueRouter.process(userInput(userId = userId, chatId = chatId, text = Buttons.ADD_EXPENSE))
+
+        val parsedExpenseResult =
+            dialogueRouter.process(
+                userInput(
+                    userId = userId,
+                    chatId = chatId,
+                    text = "500",
+                ),
+            )
+        val categorySelectionAction = parsedExpenseResult.response.actions.single() as BotAction.ShowCategorySelection
+
+        assertThat(categorySelectionAction.categories).isNotEmpty()
+        val category = categorySelectionAction.categories.first()
+
+        assertThat(parsedExpenseResult.response.message)
+            .isEqualTo(BotMessage.SelectCategory(Money.of(BigDecimal("500.00")), null))
+        assertThat(parsedExpenseResult.nextState)
+            .isEqualTo(UserState.AwaitingCategorySelection(ParsedExpense(Money.of(BigDecimal("500.00")), null)))
+
+        val savedExpenseResult =
+            dialogueRouter.process(
+                userInput(
+                    userId = userId,
+                    chatId = chatId,
+                    callbackData = CallbackData.selectCategory(category.id),
+                ),
+            )
+
+        assertThat(savedExpenseResult.response.message)
+            .isEqualTo(BotMessage.ExpenseSaved(Money.of(BigDecimal("500.00")), category.name, null))
+        assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
+
+        val expenses = findExpenses(userId)
+        assertThat(expenses).hasSize(1)
+        assertThat(expenses.single().description).isNull()
+    }
+
+    @Test
     fun `cancel category selection returns to idle without saving expense`() {
         val userId = 2002L
         val chatId = 3002L

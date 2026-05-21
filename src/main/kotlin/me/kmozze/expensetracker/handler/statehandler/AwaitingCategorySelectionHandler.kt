@@ -81,7 +81,7 @@ class AwaitingCategorySelectionHandler(
                         BotMessage.ExpenseSaved(
                             amount = expense.amount,
                             categoryName = category.name,
-                            description = expense.description.orEmpty(),
+                            description = expense.description,
                         ),
                     actions = listOf(BotAction.ShowMainMenu),
                 ),
