@@ -20,16 +20,22 @@ class MessageFormatter {
                 "Я не понял команду 😕\nЧто бы вернуться в главное меню напиши /start"
 
             is BotMessage.AddExpenseInstructions ->
-                "Введите сумму и описание одним сообщением.\nНапример: `500 такси` или  `такси 500`."
+                "Введите сумму одним сообщением. Можно добавить описание.\nНапример: `500`, `500 такси` или `такси 500`."
 
             is BotMessage.SelectCategory ->
-                "💰 *${message.amount.format()} ₽*\n📝 ${message.description}\n\nКуда запишем?"
+                buildString {
+                    append("💰 *${message.amount.format()} ₽*")
+                    appendDescription(message.description)
+                    append("\n\nКуда запишем?")
+                }
 
             is BotMessage.ExpenseSaved ->
-                "✅ Сохранено!\n" +
-                    "💰 Сумма: ${message.amount.format()} ₽\n" +
-                    "📂 Категория: ${message.categoryName}\n" +
-                    "📝 Описание: ${message.description}"
+                buildString {
+                    append("✅ Сохранено!\n")
+                    append("💰 Сумма: ${message.amount.format()} ₽\n")
+                    append("📂 Категория: ${message.categoryName}")
+                    appendDescription(message.description)
+                }
 
             is BotMessage.ExpenseCanceled ->
                 "Добавление расхода отменено."
@@ -45,7 +51,7 @@ class MessageFormatter {
 
     private fun formatError(errorCode: ErrorCode): String =
         when (errorCode) {
-            BusinessErrorCode.EXPENSE_INVALID_FORMAT -> "Неверный формат. Используйте: 'Еда 500' или '500 Еда'"
+            BusinessErrorCode.EXPENSE_INVALID_FORMAT -> "Неверный формат. Используйте: '500', 'Еда 500' или '500 Еда'"
             BusinessErrorCode.INVALID_AMOUNT -> "Сумма должна быть больше нуля"
             BusinessErrorCode.CATEGORY_NOT_FOUND -> "Категория не найдена"
             BusinessErrorCode.INVALID_CATEGORY_SELECTION -> "Не получилось выбрать категорию"
@@ -53,4 +59,10 @@ class MessageFormatter {
             SystemErrorCode.INTERNAL_ERROR -> "Непредвиденная системная ошибка."
             else -> "Произошла неизвестная ошибка."
         }
+
+    private fun StringBuilder.appendDescription(description: String?) {
+        if (!description.isNullOrBlank()) {
+            append("\n📝 $description")
+        }
+    }
 }
