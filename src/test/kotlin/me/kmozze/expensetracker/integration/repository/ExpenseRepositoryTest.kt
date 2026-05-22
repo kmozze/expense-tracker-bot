@@ -1,95 +1,66 @@
 package me.kmozze.expensetracker.integration.repository
 
-import me.kmozze.expense.tracker.jooq.tables.references.EXPENSE
+import com.github.database.rider.core.api.configuration.DBUnit
+import com.github.database.rider.core.api.configuration.Orthography
+import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.SeedStrategy
+import com.github.database.rider.junit5.api.DBRider
 import me.kmozze.expensetracker.integration.AbstractIntegrationTest
-import me.kmozze.expensetracker.model.domain.Money
-import me.kmozze.expensetracker.model.entity.Category
-import me.kmozze.expensetracker.model.entity.Expense
-import me.kmozze.expensetracker.repository.ICategoryRepository
 import me.kmozze.expensetracker.repository.IExpenseRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.jooq.DSLContext
+import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.annotation.Transactional
-import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
-@Transactional
+@DBRider
+@DBUnit(
+    caseInsensitiveStrategy = Orthography.LOWERCASE,
+    dataTypeFactoryClass = PostgresqlDataTypeFactory::class,
+)
+@DataSet(
+    value = ["datasets/repository/category-empty.yml"],
+    strategy = SeedStrategy.INSERT,
+    executeScriptsBefore = ["datasets/repository/expense-period.sql"],
+    executeStatementsAfter = ["delete from expense", "delete from category"],
+)
 class ExpenseRepositoryTest : AbstractIntegrationTest() {
-    @Autowired
-    private lateinit var categoryRepository: ICategoryRepository
-
     @Autowired
     private lateinit var expenseRepository: IExpenseRepository
 
-    @Autowired
-    private lateinit var dsl: DSLContext
-
     @Test
-    fun `find all by user id and period returns expenses from newest to oldest`() {
+    fun `find all by user id and period returns only matching expenses from newest to oldest`() {
         val userId = 40001L
-        val category =
-            categoryRepository.create(
-                Category(
-                    name = "Еда",
-                    userId = userId,
-                ),
-            )
-        val oldest =
-            createExpense(
-                userId = userId,
-                categoryId = category.id,
-                amount = "100.00",
-                createdAt = OffsetDateTime.parse("2026-05-20T10:00:00Z"),
-            )
-        val newest =
-            createExpense(
-                userId = userId,
-                categoryId = category.id,
-                amount = "300.00",
-                createdAt = OffsetDateTime.parse("2026-05-20T12:00:00Z"),
-            )
-        val middle =
-            createExpense(
-                userId = userId,
-                categoryId = category.id,
-                amount = "200.00",
-                createdAt = OffsetDateTime.parse("2026-05-20T11:00:00Z"),
-            )
+        val from = OffsetDateTime.parse("2026-05-20T00:00:00Z")
+        val to = OffsetDateTime.parse("2026-05-21T00:00:00Z")
 
         val result =
             expenseRepository.findAllByUserIdAndPeriod(
                 userId = userId,
-                from = OffsetDateTime.parse("2026-05-20T00:00:00Z"),
-                to = OffsetDateTime.parse("2026-05-21T00:00:00Z"),
+                from = from,
+                to = to,
             )
 
-        assertThat(result.map { it.id }).containsExactly(newest.id, middle.id, oldest.id)
+        assertThat(result.map { it.id })
+            .containsExactly(
+                UUID.fromString("00000000-0000-0000-0000-000000000103"),
+                UUID.fromString("00000000-0000-0000-0000-000000000102"),
+                UUID.fromString("00000000-0000-0000-0000-000000000101"),
+            )
     }
 
-    private fun createExpense(
-        userId: Long,
-        categoryId: UUID,
-        amount: String,
-        createdAt: OffsetDateTime,
-    ): Expense {
-        val expense =
-            expenseRepository.create(
-                Expense(
-                    categoryId = categoryId,
-                    amount = Money.of(BigDecimal(amount)),
-                    userId = userId,
-                ),
+    @Test
+    fun `find all by user id and period returns empty list when nothing matches`() {
+        val userId = 40003L
+
+        val result =
+            expenseRepository.findAllByUserIdAndPeriod(
+                userId = userId,
+                from = OffsetDateTime.parse("2026-05-21T00:00:00Z"),
+                to = OffsetDateTime.parse("2026-05-22T00:00:00Z"),
             )
 
-        dsl
-            .update(EXPENSE)
-            .set(EXPENSE.CREATED_AT, createdAt)
-            .where(EXPENSE.ID.eq(expense.id))
-            .execute()
-
-        return expense.copy(createdAt = createdAt)
+        assertThat(result).isEmpty()
     }
 }
