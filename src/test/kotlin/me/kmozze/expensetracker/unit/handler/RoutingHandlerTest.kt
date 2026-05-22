@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
 
 class RoutingHandlerTest {
     private val userSessionService = UserSessionService()
-    private val startCommandHandler: StartCommandHandler = mockk(relaxed = true)
+    private val startCommandHandler: StartCommandHandler = mockk()
     private val unknownCommandHandler = UnknownCommandHandler()
     private val errorHandler = ErrorHandler()
 

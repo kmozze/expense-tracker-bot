@@ -4,7 +4,6 @@ import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.handler.DialogueRouter
-import me.kmozze.expensetracker.integration.AbstractIntegrationTest
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.HandlerResult
@@ -19,13 +18,11 @@ import me.kmozze.expensetracker.support.processUserInput
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
-@Transactional
-class AddExpenseFlowTest : AbstractIntegrationTest() {
+class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
     @Autowired
     private lateinit var dialogueRouter: DialogueRouter
 
