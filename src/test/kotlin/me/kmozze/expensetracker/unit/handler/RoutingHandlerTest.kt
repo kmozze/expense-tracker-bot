@@ -2,7 +2,6 @@ package me.kmozze.expensetracker.unit.handler
 
 import io.mockk.mockk
 import me.kmozze.expensetracker.adapter.callback.CallbackData
-import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.handler.ErrorHandler
 import me.kmozze.expensetracker.handler.StartCommandHandler
@@ -16,6 +15,7 @@ import me.kmozze.expensetracker.model.domain.ParsedExpense
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.UserSessionService
+import me.kmozze.expensetracker.support.makeUserInput
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -51,13 +51,13 @@ class RoutingHandlerTest {
         val firstCategoryId = UUID.fromString("00000000-0000-0000-0000-000000000001")
         val secondCategoryId = UUID.fromString("00000000-0000-0000-0000-000000000002")
         val firstInput =
-            userInput(
+            makeUserInput(
                 userId = userId,
                 chatId = 1L,
                 callbackData = CallbackData.selectCategory(firstCategoryId),
             )
         val secondInput =
-            userInput(
+            makeUserInput(
                 userId = userId,
                 chatId = 1L,
                 callbackData = CallbackData.selectCategory(secondCategoryId),
@@ -84,20 +84,6 @@ class RoutingHandlerTest {
             unknownCommandHandler = unknownCommandHandler,
             errorHandler = errorHandler,
             stateHandlers = stateHandlers.toList(),
-        )
-
-    private fun userInput(
-        userId: Long,
-        chatId: Long,
-        text: String? = null,
-        callbackData: String? = null,
-    ): UserInput =
-        UserInput(
-            userId = userId,
-            chatId = chatId,
-            text = text,
-            callbackData = callbackData,
-            command = UserCommandParser.parse(text = text, callbackData = callbackData),
         )
 
     private class RecordingStateHandler(
