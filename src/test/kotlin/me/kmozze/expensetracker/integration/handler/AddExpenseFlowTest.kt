@@ -9,6 +9,7 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.ParsedExpense
+import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
@@ -146,7 +147,7 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `invalid category callback keeps category selection open without saving expense`() {
+    fun `invalid category selection command keeps category selection open without saving expense`() {
         val userId = 2003L
         val chatId = 3003L
 
@@ -156,7 +157,7 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
             dialogueRouter.processUserInput(
                 userId = userId,
                 chatId = chatId,
-                callbackData = "select_category:not-a-uuid",
+                command = UserCommand.InvalidCategorySelection,
             )
 
         assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION))
