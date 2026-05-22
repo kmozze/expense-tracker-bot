@@ -1,14 +1,13 @@
 package me.kmozze.expensetracker.integration.handler
 
-import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.integration.AbstractIntegrationTest
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
-import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.repository.ICategoryRepository
+import me.kmozze.expensetracker.support.processUserInput
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,9 +25,8 @@ class StartCommandTest : AbstractIntegrationTest() {
     @Test
     fun `receive welcome message and default categories created`() {
         val userId = 1001L
-        val input = userInput(userId = userId, chatId = 12345L, text = "/start")
 
-        val result = dialogueRouter.process(input)
+        val result = dialogueRouter.processUserInput(userId = userId, chatId = 12345L, text = "/start")
 
         assertThat(result.response.message).isEqualTo(BotMessage.WelcomeFirstTime)
         assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
@@ -50,25 +48,10 @@ class StartCommandTest : AbstractIntegrationTest() {
             )
         categoryRepository.create(existingCategory)
 
-        val input = userInput(userId = userId, chatId = 54321L, text = "/start")
-        val result = dialogueRouter.process(input)
+        val result = dialogueRouter.processUserInput(userId = userId, chatId = 54321L, text = "/start")
 
         assertThat(result.response.message).isEqualTo(BotMessage.WelcomeBack)
         assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
     }
-
-    private fun userInput(
-        userId: Long,
-        chatId: Long,
-        text: String? = null,
-        callbackData: String? = null,
-    ): UserInput =
-        UserInput(
-            userId = userId,
-            chatId = chatId,
-            text = text,
-            callbackData = callbackData,
-            command = UserCommandParser.parse(text = text, callbackData = callbackData),
-        )
 }
