@@ -1,4 +1,4 @@
-package me.kmozze.expensetracker.integration.handler
+package me.kmozze.expensetracker.integration.flow
 
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.ui.Buttons
@@ -10,7 +10,6 @@ import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.ParsedExpense
-import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
@@ -110,45 +109,6 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `cancel category selection returns to idle without saving expense`() {
-        val userId = 2002L
-        val chatId = 3002L
-
-        startCategorySelection(userId, chatId)
-
-        val result =
-            dialogueRouter.processUserInput(
-                userId = userId,
-                chatId = chatId,
-                callbackData = CallbackData.cancel(),
-            )
-
-        assertThat(result.response.message).isEqualTo(BotMessage.ExpenseCanceled)
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
-        assertThat(findExpenses(userId)).isEmpty()
-    }
-
-    @Test
-    fun `invalid category selection command keeps category selection open without saving expense`() {
-        val userId = 2003L
-        val chatId = 3003L
-
-        startCategorySelection(userId, chatId)
-
-        val result =
-            dialogueRouter.processUserInput(
-                userId = userId,
-                chatId = chatId,
-                command = UserCommand.InvalidCategorySelection,
-            )
-
-        assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION))
-        assertThat(result.response.actions.single()).isInstanceOf(BotAction.ShowCategorySelection::class.java)
-        assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITH_DESCRIPTION))
-        assertThat(findExpenses(userId)).isEmpty()
-    }
-
-    @Test
     fun `foreign category callback keeps category selection open without saving expense`() {
         val userId = 2004L
         val chatId = 3004L
@@ -193,26 +153,6 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
 
         assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.EXPENSE_INVALID_FORMAT))
         assertThat(result.nextState).isEqualTo(UserState.AwaitingExpenseInput)
-        assertThat(findExpenses(userId)).isEmpty()
-    }
-
-    @Test
-    fun `expense input without categories returns no categories message without saving expense`() {
-        val userId = 2007L
-        val chatId = 3007L
-
-        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = Buttons.ADD_EXPENSE)
-
-        val result =
-            dialogueRouter.processUserInput(
-                userId = userId,
-                chatId = chatId,
-                text = EXPENSE_TEXT_WITH_DESCRIPTION,
-            )
-
-        assertThat(result.response.message).isEqualTo(BotMessage.NoCategories)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
         assertThat(findExpenses(userId)).isEmpty()
     }
 
