@@ -7,6 +7,7 @@ import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.integration.AbstractIntegrationTest
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.ParsedExpense
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -40,33 +41,18 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
         val userId = 2001L
         val chatId = 3001L
 
-        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = "/start")
-
-        val addExpenseResult =
-            dialogueRouter.processUserInput(
-                userId = userId,
-                chatId = chatId,
-                text = Buttons.ADD_EXPENSE,
-            )
+        val addExpenseResult = startExpenseInput(userId, chatId)
 
         assertThat(addExpenseResult.response.message).isEqualTo(BotMessage.AddExpenseInstructions)
         assertThat(addExpenseResult.nextState).isEqualTo(UserState.AwaitingExpenseInput)
 
-        val parsedExpenseResult =
-            dialogueRouter.processUserInput(
-                userId = userId,
-                chatId = chatId,
-                text = "500 такси",
-            )
-        val categorySelectionAction = parsedExpenseResult.response.actions.single() as BotAction.ShowCategorySelection
+        val categorySelection = submitExpenseForCategorySelection(userId, chatId, EXPENSE_TEXT_WITH_DESCRIPTION)
+        val category = categorySelection.category
 
-        assertThat(categorySelectionAction.categories).isNotEmpty()
-        val category = categorySelectionAction.categories.first()
-
-        assertThat(parsedExpenseResult.response.message)
-            .isEqualTo(BotMessage.SelectCategory(Money.of(BigDecimal("500.00")), "такси"))
-        assertThat(parsedExpenseResult.nextState)
-            .isEqualTo(UserState.AwaitingCategorySelection(ParsedExpense(Money.of(BigDecimal("500.00")), "такси")))
+        assertThat(categorySelection.result.response.message)
+            .isEqualTo(BotMessage.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
+        assertThat(categorySelection.result.nextState)
+            .isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITH_DESCRIPTION))
 
         val savedExpenseResult =
             dialogueRouter.processUserInput(
@@ -76,15 +62,17 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
             )
 
         assertThat(savedExpenseResult.response.message)
-            .isEqualTo(BotMessage.ExpenseSaved(Money.of(BigDecimal("500.00")), category.name, "такси"))
+            .isEqualTo(BotMessage.ExpenseSaved(EXPENSE_AMOUNT, category.name, EXPENSE_DESCRIPTION))
         assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
 
         val expenses = findExpenses(userId)
 
         assertThat(expenses).hasSize(1)
-        assertThat(expenses.single().amount).isEqualTo(Money.of(BigDecimal("500.00")))
-        assertThat(expenses.single().categoryId).isEqualTo(category.id)
-        assertThat(expenses.single().description).isEqualTo("такси")
+        val expense = expenses.single()
+
+        assertThat(expense.amount).isEqualTo(EXPENSE_AMOUNT)
+        assertThat(expense.categoryId).isEqualTo(category.id)
+        assertThat(expense.description).isEqualTo(EXPENSE_DESCRIPTION)
     }
 
     @Test
@@ -92,24 +80,14 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
         val userId = 2008L
         val chatId = 3008L
 
-        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = "/start")
-        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = Buttons.ADD_EXPENSE)
+        startExpenseInput(userId, chatId)
+        val categorySelection = submitExpenseForCategorySelection(userId, chatId, EXPENSE_TEXT_WITHOUT_DESCRIPTION)
+        val category = categorySelection.category
 
-        val parsedExpenseResult =
-            dialogueRouter.processUserInput(
-                userId = userId,
-                chatId = chatId,
-                text = "500",
-            )
-        val categorySelectionAction = parsedExpenseResult.response.actions.single() as BotAction.ShowCategorySelection
-
-        assertThat(categorySelectionAction.categories).isNotEmpty()
-        val category = categorySelectionAction.categories.first()
-
-        assertThat(parsedExpenseResult.response.message)
-            .isEqualTo(BotMessage.SelectCategory(Money.of(BigDecimal("500.00")), null))
-        assertThat(parsedExpenseResult.nextState)
-            .isEqualTo(UserState.AwaitingCategorySelection(ParsedExpense(Money.of(BigDecimal("500.00")), null)))
+        assertThat(categorySelection.result.response.message)
+            .isEqualTo(BotMessage.SelectCategory(EXPENSE_AMOUNT, null))
+        assertThat(categorySelection.result.nextState)
+            .isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITHOUT_DESCRIPTION))
 
         val savedExpenseResult =
             dialogueRouter.processUserInput(
@@ -119,12 +97,16 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
             )
 
         assertThat(savedExpenseResult.response.message)
-            .isEqualTo(BotMessage.ExpenseSaved(Money.of(BigDecimal("500.00")), category.name, null))
+            .isEqualTo(BotMessage.ExpenseSaved(EXPENSE_AMOUNT, category.name, null))
         assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
 
         val expenses = findExpenses(userId)
         assertThat(expenses).hasSize(1)
-        assertThat(expenses.single().description).isNull()
+        val expense = expenses.single()
+
+        assertThat(expense.amount).isEqualTo(EXPENSE_AMOUNT)
+        assertThat(expense.categoryId).isEqualTo(category.id)
+        assertThat(expense.description).isNull()
     }
 
     @Test
@@ -151,7 +133,7 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
         val userId = 2003L
         val chatId = 3003L
 
-        val parsedExpense = startCategorySelection(userId, chatId)
+        startCategorySelection(userId, chatId)
 
         val result =
             dialogueRouter.processUserInput(
@@ -162,7 +144,7 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
 
         assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION))
         assertThat(result.response.actions.single()).isInstanceOf(BotAction.ShowCategorySelection::class.java)
-        assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(parsedExpense))
+        assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITH_DESCRIPTION))
         assertThat(findExpenses(userId)).isEmpty()
     }
 
@@ -170,7 +152,9 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
     fun `foreign category callback keeps category selection open without saving expense`() {
         val userId = 2004L
         val chatId = 3004L
-        val parsedExpense = startCategorySelection(userId, chatId)
+
+        startCategorySelection(userId, chatId)
+
         val foreignCategory =
             categoryRepository.create(
                 Category(
@@ -189,7 +173,7 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
 
         assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
         assertThat(result.response.actions.single()).isInstanceOf(BotAction.ShowCategorySelection::class.java)
-        assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(parsedExpense))
+        assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITH_DESCRIPTION))
         assertThat(findExpenses(userId)).isEmpty()
     }
 
@@ -198,8 +182,7 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
         val userId = 2005L
         val chatId = 3005L
 
-        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = "/start")
-        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = Buttons.ADD_EXPENSE)
+        startExpenseInput(userId, chatId)
 
         val result =
             dialogueRouter.processUserInput(
@@ -224,7 +207,7 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
             dialogueRouter.processUserInput(
                 userId = userId,
                 chatId = chatId,
-                text = "500 такси",
+                text = EXPENSE_TEXT_WITH_DESCRIPTION,
             )
 
         assertThat(result.response.message).isEqualTo(BotMessage.NoCategories)
@@ -252,25 +235,43 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
         assertThat(findExpenses(userId)).isEmpty()
     }
 
-    private fun startCategorySelection(
+    private fun startExpenseInput(
         userId: Long,
         chatId: Long,
-    ): ParsedExpense {
+    ): HandlerResult {
         dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = "/start")
-        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = Buttons.ADD_EXPENSE)
 
+        return dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = Buttons.ADD_EXPENSE)
+    }
+
+    private fun submitExpenseForCategorySelection(
+        userId: Long,
+        chatId: Long,
+        expenseText: String,
+    ): CategorySelection {
         val result =
             dialogueRouter.processUserInput(
                 userId = userId,
                 chatId = chatId,
-                text = "500 такси",
+                text = expenseText,
             )
-        val categorySelectionAction = result.response.actions.single() as BotAction.ShowCategorySelection
+        val action = result.categorySelectionAction()
 
-        assertThat(result.response.message).isEqualTo(BotMessage.SelectCategory(Money.of(BigDecimal("500.00")), "такси"))
-        assertThat(categorySelectionAction.categories).isNotEmpty()
+        assertThat(action.categories).isNotEmpty()
 
-        return ParsedExpense(Money.of(BigDecimal("500.00")), "такси")
+        return CategorySelection(
+            result = result,
+            category = action.categories.first(),
+        )
+    }
+
+    private fun startCategorySelection(
+        userId: Long,
+        chatId: Long,
+    ): CategorySelection {
+        startExpenseInput(userId, chatId)
+
+        return submitExpenseForCategorySelection(userId, chatId, EXPENSE_TEXT_WITH_DESCRIPTION)
     }
 
     private fun findExpenses(userId: Long): List<Expense> =
@@ -280,7 +281,21 @@ class AddExpenseFlowTest : AbstractIntegrationTest() {
             to = TEST_PERIOD_TO,
         )
 
+    private fun HandlerResult.categorySelectionAction(): BotAction.ShowCategorySelection =
+        response.actions.single() as BotAction.ShowCategorySelection
+
+    private data class CategorySelection(
+        val result: HandlerResult,
+        val category: Category,
+    )
+
     private companion object {
+        const val EXPENSE_TEXT_WITH_DESCRIPTION = "500 такси"
+        const val EXPENSE_TEXT_WITHOUT_DESCRIPTION = "500"
+        const val EXPENSE_DESCRIPTION = "такси"
+        val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
+        val EXPENSE_WITH_DESCRIPTION: ParsedExpense = ParsedExpense(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
+        val EXPENSE_WITHOUT_DESCRIPTION: ParsedExpense = ParsedExpense(EXPENSE_AMOUNT, null)
         val TEST_PERIOD_FROM: OffsetDateTime = OffsetDateTime.parse("2000-01-01T00:00:00Z")
         val TEST_PERIOD_TO: OffsetDateTime = OffsetDateTime.parse("2100-01-01T00:00:00Z")
     }
