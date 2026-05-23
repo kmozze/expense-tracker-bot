@@ -1,7 +1,6 @@
 package me.kmozze.expensetracker.integration.flow
 
 import me.kmozze.expensetracker.handler.DialogueRouter
-import me.kmozze.expensetracker.integration.AbstractIntegrationTest
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.UserState
@@ -11,11 +10,9 @@ import me.kmozze.expensetracker.support.processUserInput
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
-@Transactional
-class StartFlowTest : AbstractIntegrationTest() {
+class StartFlowTest : AbstractFlowIntegrationTest() {
     @Autowired
     private lateinit var dialogueRouter: DialogueRouter
 
