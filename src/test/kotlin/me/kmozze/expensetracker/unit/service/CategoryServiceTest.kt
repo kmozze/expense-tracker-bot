@@ -1,5 +1,6 @@
 package me.kmozze.expensetracker.unit.service
 
+import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
@@ -12,6 +13,7 @@ import me.kmozze.expensetracker.service.CategoryService
 import org.jooq.exception.DataAccessException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -21,7 +23,7 @@ import java.util.UUID
 
 @ExtendWith(MockKExtension::class)
 class CategoryServiceTest {
-    private val categoryRepository: ICategoryRepository = mockk(relaxed = true)
+    private val categoryRepository: ICategoryRepository = mockk()
     private lateinit var service: CategoryService
 
     @BeforeEach
@@ -36,24 +38,32 @@ class CategoryServiceTest {
         val result = service.initDefaultCategories(123L)
 
         assertFalse(result, "Должен вернуть false при повторной инициализации")
+        verify(exactly = 1) { categoryRepository.existsByUserId(123L) }
         verify(exactly = 0) { categoryRepository.createIfAbsent(any()) }
+        confirmVerified(categoryRepository)
     }
 
     @Test
     fun `create 5 default categories`() {
+        val createdCategories = mutableListOf<Category>()
         every { categoryRepository.existsByUserId(123L) } returns false
-        every { categoryRepository.createIfAbsent(any()) } returns true
+        every { categoryRepository.createIfAbsent(capture(createdCategories)) } returns true
 
         val result = service.initDefaultCategories(123L)
 
         assertTrue(result, "Должен вернуть true при первом запуске")
+        assertEquals(listOf("Еда", "Транспорт", "Жильё", "Развлечения", "Прочее"), createdCategories.map { it.name })
+        assertTrue(createdCategories.all { it.userId == 123L })
+        verify(exactly = 1) { categoryRepository.existsByUserId(123L) }
         verify(exactly = 5) { categoryRepository.createIfAbsent(any()) }
+        confirmVerified(categoryRepository)
     }
 
     @Test
-    fun `wrap DataAccessException into SystemException`() {
+    fun `init default categories wraps DataAccessException into SystemException`() {
+        val cause = DataAccessException("DB connection failed")
         every { categoryRepository.existsByUserId(123L) } returns false
-        every { categoryRepository.createIfAbsent(any()) } throws DataAccessException("DB connection failed")
+        every { categoryRepository.createIfAbsent(any()) } throws cause
 
         val exception =
             assertThrows<SystemException> {
@@ -61,6 +71,44 @@ class CategoryServiceTest {
             }
 
         assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
+        assertEquals(cause, exception.cause)
+        verify(exactly = 1) { categoryRepository.existsByUserId(123L) }
+        verify(exactly = 1) { categoryRepository.createIfAbsent(any()) }
+        confirmVerified(categoryRepository)
+    }
+
+    @Test
+    fun `get categories returns categories for user`() {
+        val userId = 123L
+        val categories =
+            listOf(
+                Category(name = "Еда", userId = userId),
+                Category(name = "Транспорт", userId = userId),
+            )
+        every { categoryRepository.findAllByUserId(userId) } returns categories
+
+        val result = service.getCategories(userId)
+
+        assertEquals(categories, result)
+        verify(exactly = 1) { categoryRepository.findAllByUserId(userId) }
+        confirmVerified(categoryRepository)
+    }
+
+    @Test
+    fun `get categories wraps DataAccessException into SystemException`() {
+        val userId = 123L
+        val cause = DataAccessException("DB connection failed")
+        every { categoryRepository.findAllByUserId(userId) } throws cause
+
+        val exception =
+            assertThrows<SystemException> {
+                service.getCategories(userId)
+            }
+
+        assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
+        assertEquals(cause, exception.cause)
+        verify(exactly = 1) { categoryRepository.findAllByUserId(userId) }
+        confirmVerified(categoryRepository)
     }
 
     @Test
@@ -79,6 +127,7 @@ class CategoryServiceTest {
 
         assertEquals(category, result)
         verify(exactly = 1) { categoryRepository.findByIdForUser(categoryId, userId) }
+        confirmVerified(categoryRepository)
     }
 
     @Test
@@ -89,7 +138,9 @@ class CategoryServiceTest {
 
         val result = service.findCategoryForUser(categoryId, userId)
 
-        assertEquals(null, result)
+        assertNull(result)
+        verify(exactly = 1) { categoryRepository.findByIdForUser(categoryId, userId) }
+        confirmVerified(categoryRepository)
     }
 
     @Test
@@ -106,5 +157,7 @@ class CategoryServiceTest {
 
         assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
         assertEquals(cause, exception.cause)
+        verify(exactly = 1) { categoryRepository.findByIdForUser(categoryId, userId) }
+        confirmVerified(categoryRepository)
     }
 }
