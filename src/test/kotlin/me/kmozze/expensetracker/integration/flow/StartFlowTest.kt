@@ -1,4 +1,4 @@
-package me.kmozze.expensetracker.integration.handler
+package me.kmozze.expensetracker.integration.flow
 
 import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.integration.AbstractIntegrationTest
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 @Transactional
-class StartCommandTest : AbstractIntegrationTest() {
+class StartFlowTest : AbstractIntegrationTest() {
     @Autowired
     private lateinit var dialogueRouter: DialogueRouter
 
