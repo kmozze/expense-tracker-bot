@@ -5,6 +5,8 @@ import me.kmozze.expensetracker.exception.ErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.model.domain.BotMessage
 import org.springframework.stereotype.Component
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Component
 class MessageFormatter {
@@ -33,7 +35,8 @@ class MessageFormatter {
                 buildString {
                     append("✅ Сохранено!\n")
                     append("💰 Сумма: ${message.amount.format()} ₽\n")
-                    append("📂 Категория: ${message.categoryName}")
+                    append("📂 Категория: ${message.categoryName}\n")
+                    append("📅 Дата: ${message.expenseDate.formatForUser()}")
                     appendDescription(message.description)
                 }
 
@@ -64,5 +67,11 @@ class MessageFormatter {
         if (!description.isNullOrBlank()) {
             append("\n📝 $description")
         }
+    }
+
+    private fun LocalDate.formatForUser(): String = format(USER_DATE_FORMATTER)
+
+    private companion object {
+        val USER_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     }
 }

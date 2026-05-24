@@ -81,6 +81,7 @@ class AwaitingCategorySelectionHandler(
                         BotMessage.ExpenseSaved(
                             amount = expense.amount,
                             categoryName = category.name,
+                            expenseDate = expense.expenseDate,
                             description = expense.description,
                         ),
                     actions = listOf(BotAction.ShowMainMenu),

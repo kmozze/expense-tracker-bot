@@ -11,6 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -48,6 +49,7 @@ class ExpenseRepositoryTest : AbstractIntegrationTest() {
                 UUID.fromString("00000000-0000-0000-0000-000000000102"),
                 UUID.fromString("00000000-0000-0000-0000-000000000101"),
             )
+        assertThat(result.first().expenseDate).isEqualTo(LocalDate.parse("2026-05-20"))
     }
 
     @Test

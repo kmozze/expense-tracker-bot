@@ -6,6 +6,7 @@ import me.kmozze.expensetracker.model.domain.Money
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.LocalDate
 
 class MessageFormatterTest {
     private val formatter = MessageFormatter()
@@ -30,10 +31,12 @@ class MessageFormatterTest {
                 BotMessage.ExpenseSaved(
                     amount = Money.of(BigDecimal("500.00")),
                     categoryName = "Еда",
+                    expenseDate = LocalDate.parse("2026-05-24"),
                     description = null,
                 ),
             )
 
-        assertThat(text).isEqualTo("✅ Сохранено!\n💰 Сумма: 500.00 ₽\n📂 Категория: Еда")
+        assertThat(text)
+            .isEqualTo("✅ Сохранено!\n💰 Сумма: 500.00 ₽\n📂 Категория: Еда\n📅 Дата: 24.05.2026")
     }
 }

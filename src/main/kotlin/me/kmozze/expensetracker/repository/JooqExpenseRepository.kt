@@ -19,6 +19,7 @@ class JooqExpenseRepository(
             categoryId = this.categoryId,
             amount = Money.of(this.amount),
             userId = this.userId,
+            expenseDate = this.expenseDate,
             description = this.description,
             createdAt = this.createdAt,
         )
@@ -37,6 +38,7 @@ class JooqExpenseRepository(
             .set(EXPENSE.AMOUNT, expense.amount.value)
             .set(EXPENSE.CATEGORY_ID, expense.categoryId)
             .set(EXPENSE.USER_ID, expense.userId)
+            .set(EXPENSE.EXPENSE_DATE, expense.expenseDate)
             .set(EXPENSE.DESCRIPTION, expense.description)
             .returning()
             .fetchSingle()
@@ -47,6 +49,7 @@ class JooqExpenseRepository(
             .update(EXPENSE)
             .set(EXPENSE.AMOUNT, expense.amount.value)
             .set(EXPENSE.CATEGORY_ID, expense.categoryId)
+            .set(EXPENSE.EXPENSE_DATE, expense.expenseDate)
             .set(EXPENSE.DESCRIPTION, expense.description)
             .where(EXPENSE.ID.eq(expense.id))
             .returning()

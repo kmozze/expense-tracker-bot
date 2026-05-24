@@ -3,5 +3,3 @@ databaseChangeLog:
       file: db/changelog/changesets/001-init-schema.sql
   - include:
       file: db/changelog/changesets/002-triggers.sql
-  - include:
-      file: db/changelog/changesets/003-expense-period-index.sql

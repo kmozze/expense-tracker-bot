@@ -10,6 +10,7 @@ import org.jooq.exception.DataAccessException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 import java.util.UUID
 
 @Service
@@ -38,6 +39,7 @@ class ExpenseService(
                     categoryId = categoryId,
                     amount = parsedExpense.amount,
                     userId = userId,
+                    expenseDate = LocalDate.now(),
                     description = parsedExpense.description,
                 )
 

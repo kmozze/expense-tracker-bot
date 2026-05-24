@@ -1,6 +1,6 @@
 # Expense Tracker Telegram Bot
 
-Telegram-бот для учета личных расходов. Пользователь вводит сумму, при желании добавляет описание, выбирает категорию inline-кнопкой, а бот сохраняет расход в PostgreSQL.
+Telegram-бот для учета личных расходов. Пользователь вводит сумму, при желании добавляет описание, выбирает категорию inline-кнопкой, а бот сохраняет расход в PostgreSQL с текущей датой траты.
 
 ## Стек
 
@@ -11,7 +11,7 @@ Telegram-бот для учета личных расходов. Пользов�
 - jOOQ 3.19.x
 - Liquibase
 - Gradle Kotlin DSL
-- JUnit 5, MockK, Testcontainers
+- JUnit 5, MockK, Database Rider, Testcontainers
 
 ## Что уже работает
 
@@ -21,7 +21,7 @@ Telegram-бот для учета личных расходов. Пользов�
   1. нажать `➕ Добавить расход`;
   2. отправить `500`, `500 такси` или `такси 500`;
   3. выбрать категорию;
-  4. получить подтверждение сохранения.
+  4. получить подтверждение сохранения с текущей датой траты.
 - Парсер поддерживает ввод только суммы или суммы с описанием в начале/конце строки, десятичную точку и запятую.
 - Кнопка отмены в inline-выборе категории отменяет добавление расхода.
 
@@ -45,6 +45,8 @@ src/main/resources/db/changelog/
 src/test/kotlin/me/kmozze/expensetracker/
   unit/
   integration/
+    flow/
+    repository/
 ```
 
 План будущего UX и поведения бота лежит в `UI.md`.
@@ -74,7 +76,7 @@ export BOT_TOKEN=<bot_token>
 ./gradlew jooqCodegen
 ```
 
-Сейчас генерация настроена через jOOQ `DDLDatabase` и читает SQL из `src/main/resources/db/changelog/changesets/001-init-schema.sql`. Живая БД для самой генерации не нужна, но Postgres нужен для запуска приложения и интеграционных тестов.
+Сейчас генерация настроена через jOOQ `DDLDatabase` и читает SQL из `src/main/resources/db/changelog/changesets/*.sql`, кроме trigger changeset. Живая БД для самой генерации не нужна, но Postgres нужен для запуска приложения и интеграционных тестов.
 
 4. Проверить компиляцию:
 
@@ -104,7 +106,7 @@ build/generated-sources/jooq
 ./gradlew jooqCodegen
 ```
 
-Генерация настроена через `DDLDatabase` и читает SQL из `src/main/resources/db/changelog/changesets/001-init-schema.sql`. При изменении схемы обновляйте миграции и перегенерируйте jOOQ-классы.
+Генерация настроена через `DDLDatabase` и читает SQL из `src/main/resources/db/changelog/changesets/*.sql`, кроме trigger changeset. При изменении схемы обновляйте миграции и перегенерируйте jOOQ-классы.
 
 ## Проверки
 
@@ -114,7 +116,7 @@ build/generated-sources/jooq
 ./gradlew test
 ```
 
-`./gradlew test` запускает unit- и integration-тесты. Интеграционные тесты используют Testcontainers PostgreSQL, поэтому Docker должен быть запущен.
+`./gradlew test` запускает unit- и integration-тесты. Интеграционные тесты используют Testcontainers PostgreSQL, а repository-тесты задают fixture'ы через Database Rider, поэтому Docker должен быть запущен.
 
 Перед полным прогоном тестов стоит поднять Docker/Postgres:
 
@@ -142,4 +144,4 @@ docker compose up -d
 ## Текущие ограничения
 
 - Сессии пользователей хранятся in-memory и сбрасываются при рестарте приложения.
-- Просмотр расходов, управление категориями, статистика, редактирование и удаление расходов пока не реализованы в UI.
+- Выбор даты траты, просмотр расходов, управление категориями, статистика, редактирование и удаление расходов пока не реализованы в UI.
