@@ -5,6 +5,7 @@ import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.entity.Expense
 import me.kmozze.expensetracker.repository.IExpenseRepository
+import me.kmozze.expensetracker.service.parser.InputExpenseDateParsingService
 import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
 import org.jooq.exception.DataAccessException
 import org.slf4j.LoggerFactory
@@ -15,16 +16,19 @@ import java.time.LocalDate
 @Service
 class ExpenseService(
     private val expenseTextParser: InputExpenseParsingService,
+    private val expenseDateParser: InputExpenseDateParsingService,
     private val expenseRepository: IExpenseRepository,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     fun parseExpense(text: String): ExpenseDraft {
         val expenseDraft = expenseTextParser.parse(text)
-        logger.info("Expense parsed successfully: {}", expenseDraft)
+        logger.info("Expense draft parsed successfully: {}", expenseDraft)
 
         return expenseDraft
     }
+
+    fun parseExpenseDate(text: String): LocalDate = expenseDateParser.parse(text)
 
     @Transactional
     fun saveExpense(
@@ -33,12 +37,13 @@ class ExpenseService(
     ): Expense =
         try {
             val categoryId = expenseDraft.requireCategoryId()
+            val expenseDate = expenseDraft.requireExpenseDate()
             val expense =
                 Expense(
                     categoryId = categoryId,
                     amount = expenseDraft.amount,
                     userId = userId,
-                    expenseDate = expenseDraft.expenseDate ?: LocalDate.now(),
+                    expenseDate = expenseDate,
                     description = expenseDraft.description,
                 )
 

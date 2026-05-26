@@ -31,6 +31,22 @@ class MessageFormatter {
                     append("\n\nКуда запишем?")
                 }
 
+            is BotMessage.SelectExpenseDate ->
+                buildString {
+                    append("💰 Сумма: ${message.amount.format()} ₽\n")
+                    append("📂 Категория: ${message.categoryName}")
+                    appendDescription(message.description)
+                    append("\n\nКогда была трата?")
+                }
+
+            is BotMessage.EnterExpenseDateManually ->
+                buildString {
+                    append("💰 Сумма: ${message.amount.format()} ₽\n")
+                    append("📂 Категория: ${message.categoryName}")
+                    appendDescription(message.description)
+                    append("\n\nВведите дату траты в формате ДД.ММ.ГГГГ.")
+                }
+
             is BotMessage.ExpenseSaved ->
                 buildString {
                     append("✅ Сохранено!\n")
@@ -58,6 +74,8 @@ class MessageFormatter {
             BusinessErrorCode.INVALID_AMOUNT -> "Сумма должна быть больше нуля"
             BusinessErrorCode.CATEGORY_NOT_FOUND -> "Категория не найдена"
             BusinessErrorCode.INVALID_CATEGORY_SELECTION -> "Не получилось выбрать категорию"
+            BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION -> "Не получилось выбрать дату"
+            BusinessErrorCode.EXPENSE_DATE_INVALID_FORMAT -> "Введите дату в формате ДД.ММ.ГГГГ"
             SystemErrorCode.DATABASE_ERROR -> "Ошибка базы данных. Попробуйте позже."
             SystemErrorCode.INTERNAL_ERROR -> "Непредвиденная системная ошибка."
             else -> "Произошла неизвестная ошибка."

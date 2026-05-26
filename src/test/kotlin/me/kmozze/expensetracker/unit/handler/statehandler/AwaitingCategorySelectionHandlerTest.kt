@@ -14,22 +14,18 @@ import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
-import me.kmozze.expensetracker.model.entity.Expense
 import me.kmozze.expensetracker.service.CategoryService
-import me.kmozze.expensetracker.service.ExpenseService
 import me.kmozze.expensetracker.support.makeUserInput
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.math.BigDecimal
-import java.time.LocalDate
 import java.util.UUID
 
 @ExtendWith(MockKExtension::class)
 class AwaitingCategorySelectionHandlerTest {
     private val categoryService: CategoryService = mockk()
-    private val expenseService: ExpenseService = mockk()
     private lateinit var handler: AwaitingCategorySelectionHandler
 
     @BeforeEach
@@ -37,43 +33,34 @@ class AwaitingCategorySelectionHandlerTest {
         handler =
             AwaitingCategorySelectionHandler(
                 categoryService = categoryService,
-                expenseService = expenseService,
             )
     }
 
     @Test
-    fun `selected category saves expense and returns idle`() {
+    fun `selected category opens expense date selection`() {
         val category = category(id = CATEGORY_ID)
-        val savedExpense = expense(categoryId = CATEGORY_ID)
         every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns category
-        every {
-            expenseService.saveExpense(
-                userId = USER_ID,
-                expenseDraft = EXPENSE_DRAFT.copy(categoryId = CATEGORY_ID),
-            )
-        } returns savedExpense
 
         val result = handle(UserCommand.SelectCategory(CATEGORY_ID))
 
         assertThat(result.response.message)
             .isEqualTo(
-                BotMessage.ExpenseSaved(
+                BotMessage.SelectExpenseDate(
                     amount = EXPENSE_AMOUNT,
                     categoryName = category.name,
-                    expenseDate = EXPENSE_DATE,
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
-        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
-        verify(exactly = 1) {
-            expenseService.saveExpense(
-                userId = USER_ID,
-                expenseDraft = EXPENSE_DRAFT.copy(categoryId = CATEGORY_ID),
+        assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.nextState)
+            .isEqualTo(
+                UserState.AwaitingExpenseDateSelection(
+                    expenseDraft = EXPENSE_DRAFT.copy(categoryId = CATEGORY_ID),
+                    categoryName = category.name,
+                ),
             )
-        }
-        confirmVerified(categoryService, expenseService)
+        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
+        confirmVerified(categoryService)
     }
 
     @Test
@@ -89,7 +76,7 @@ class AwaitingCategorySelectionHandlerTest {
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
-        confirmVerified(categoryService, expenseService)
+        confirmVerified(categoryService)
     }
 
     @Test
@@ -104,7 +91,7 @@ class AwaitingCategorySelectionHandlerTest {
         assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
-        confirmVerified(categoryService, expenseService)
+        confirmVerified(categoryService)
     }
 
     @Test
@@ -114,7 +101,7 @@ class AwaitingCategorySelectionHandlerTest {
         assertThat(result.response.message).isEqualTo(BotMessage.ExpenseCanceled)
         assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
-        confirmVerified(categoryService, expenseService)
+        confirmVerified(categoryService)
     }
 
     @Test
@@ -129,7 +116,7 @@ class AwaitingCategorySelectionHandlerTest {
         assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
-        confirmVerified(categoryService, expenseService)
+        confirmVerified(categoryService)
     }
 
     private fun handle(command: UserCommand) =
@@ -151,20 +138,10 @@ class AwaitingCategorySelectionHandlerTest {
             userId = USER_ID,
         )
 
-    private fun expense(categoryId: UUID): Expense =
-        Expense(
-            categoryId = categoryId,
-            amount = EXPENSE_AMOUNT,
-            userId = USER_ID,
-            expenseDate = EXPENSE_DATE,
-            description = EXPENSE_DESCRIPTION,
-        )
-
     private companion object {
         const val USER_ID = 123L
         const val CHAT_ID = 456L
         const val EXPENSE_DESCRIPTION = "такси"
-        val EXPENSE_DATE: LocalDate = LocalDate.parse("2026-05-24")
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val EXPENSE_DRAFT: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
         val AWAITING_CATEGORY_SELECTION: UserState.AwaitingCategorySelection =

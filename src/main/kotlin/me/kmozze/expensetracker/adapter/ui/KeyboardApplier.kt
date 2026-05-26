@@ -16,6 +16,10 @@ class KeyboardApplier {
                     sendMessage.replyMarkup = Keyboards.mainMenu()
                 is BotAction.ShowCategorySelection ->
                     sendMessage.replyMarkup = Keyboards.categorySelection(action.categories)
+                is BotAction.ShowExpenseDateSelection ->
+                    sendMessage.replyMarkup = Keyboards.expenseDateSelection()
+                is BotAction.ShowCancel ->
+                    sendMessage.replyMarkup = Keyboards.cancel()
             }
         }
     }

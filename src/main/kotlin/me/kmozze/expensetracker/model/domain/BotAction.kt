@@ -8,4 +8,8 @@ sealed class BotAction {
     data class ShowCategorySelection(
         val categories: List<Category>,
     ) : BotAction()
+
+    data object ShowExpenseDateSelection : BotAction()
+
+    data object ShowCancel : BotAction()
 }

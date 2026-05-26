@@ -5,6 +5,8 @@ object Icons {
     const val SUCCESS = "✅"
     const val MONEY = "💰"
     const val CATEGORY = "📂"
+    const val CALENDAR = "📅"
+    const val EDIT = "✏️"
     const val PLUS = "➕"
     const val LIST = "📋"
     const val STATS = "📊"
