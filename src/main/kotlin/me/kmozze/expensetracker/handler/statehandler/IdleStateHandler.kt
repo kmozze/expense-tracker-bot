@@ -46,6 +46,21 @@ class IdleStateHandler : StateHandler {
                     nextState = UserState.Idle,
                 )
 
+            UserCommand.Cancel,
+            is UserCommand.SelectCategory,
+            UserCommand.InvalidCategorySelection,
+            is UserCommand.SelectExpenseDate,
+            UserCommand.InvalidExpenseDateSelection,
+            ->
+                HandlerResult(
+                    response =
+                        HandlerResponse(
+                            message = BotMessage.SelectionExpired,
+                            actions = listOf(BotAction.ShowMainMenu),
+                        ),
+                    nextState = UserState.Idle,
+                )
+
             else ->
                 HandlerResult(
                     response =

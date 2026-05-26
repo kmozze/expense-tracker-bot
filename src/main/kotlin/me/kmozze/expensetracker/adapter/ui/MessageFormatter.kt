@@ -59,6 +59,9 @@ class MessageFormatter {
             is BotMessage.ExpenseCanceled ->
                 "Добавление расхода отменено."
 
+            is BotMessage.SelectionExpired ->
+                "Этот выбор уже неактуален. Используйте главное меню."
+
             is BotMessage.NoCategories ->
                 "У вас нет ни одной категории. Создайте хотя бы одну, чтобы записывать расходы."
 
