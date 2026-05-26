@@ -32,5 +32,5 @@ CREATE TABLE expense (
 -- changeset kmozze:3
 -- comment: indexes
 CREATE INDEX idx_category_user_id ON category(user_id);
-CREATE INDEX idx_expense_user_id_created_at ON expense(user_id, created_at);
+CREATE INDEX idx_expense_user_id_expense_date ON expense(user_id, expense_date);
 CREATE INDEX idx_expense_category_id ON expense(category_id);

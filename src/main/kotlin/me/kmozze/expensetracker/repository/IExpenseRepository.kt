@@ -14,7 +14,9 @@ interface IExpenseRepository {
     fun findById(id: UUID): Expense?
 
     /**
-     * Returns expenses from newest to oldest, including `from` and excluding `to`.
+     * Returns expenses created from newest to oldest, including `from` and excluding `to`.
+     *
+     * User-facing period queries will switch to `expenseDate` in the date selection flow.
      */
     fun findAllByUserIdAndPeriod(
         userId: Long,
