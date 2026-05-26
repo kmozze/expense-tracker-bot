@@ -9,7 +9,6 @@ import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.CategoryService
-import me.kmozze.expensetracker.service.ExpenseService
 import org.springframework.stereotype.Component
 import java.util.UUID
 import kotlin.reflect.KClass
@@ -17,7 +16,6 @@ import kotlin.reflect.KClass
 @Component
 class AwaitingCategorySelectionHandler(
     private val categoryService: CategoryService,
-    private val expenseService: ExpenseService,
 ) : StateHandler {
     override val supportedStateClass: KClass<out UserState> = UserState.AwaitingCategorySelection::class
 
@@ -32,7 +30,7 @@ class AwaitingCategorySelectionHandler(
         return when (val command = input.command) {
             UserCommand.Cancel -> cancelExpenseCreation()
             is UserCommand.SelectCategory ->
-                saveExpense(
+                selectCategory(
                     input = input,
                     currentState = currentState,
                     categoryId = command.categoryId,
@@ -49,12 +47,14 @@ class AwaitingCategorySelectionHandler(
             UserCommand.ViewExpenses,
             UserCommand.Categories,
             UserCommand.Statistics,
+            is UserCommand.SelectExpenseDate,
+            UserCommand.InvalidExpenseDateSelection,
             is UserCommand.PlainText,
             -> repeatCategorySelection(input.userId, currentState)
         }
     }
 
-    private fun saveExpense(
+    private fun selectCategory(
         input: UserInput,
         currentState: UserState.AwaitingCategorySelection,
         categoryId: UUID,
@@ -68,21 +68,23 @@ class AwaitingCategorySelectionHandler(
                 )
 
         val expenseDraft = currentState.expenseDraft.copy(categoryId = category.id)
-        val expense = expenseService.saveExpense(input.userId, expenseDraft)
 
         return HandlerResult(
             response =
                 HandlerResponse(
                     message =
-                        BotMessage.ExpenseSaved(
-                            amount = expense.amount,
+                        BotMessage.SelectExpenseDate(
+                            amount = expenseDraft.amount,
                             categoryName = category.name,
-                            expenseDate = expense.expenseDate,
-                            description = expense.description,
+                            description = expenseDraft.description,
                         ),
-                    actions = listOf(BotAction.ShowMainMenu),
+                    actions = listOf(BotAction.ShowExpenseDateSelection),
                 ),
-            nextState = UserState.Idle,
+            nextState =
+                UserState.AwaitingExpenseDateSelection(
+                    expenseDraft = expenseDraft,
+                    categoryName = category.name,
+                ),
         )
     }
 

@@ -13,4 +13,9 @@ data class ExpenseDraft(
         requireNotNull(categoryId) {
             "ExpenseDraft.categoryId must be set before saving"
         }
+
+    fun requireExpenseDate(): LocalDate =
+        requireNotNull(expenseDate) {
+            "ExpenseDraft.expenseDate must be set before saving"
+        }
 }

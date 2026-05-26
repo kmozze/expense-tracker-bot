@@ -13,8 +13,8 @@ import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.entity.Expense
 import me.kmozze.expensetracker.repository.IExpenseRepository
 import me.kmozze.expensetracker.service.ExpenseService
+import me.kmozze.expensetracker.service.parser.InputExpenseDateParsingService
 import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
-import org.assertj.core.api.Assertions.assertThat
 import org.jooq.exception.DataAccessException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -30,6 +30,7 @@ import java.util.UUID
 @ExtendWith(MockKExtension::class)
 class ExpenseServiceTest {
     private val expenseTextParser: InputExpenseParsingService = mockk()
+    private val expenseDateParser: InputExpenseDateParsingService = mockk()
     private val expenseRepository: IExpenseRepository = mockk()
     private lateinit var service: ExpenseService
 
@@ -38,6 +39,7 @@ class ExpenseServiceTest {
         service =
             ExpenseService(
                 expenseTextParser = expenseTextParser,
+                expenseDateParser = expenseDateParser,
                 expenseRepository = expenseRepository,
             )
     }
@@ -52,18 +54,37 @@ class ExpenseServiceTest {
 
         assertEquals(expenseDraft, result)
         verify(exactly = 1) { expenseTextParser.parse(text) }
-        confirmVerified(expenseTextParser, expenseRepository)
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
     }
 
     @Test
-    fun `save expense creates expense from draft`() {
+    fun `parse expense date returns date from parser`() {
+        val text = "24.05.2026"
+        val expenseDate = LocalDate.parse("2026-05-24")
+        every { expenseDateParser.parse(text) } returns expenseDate
+
+        val result = service.parseExpenseDate(text)
+
+        assertEquals(expenseDate, result)
+        verify(exactly = 1) { expenseDateParser.parse(text) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `save expense creates expense from complete draft`() {
         val userId = 123L
         val categoryId = UUID.randomUUID()
-        val expenseDraft = ExpenseDraft(EXPENSE_AMOUNT, "такси", categoryId = categoryId)
+        val expenseDate = LocalDate.parse("2026-05-24")
+        val expenseDraft =
+            ExpenseDraft(
+                amount = EXPENSE_AMOUNT,
+                description = "такси",
+                categoryId = categoryId,
+                expenseDate = expenseDate,
+            )
         val expenseSlot = slot<Expense>()
         val savedExpenseId = UUID.randomUUID()
         val savedAt = OffsetDateTime.parse("2026-05-22T10:00:00Z")
-        val expenseDateBeforeSave = LocalDate.now()
         every { expenseRepository.create(capture(expenseSlot)) } answers {
             expenseSlot.captured.copy(id = savedExpenseId, createdAt = savedAt)
         }
@@ -73,13 +94,12 @@ class ExpenseServiceTest {
                 userId = userId,
                 expenseDraft = expenseDraft,
             )
-        val expenseDateAfterSave = LocalDate.now()
 
         val createdExpense = expenseSlot.captured
         assertEquals(categoryId, createdExpense.categoryId)
         assertEquals(EXPENSE_AMOUNT, createdExpense.amount)
         assertEquals(userId, createdExpense.userId)
-        assertThat(createdExpense.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
+        assertEquals(expenseDate, createdExpense.expenseDate)
         assertEquals("такси", createdExpense.description)
         assertNull(createdExpense.createdAt)
 
@@ -87,18 +107,24 @@ class ExpenseServiceTest {
         assertEquals(categoryId, result.categoryId)
         assertEquals(EXPENSE_AMOUNT, result.amount)
         assertEquals(userId, result.userId)
-        assertThat(result.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
+        assertEquals(expenseDate, result.expenseDate)
         assertEquals("такси", result.description)
         assertEquals(savedAt, result.createdAt)
         verify(exactly = 1) { expenseRepository.create(any()) }
-        confirmVerified(expenseTextParser, expenseRepository)
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
     }
 
     @Test
     fun `save expense wraps DataAccessException into SystemException`() {
         val userId = 123L
         val categoryId = UUID.randomUUID()
-        val expenseDraft = ExpenseDraft(EXPENSE_AMOUNT, "такси", categoryId = categoryId)
+        val expenseDraft =
+            ExpenseDraft(
+                amount = EXPENSE_AMOUNT,
+                description = "такси",
+                categoryId = categoryId,
+                expenseDate = LocalDate.parse("2026-05-24"),
+            )
         val cause = DataAccessException("DB connection failed")
         every { expenseRepository.create(any()) } throws cause
 
@@ -113,7 +139,7 @@ class ExpenseServiceTest {
         assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
         assertEquals(cause, exception.cause)
         verify(exactly = 1) { expenseRepository.create(any()) }
-        confirmVerified(expenseTextParser, expenseRepository)
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
     }
 
     @Test
@@ -121,11 +147,33 @@ class ExpenseServiceTest {
         assertThrows<IllegalArgumentException> {
             service.saveExpense(
                 userId = 123L,
-                expenseDraft = ExpenseDraft(EXPENSE_AMOUNT, "такси"),
+                expenseDraft =
+                    ExpenseDraft(
+                        amount = EXPENSE_AMOUNT,
+                        description = "такси",
+                        expenseDate = LocalDate.parse("2026-05-24"),
+                    ),
             )
         }
 
-        confirmVerified(expenseTextParser, expenseRepository)
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `save expense requires date in draft`() {
+        assertThrows<IllegalArgumentException> {
+            service.saveExpense(
+                userId = 123L,
+                expenseDraft =
+                    ExpenseDraft(
+                        amount = EXPENSE_AMOUNT,
+                        description = "такси",
+                        categoryId = UUID.randomUUID(),
+                    ),
+            )
+        }
+
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
     }
 
     private companion object {

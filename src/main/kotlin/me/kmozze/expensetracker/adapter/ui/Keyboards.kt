@@ -39,15 +39,7 @@ object Keyboards {
                 .chunked(2)
                 .map { InlineKeyboardRow(it) } +
                 listOf(
-                    InlineKeyboardRow(
-                        listOf(
-                            InlineKeyboardButton
-                                .builder()
-                                .text(Buttons.CANCEL)
-                                .callbackData(CallbackData.cancel())
-                                .build(),
-                        ),
-                    ),
+                    cancelRow(),
                 )
 
         return InlineKeyboardMarkup
@@ -55,4 +47,56 @@ object Keyboards {
             .keyboard(rows)
             .build()
     }
+
+    fun expenseDateSelection(): InlineKeyboardMarkup {
+        val rows =
+            listOf(
+                InlineKeyboardRow(
+                    listOf(
+                        InlineKeyboardButton
+                            .builder()
+                            .text(Buttons.TODAY)
+                            .callbackData(CallbackData.selectExpenseDateToday())
+                            .build(),
+                        InlineKeyboardButton
+                            .builder()
+                            .text(Buttons.YESTERDAY)
+                            .callbackData(CallbackData.selectExpenseDateYesterday())
+                            .build(),
+                    ),
+                ),
+                InlineKeyboardRow(
+                    listOf(
+                        InlineKeyboardButton
+                            .builder()
+                            .text(Buttons.ENTER_DATE_MANUALLY)
+                            .callbackData(CallbackData.enterExpenseDateManually())
+                            .build(),
+                    ),
+                ),
+                cancelRow(),
+            )
+
+        return InlineKeyboardMarkup
+            .builder()
+            .keyboard(rows)
+            .build()
+    }
+
+    fun cancel(): InlineKeyboardMarkup =
+        InlineKeyboardMarkup
+            .builder()
+            .keyboard(listOf(cancelRow()))
+            .build()
+
+    private fun cancelRow(): InlineKeyboardRow =
+        InlineKeyboardRow(
+            listOf(
+                InlineKeyboardButton
+                    .builder()
+                    .text(Buttons.CANCEL)
+                    .callbackData(CallbackData.cancel())
+                    .build(),
+            ),
+        )
 }

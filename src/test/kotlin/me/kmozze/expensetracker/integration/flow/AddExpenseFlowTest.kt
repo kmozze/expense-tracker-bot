@@ -34,7 +34,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
     private lateinit var expenseRepository: IExpenseRepository
 
     @Test
-    fun `add expense flow saves expense after category selection`() {
+    fun `add expense flow saves expense after today date selection`() {
         val userId = 2001L
         val chatId = 3001L
 
@@ -51,16 +51,30 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(categorySelection.result.nextState)
             .isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITH_DESCRIPTION))
 
-        val expenseDateBeforeSave = LocalDate.now()
-        val savedExpenseResult =
-            dialogueRouter.processUserInput(
-                userId = userId,
-                chatId = chatId,
-                callbackData = CallbackData.selectCategory(category.id),
-            )
-        val expenseDateAfterSave = LocalDate.now()
+        val dateSelectionResult = selectCategoryForDateSelection(userId, chatId, category, EXPENSE_WITH_DESCRIPTION)
 
+        assertThat(dateSelectionResult.response.message)
+            .isEqualTo(
+                BotMessage.SelectExpenseDate(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = category.name,
+                    description = EXPENSE_DESCRIPTION,
+                ),
+            )
+        assertThat(dateSelectionResult.nextState)
+            .isEqualTo(
+                UserState.AwaitingExpenseDateSelection(
+                    expenseDraft = EXPENSE_WITH_DESCRIPTION.copy(categoryId = category.id),
+                    categoryName = category.name,
+                ),
+            )
+        assertThat(findExpenses(userId)).isEmpty()
+
+        val expenseDateBeforeSave = LocalDate.now()
+        val savedExpenseResult = selectTodayDate(userId, chatId)
+        val expenseDateAfterSave = LocalDate.now()
         val savedMessage = savedExpenseResult.response.message as BotMessage.ExpenseSaved
+
         assertThat(savedMessage.amount).isEqualTo(EXPENSE_AMOUNT)
         assertThat(savedMessage.categoryName).isEqualTo(category.name)
         assertThat(savedMessage.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
@@ -79,7 +93,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
     }
 
     @Test
-    fun `add expense flow saves expense without description`() {
+    fun `add expense flow saves expense without description after manual date input`() {
         val userId = 2008L
         val chatId = 3008L
 
@@ -92,19 +106,41 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(categorySelection.result.nextState)
             .isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITHOUT_DESCRIPTION))
 
-        val expenseDateBeforeSave = LocalDate.now()
+        selectCategoryForDateSelection(userId, chatId, category, EXPENSE_WITHOUT_DESCRIPTION)
+
+        val manualDateInputResult =
+            dialogueRouter.processUserInput(
+                userId = userId,
+                chatId = chatId,
+                callbackData = CallbackData.enterExpenseDateManually(),
+            )
+        assertThat(manualDateInputResult.response.message)
+            .isEqualTo(
+                BotMessage.EnterExpenseDateManually(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = category.name,
+                    description = null,
+                ),
+            )
+        assertThat(manualDateInputResult.nextState)
+            .isEqualTo(
+                UserState.AwaitingExpenseManualDateInput(
+                    expenseDraft = EXPENSE_WITHOUT_DESCRIPTION.copy(categoryId = category.id),
+                    categoryName = category.name,
+                ),
+            )
+
         val savedExpenseResult =
             dialogueRouter.processUserInput(
                 userId = userId,
                 chatId = chatId,
-                callbackData = CallbackData.selectCategory(category.id),
+                text = MANUAL_DATE_TEXT,
             )
-        val expenseDateAfterSave = LocalDate.now()
 
         val savedMessage = savedExpenseResult.response.message as BotMessage.ExpenseSaved
         assertThat(savedMessage.amount).isEqualTo(EXPENSE_AMOUNT)
         assertThat(savedMessage.categoryName).isEqualTo(category.name)
-        assertThat(savedMessage.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
+        assertThat(savedMessage.expenseDate).isEqualTo(MANUAL_DATE)
         assertThat(savedMessage.description).isNull()
         assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
 
@@ -114,8 +150,42 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
         assertThat(expense.amount).isEqualTo(EXPENSE_AMOUNT)
         assertThat(expense.categoryId).isEqualTo(category.id)
-        assertThat(expense.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
+        assertThat(expense.expenseDate).isEqualTo(MANUAL_DATE)
         assertThat(expense.description).isNull()
+    }
+
+    @Test
+    fun `invalid manual date keeps manual date input open without saving expense`() {
+        val userId = 2009L
+        val chatId = 3009L
+
+        startExpenseInput(userId, chatId)
+        val categorySelection = submitExpenseForCategorySelection(userId, chatId, EXPENSE_TEXT_WITH_DESCRIPTION)
+        val category = categorySelection.category
+        selectCategoryForDateSelection(userId, chatId, category, EXPENSE_WITH_DESCRIPTION)
+        dialogueRouter.processUserInput(
+            userId = userId,
+            chatId = chatId,
+            callbackData = CallbackData.enterExpenseDateManually(),
+        )
+
+        val result =
+            dialogueRouter.processUserInput(
+                userId = userId,
+                chatId = chatId,
+                text = "31.02.2026",
+            )
+
+        assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.EXPENSE_DATE_INVALID_FORMAT))
+        assertThat(result.response.actions).containsExactly(BotAction.ShowCancel)
+        assertThat(result.nextState)
+            .isEqualTo(
+                UserState.AwaitingExpenseManualDateInput(
+                    expenseDraft = EXPENSE_WITH_DESCRIPTION.copy(categoryId = category.id),
+                    categoryName = category.name,
+                ),
+            )
+        assertThat(findExpenses(userId)).isEmpty()
     }
 
     @Test
@@ -224,6 +294,41 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         return submitExpenseForCategorySelection(userId, chatId, EXPENSE_TEXT_WITH_DESCRIPTION)
     }
 
+    private fun selectCategoryForDateSelection(
+        userId: Long,
+        chatId: Long,
+        category: Category,
+        expenseDraft: ExpenseDraft,
+    ): HandlerResult {
+        val result =
+            dialogueRouter.processUserInput(
+                userId = userId,
+                chatId = chatId,
+                callbackData = CallbackData.selectCategory(category.id),
+            )
+
+        assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.nextState)
+            .isEqualTo(
+                UserState.AwaitingExpenseDateSelection(
+                    expenseDraft = expenseDraft.copy(categoryId = category.id),
+                    categoryName = category.name,
+                ),
+            )
+
+        return result
+    }
+
+    private fun selectTodayDate(
+        userId: Long,
+        chatId: Long,
+    ): HandlerResult =
+        dialogueRouter.processUserInput(
+            userId = userId,
+            chatId = chatId,
+            callbackData = CallbackData.selectExpenseDateToday(),
+        )
+
     private fun findExpenses(userId: Long): List<Expense> =
         expenseRepository.findAllByUserIdAndPeriod(
             userId = userId,
@@ -243,6 +348,8 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         const val EXPENSE_TEXT_WITH_DESCRIPTION = "500 такси"
         const val EXPENSE_TEXT_WITHOUT_DESCRIPTION = "500"
         const val EXPENSE_DESCRIPTION = "такси"
+        const val MANUAL_DATE_TEXT = "20.05.2026"
+        val MANUAL_DATE: LocalDate = LocalDate.parse("2026-05-20")
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val EXPENSE_WITH_DESCRIPTION: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
         val EXPENSE_WITHOUT_DESCRIPTION: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, null)

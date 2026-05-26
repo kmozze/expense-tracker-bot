@@ -8,4 +8,14 @@ sealed class UserState {
     data class AwaitingCategorySelection(
         val expenseDraft: ExpenseDraft,
     ) : UserState()
+
+    data class AwaitingExpenseDateSelection(
+        val expenseDraft: ExpenseDraft,
+        val categoryName: String,
+    ) : UserState()
+
+    data class AwaitingExpenseManualDateInput(
+        val expenseDraft: ExpenseDraft,
+        val categoryName: String,
+    ) : UserState()
 }

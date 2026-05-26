@@ -3,6 +3,7 @@ package me.kmozze.expensetracker.unit.handler.statehandler
 import me.kmozze.expensetracker.handler.statehandler.IdleStateHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.support.makeUserInput
@@ -82,8 +83,10 @@ class IdleStateHandlerTest {
                 UserCommand.Unsupported,
                 UserCommand.Cancel,
                 UserCommand.InvalidCategorySelection,
+                UserCommand.InvalidExpenseDateSelection,
                 UserCommand.PlainText("500 такси"),
                 UserCommand.SelectCategory(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+                UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY),
             )
     }
 }

@@ -2,6 +2,12 @@ package me.kmozze.expensetracker.model.domain
 
 import java.util.UUID
 
+enum class ExpenseDateSelection {
+    TODAY,
+    YESTERDAY,
+    MANUAL,
+}
+
 sealed class UserCommand {
     data object Start : UserCommand()
 
@@ -20,6 +26,12 @@ sealed class UserCommand {
     ) : UserCommand()
 
     data object InvalidCategorySelection : UserCommand()
+
+    data class SelectExpenseDate(
+        val selection: ExpenseDateSelection,
+    ) : UserCommand()
+
+    data object InvalidExpenseDateSelection : UserCommand()
 
     data class PlainText(
         val value: String,

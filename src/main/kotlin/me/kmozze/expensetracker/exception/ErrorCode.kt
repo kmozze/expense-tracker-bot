@@ -9,6 +9,8 @@ enum class BusinessErrorCode : ErrorCode {
     INVALID_AMOUNT,
     CATEGORY_NOT_FOUND,
     INVALID_CATEGORY_SELECTION,
+    INVALID_EXPENSE_DATE_SELECTION,
+    EXPENSE_DATE_INVALID_FORMAT,
     ;
 
     override val code: String get() = name

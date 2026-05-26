@@ -17,6 +17,18 @@ sealed class BotMessage {
         val description: String?,
     ) : BotMessage()
 
+    data class SelectExpenseDate(
+        val amount: Money,
+        val categoryName: String,
+        val description: String?,
+    ) : BotMessage()
+
+    data class EnterExpenseDateManually(
+        val amount: Money,
+        val categoryName: String,
+        val description: String?,
+    ) : BotMessage()
+
     data class ExpenseSaved(
         val amount: Money,
         val categoryName: String,

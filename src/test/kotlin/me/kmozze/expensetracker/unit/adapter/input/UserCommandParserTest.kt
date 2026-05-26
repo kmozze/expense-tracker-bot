@@ -3,6 +3,7 @@ package me.kmozze.expensetracker.unit.adapter.input
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.adapter.ui.Buttons
+import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.UserCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -47,6 +48,17 @@ class UserCommandParserTest {
             )
 
         assertThat(command).isEqualTo(UserCommand.Cancel)
+    }
+
+    @Test
+    fun `parse expense date callback data before text`() {
+        val command =
+            UserCommandParser.parse(
+                text = Buttons.ADD_EXPENSE,
+                callbackData = CallbackData.selectExpenseDateToday(),
+            )
+
+        assertThat(command).isEqualTo(UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY))
     }
 
     private companion object {
