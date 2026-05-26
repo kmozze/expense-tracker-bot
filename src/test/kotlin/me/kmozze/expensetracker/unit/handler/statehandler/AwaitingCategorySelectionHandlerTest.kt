@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.util.UUID
 
 @ExtendWith(MockKExtension::class)
@@ -56,7 +57,14 @@ class AwaitingCategorySelectionHandlerTest {
         val result = handle(UserCommand.SelectCategory(CATEGORY_ID))
 
         assertThat(result.response.message)
-            .isEqualTo(BotMessage.ExpenseSaved(EXPENSE_AMOUNT, category.name, EXPENSE_DESCRIPTION))
+            .isEqualTo(
+                BotMessage.ExpenseSaved(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = category.name,
+                    expenseDate = EXPENSE_DATE,
+                    description = EXPENSE_DESCRIPTION,
+                ),
+            )
         assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
@@ -150,6 +158,7 @@ class AwaitingCategorySelectionHandlerTest {
             categoryId = categoryId,
             amount = EXPENSE_AMOUNT,
             userId = USER_ID,
+            expenseDate = EXPENSE_DATE,
             description = EXPENSE_DESCRIPTION,
         )
 
@@ -157,6 +166,7 @@ class AwaitingCategorySelectionHandlerTest {
         const val USER_ID = 123L
         const val CHAT_ID = 456L
         const val EXPENSE_DESCRIPTION = "такси"
+        val EXPENSE_DATE: LocalDate = LocalDate.parse("2026-05-24")
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val PARSED_EXPENSE: ParsedExpense = ParsedExpense(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
         val AWAITING_CATEGORY_SELECTION: UserState.AwaitingCategorySelection =

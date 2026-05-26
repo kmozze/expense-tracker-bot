@@ -19,6 +19,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -50,15 +51,20 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(categorySelection.result.nextState)
             .isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITH_DESCRIPTION))
 
+        val expenseDateBeforeSave = LocalDate.now()
         val savedExpenseResult =
             dialogueRouter.processUserInput(
                 userId = userId,
                 chatId = chatId,
                 callbackData = CallbackData.selectCategory(category.id),
             )
+        val expenseDateAfterSave = LocalDate.now()
 
-        assertThat(savedExpenseResult.response.message)
-            .isEqualTo(BotMessage.ExpenseSaved(EXPENSE_AMOUNT, category.name, EXPENSE_DESCRIPTION))
+        val savedMessage = savedExpenseResult.response.message as BotMessage.ExpenseSaved
+        assertThat(savedMessage.amount).isEqualTo(EXPENSE_AMOUNT)
+        assertThat(savedMessage.categoryName).isEqualTo(category.name)
+        assertThat(savedMessage.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
+        assertThat(savedMessage.description).isEqualTo(EXPENSE_DESCRIPTION)
         assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
 
         val expenses = findExpenses(userId)
@@ -68,6 +74,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
         assertThat(expense.amount).isEqualTo(EXPENSE_AMOUNT)
         assertThat(expense.categoryId).isEqualTo(category.id)
+        assertThat(expense.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
         assertThat(expense.description).isEqualTo(EXPENSE_DESCRIPTION)
     }
 
@@ -85,15 +92,20 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(categorySelection.result.nextState)
             .isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITHOUT_DESCRIPTION))
 
+        val expenseDateBeforeSave = LocalDate.now()
         val savedExpenseResult =
             dialogueRouter.processUserInput(
                 userId = userId,
                 chatId = chatId,
                 callbackData = CallbackData.selectCategory(category.id),
             )
+        val expenseDateAfterSave = LocalDate.now()
 
-        assertThat(savedExpenseResult.response.message)
-            .isEqualTo(BotMessage.ExpenseSaved(EXPENSE_AMOUNT, category.name, null))
+        val savedMessage = savedExpenseResult.response.message as BotMessage.ExpenseSaved
+        assertThat(savedMessage.amount).isEqualTo(EXPENSE_AMOUNT)
+        assertThat(savedMessage.categoryName).isEqualTo(category.name)
+        assertThat(savedMessage.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
+        assertThat(savedMessage.description).isNull()
         assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
 
         val expenses = findExpenses(userId)
@@ -102,6 +114,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
         assertThat(expense.amount).isEqualTo(EXPENSE_AMOUNT)
         assertThat(expense.categoryId).isEqualTo(category.id)
+        assertThat(expense.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
         assertThat(expense.description).isNull()
     }
 

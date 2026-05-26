@@ -20,6 +20,7 @@ CREATE TABLE expense (
     amount      DECIMAL(19, 2) NOT NULL,
     category_id UUID           NOT NULL,
     user_id     BIGINT         NOT NULL,
+    expense_date DATE          NOT NULL,
     description TEXT,
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -31,5 +32,5 @@ CREATE TABLE expense (
 -- changeset kmozze:3
 -- comment: indexes
 CREATE INDEX idx_category_user_id ON category(user_id);
-CREATE INDEX idx_expense_user_id ON expense(user_id);
+CREATE INDEX idx_expense_user_id_expense_date ON expense(user_id, expense_date);
 CREATE INDEX idx_expense_category_id ON expense(category_id);

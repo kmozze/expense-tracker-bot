@@ -70,7 +70,7 @@ tasks.withType<Test> {
     }
 }
 
-val prepareJooqDdl by tasks.registering(Copy::class) {
+val prepareJooqDdl by tasks.registering(Sync::class) {
     from("src/main/resources/db/changelog/changesets") {
         include("*.sql")
         exclude("002-triggers.sql")

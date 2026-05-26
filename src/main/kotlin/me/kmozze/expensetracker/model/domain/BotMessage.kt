@@ -1,6 +1,7 @@
 package me.kmozze.expensetracker.model.domain
 
 import me.kmozze.expensetracker.exception.ErrorCode
+import java.time.LocalDate
 
 sealed class BotMessage {
     data object WelcomeFirstTime : BotMessage()
@@ -19,6 +20,7 @@ sealed class BotMessage {
     data class ExpenseSaved(
         val amount: Money,
         val categoryName: String,
+        val expenseDate: LocalDate,
         val description: String?,
     ) : BotMessage()
 
