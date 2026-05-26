@@ -5,5 +5,6 @@ data class UserInput(
     val chatId: Long,
     val text: String? = null,
     val callbackData: String? = null,
+    val callbackMessageId: Int? = null,
     val command: UserCommand,
 )

@@ -11,6 +11,7 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
@@ -52,11 +53,13 @@ class AwaitingCategorySelectionHandlerTest {
                 ),
             )
         assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
                     expenseDraft = EXPENSE_DRAFT.copy(categoryId = CATEGORY_ID),
                     categoryName = category.name,
+                    cardMessageId = CARD_MESSAGE_ID,
                 ),
             )
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
@@ -73,6 +76,7 @@ class AwaitingCategorySelectionHandlerTest {
 
         assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
         assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
@@ -89,6 +93,7 @@ class AwaitingCategorySelectionHandlerTest {
         assertThat(result.response.message)
             .isEqualTo(BotMessage.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION))
         assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)
@@ -99,7 +104,8 @@ class AwaitingCategorySelectionHandlerTest {
         val result = handle(UserCommand.Cancel)
 
         assertThat(result.response.message).isEqualTo(BotMessage.ExpenseCanceled)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         confirmVerified(categoryService)
     }
@@ -114,6 +120,7 @@ class AwaitingCategorySelectionHandlerTest {
         assertThat(result.response.message)
             .isEqualTo(BotMessage.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
         assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.SendNewMessage)
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)
@@ -125,11 +132,24 @@ class AwaitingCategorySelectionHandlerTest {
                 makeUserInput(
                     userId = USER_ID,
                     chatId = CHAT_ID,
-                    callbackData = "callback",
+                    callbackData = callbackDataFor(command),
+                    callbackMessageId = callbackMessageIdFor(command),
                     command = command,
                 ),
             currentState = AWAITING_CATEGORY_SELECTION,
         )
+
+    private fun callbackDataFor(command: UserCommand): String? =
+        when (command) {
+            is UserCommand.PlainText -> null
+            else -> "callback"
+        }
+
+    private fun callbackMessageIdFor(command: UserCommand): Int? =
+        when (command) {
+            is UserCommand.PlainText -> null
+            else -> CARD_MESSAGE_ID
+        }
 
     private fun category(id: UUID): Category =
         Category(
@@ -141,6 +161,7 @@ class AwaitingCategorySelectionHandlerTest {
     private companion object {
         const val USER_ID = 123L
         const val CHAT_ID = 456L
+        const val CARD_MESSAGE_ID = 789
         const val EXPENSE_DESCRIPTION = "такси"
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val EXPENSE_DRAFT: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)

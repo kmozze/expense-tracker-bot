@@ -9,6 +9,7 @@ import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -34,11 +35,12 @@ class AwaitingExpenseManualDateInputHandler(
         }
 
         return when (val command = input.command) {
-            UserCommand.Cancel -> cancelExpenseCreation()
+            UserCommand.Cancel -> cancelExpenseCreation(input, currentState)
             is UserCommand.PlainText -> saveExpenseWithManualDate(input, currentState, command.value)
             is UserCommand.SelectExpenseDate -> handleExpenseDateSelection(input, currentState, command.selection)
             UserCommand.InvalidExpenseDateSelection ->
                 manualDateInputError(
+                    input = input,
                     currentState = currentState,
                     errorCode = BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION,
                 )
@@ -50,7 +52,7 @@ class AwaitingExpenseManualDateInputHandler(
             UserCommand.Statistics,
             is UserCommand.SelectCategory,
             UserCommand.InvalidCategorySelection,
-            -> repeatManualDateInput(currentState)
+            -> repeatManualDateInput(input, currentState)
         }
     }
 
@@ -63,7 +65,7 @@ class AwaitingExpenseManualDateInputHandler(
             try {
                 expenseService.parseExpenseDate(dateText)
             } catch (e: BusinessException) {
-                return manualDateInputError(currentState, e.errorCode)
+                return manualDateInputError(input, currentState, e.errorCode)
             }
 
         return saveExpenseWithDate(input, currentState, expenseDate)
@@ -77,7 +79,7 @@ class AwaitingExpenseManualDateInputHandler(
         when (selection) {
             ExpenseDateSelection.TODAY -> saveExpenseWithDate(input, currentState, LocalDate.now(clock))
             ExpenseDateSelection.YESTERDAY -> saveExpenseWithDate(input, currentState, LocalDate.now(clock).minusDays(1))
-            ExpenseDateSelection.MANUAL -> repeatManualDateInput(currentState)
+            ExpenseDateSelection.MANUAL -> repeatManualDateInput(input, currentState)
         }
 
     private fun saveExpenseWithDate(
@@ -87,46 +89,67 @@ class AwaitingExpenseManualDateInputHandler(
     ): HandlerResult {
         val expenseDraft = currentState.expenseDraft.copy(expenseDate = expenseDate)
         val expense = expenseService.saveExpense(input.userId, expenseDraft)
+        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId ?: currentState.cardMessageId)
 
         return expenseSavedResult(
             expenseDraft = expenseDraft,
             categoryName = currentState.categoryName,
             expenseDate = expense.expenseDate,
+            delivery = delivery,
         )
     }
 
-    private fun repeatManualDateInput(currentState: UserState.AwaitingExpenseManualDateInput): HandlerResult =
-        HandlerResult(
+    private fun repeatManualDateInput(
+        input: UserInput,
+        currentState: UserState.AwaitingExpenseManualDateInput,
+    ): HandlerResult {
+        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId ?: currentState.cardMessageId)
+
+        return HandlerResult(
             response =
                 HandlerResponse(
                     message = currentState.toEnterExpenseDateManuallyMessage(),
                     actions = listOf(BotAction.ShowCancel),
+                    delivery = delivery,
                 ),
             nextState = currentState,
         )
+    }
 
     private fun manualDateInputError(
+        input: UserInput,
         currentState: UserState.AwaitingExpenseManualDateInput,
         errorCode: ErrorCode,
-    ): HandlerResult =
-        HandlerResult(
+    ): HandlerResult {
+        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId ?: currentState.cardMessageId)
+
+        return HandlerResult(
             response =
                 HandlerResponse(
                     message = BotMessage.Error(errorCode),
                     actions = listOf(BotAction.ShowCancel),
+                    delivery = delivery,
                 ),
             nextState = currentState,
         )
+    }
 
-    private fun cancelExpenseCreation(): HandlerResult =
-        HandlerResult(
+    private fun cancelExpenseCreation(
+        input: UserInput,
+        currentState: UserState.AwaitingExpenseManualDateInput,
+    ): HandlerResult {
+        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId ?: currentState.cardMessageId)
+
+        return HandlerResult(
             response =
                 HandlerResponse(
                     message = BotMessage.ExpenseCanceled,
-                    actions = listOf(BotAction.ShowMainMenu),
+                    actions = actionsForCompletedExpenseCard(delivery),
+                    delivery = delivery,
                 ),
             nextState = UserState.Idle,
         )
+    }
 
     private fun UserState.AwaitingExpenseManualDateInput.toEnterExpenseDateManuallyMessage(): BotMessage.EnterExpenseDateManually =
         BotMessage.EnterExpenseDateManually(
@@ -139,6 +162,7 @@ class AwaitingExpenseManualDateInputHandler(
         expenseDraft: ExpenseDraft,
         categoryName: String,
         expenseDate: LocalDate,
+        delivery: ResponseDelivery,
     ): HandlerResult =
         HandlerResult(
             response =
@@ -150,7 +174,8 @@ class AwaitingExpenseManualDateInputHandler(
                             expenseDate = expenseDate,
                             description = expenseDraft.description,
                         ),
-                    actions = listOf(BotAction.ShowMainMenu),
+                    actions = actionsForCompletedExpenseCard(delivery),
+                    delivery = delivery,
                 ),
             nextState = UserState.Idle,
         )

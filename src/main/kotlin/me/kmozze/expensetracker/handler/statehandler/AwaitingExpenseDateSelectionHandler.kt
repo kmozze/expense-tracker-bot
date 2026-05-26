@@ -7,9 +7,11 @@ import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
+import me.kmozze.expensetracker.model.domain.messageIdOrNull
 import me.kmozze.expensetracker.service.ExpenseService
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -32,10 +34,11 @@ class AwaitingExpenseDateSelectionHandler(
         }
 
         return when (val command = input.command) {
-            UserCommand.Cancel -> cancelExpenseCreation()
+            UserCommand.Cancel -> cancelExpenseCreation(input, currentState)
             is UserCommand.SelectExpenseDate -> handleExpenseDateSelection(input, currentState, command.selection)
             UserCommand.InvalidExpenseDateSelection ->
                 expenseDateSelectionError(
+                    input = input,
                     currentState = currentState,
                     errorCode = BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION,
                 )
@@ -48,7 +51,7 @@ class AwaitingExpenseDateSelectionHandler(
             is UserCommand.SelectCategory,
             UserCommand.InvalidCategorySelection,
             is UserCommand.PlainText,
-            -> repeatExpenseDateSelection(currentState)
+            -> repeatExpenseDateSelection(input, currentState)
         }
     }
 
@@ -60,7 +63,7 @@ class AwaitingExpenseDateSelectionHandler(
         when (selection) {
             ExpenseDateSelection.TODAY -> saveExpenseWithDate(input, currentState, LocalDate.now(clock))
             ExpenseDateSelection.YESTERDAY -> saveExpenseWithDate(input, currentState, LocalDate.now(clock).minusDays(1))
-            ExpenseDateSelection.MANUAL -> requestManualDateInput(currentState)
+            ExpenseDateSelection.MANUAL -> requestManualDateInput(input, currentState)
         }
 
     private fun saveExpenseWithDate(
@@ -70,60 +73,89 @@ class AwaitingExpenseDateSelectionHandler(
     ): HandlerResult {
         val expenseDraft = currentState.expenseDraft.copy(expenseDate = expenseDate)
         val expense = expenseService.saveExpense(input.userId, expenseDraft)
+        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId)
 
         return expenseSavedResult(
             expenseDraft = expenseDraft,
             categoryName = currentState.categoryName,
             expenseDate = expense.expenseDate,
+            delivery = delivery,
         )
     }
 
-    private fun requestManualDateInput(currentState: UserState.AwaitingExpenseDateSelection): HandlerResult =
-        HandlerResult(
+    private fun requestManualDateInput(
+        input: UserInput,
+        currentState: UserState.AwaitingExpenseDateSelection,
+    ): HandlerResult {
+        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId)
+
+        return HandlerResult(
             response =
                 HandlerResponse(
                     message = currentState.toEnterExpenseDateManuallyMessage(),
                     actions = listOf(BotAction.ShowCancel),
+                    delivery = delivery,
                 ),
             nextState =
                 UserState.AwaitingExpenseManualDateInput(
                     expenseDraft = currentState.expenseDraft,
                     categoryName = currentState.categoryName,
+                    cardMessageId = delivery.messageIdOrNull(),
                 ),
         )
+    }
 
-    private fun repeatExpenseDateSelection(currentState: UserState.AwaitingExpenseDateSelection): HandlerResult =
-        HandlerResult(
+    private fun repeatExpenseDateSelection(
+        input: UserInput,
+        currentState: UserState.AwaitingExpenseDateSelection,
+    ): HandlerResult {
+        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId ?: currentState.cardMessageId)
+
+        return HandlerResult(
             response =
                 HandlerResponse(
                     message = currentState.toSelectExpenseDateMessage(),
                     actions = listOf(BotAction.ShowExpenseDateSelection),
+                    delivery = delivery,
                 ),
             nextState = currentState,
         )
+    }
 
     private fun expenseDateSelectionError(
+        input: UserInput,
         currentState: UserState.AwaitingExpenseDateSelection,
         errorCode: BusinessErrorCode,
-    ): HandlerResult =
-        HandlerResult(
+    ): HandlerResult {
+        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId)
+
+        return HandlerResult(
             response =
                 HandlerResponse(
                     message = BotMessage.Error(errorCode),
                     actions = listOf(BotAction.ShowExpenseDateSelection),
+                    delivery = delivery,
                 ),
             nextState = currentState,
         )
+    }
 
-    private fun cancelExpenseCreation(): HandlerResult =
-        HandlerResult(
+    private fun cancelExpenseCreation(
+        input: UserInput,
+        currentState: UserState.AwaitingExpenseDateSelection,
+    ): HandlerResult {
+        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId ?: currentState.cardMessageId)
+
+        return HandlerResult(
             response =
                 HandlerResponse(
                     message = BotMessage.ExpenseCanceled,
-                    actions = listOf(BotAction.ShowMainMenu),
+                    actions = actionsForCompletedExpenseCard(delivery),
+                    delivery = delivery,
                 ),
             nextState = UserState.Idle,
         )
+    }
 
     private fun UserState.AwaitingExpenseDateSelection.toSelectExpenseDateMessage(): BotMessage.SelectExpenseDate =
         BotMessage.SelectExpenseDate(
@@ -143,6 +175,7 @@ class AwaitingExpenseDateSelectionHandler(
         expenseDraft: ExpenseDraft,
         categoryName: String,
         expenseDate: LocalDate,
+        delivery: ResponseDelivery,
     ): HandlerResult =
         HandlerResult(
             response =
@@ -154,7 +187,8 @@ class AwaitingExpenseDateSelectionHandler(
                             expenseDate = expenseDate,
                             description = expenseDraft.description,
                         ),
-                    actions = listOf(BotAction.ShowMainMenu),
+                    actions = actionsForCompletedExpenseCard(delivery),
+                    delivery = delivery,
                 ),
             nextState = UserState.Idle,
         )

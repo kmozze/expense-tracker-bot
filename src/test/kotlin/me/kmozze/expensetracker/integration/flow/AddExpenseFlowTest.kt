@@ -9,6 +9,7 @@ import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
@@ -66,6 +67,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
                 UserState.AwaitingExpenseDateSelection(
                     expenseDraft = EXPENSE_WITH_DESCRIPTION.copy(categoryId = category.id),
                     categoryName = category.name,
+                    cardMessageId = CARD_MESSAGE_ID,
                 ),
             )
         assertThat(findExpenses(userId)).isEmpty()
@@ -79,6 +81,8 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(savedMessage.categoryName).isEqualTo(category.name)
         assertThat(savedMessage.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
         assertThat(savedMessage.description).isEqualTo(EXPENSE_DESCRIPTION)
+        assertThat(savedExpenseResult.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(savedExpenseResult.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
 
         val expenses = findExpenses(userId)
@@ -113,6 +117,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
                 userId = userId,
                 chatId = chatId,
                 callbackData = CallbackData.enterExpenseDateManually(),
+                callbackMessageId = CARD_MESSAGE_ID,
             )
         assertThat(manualDateInputResult.response.message)
             .isEqualTo(
@@ -122,11 +127,14 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
                     description = null,
                 ),
             )
+        assertThat(manualDateInputResult.response.actions).containsExactly(BotAction.ShowCancel)
+        assertThat(manualDateInputResult.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(manualDateInputResult.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(
                     expenseDraft = EXPENSE_WITHOUT_DESCRIPTION.copy(categoryId = category.id),
                     categoryName = category.name,
+                    cardMessageId = CARD_MESSAGE_ID,
                 ),
             )
 
@@ -142,6 +150,8 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(savedMessage.categoryName).isEqualTo(category.name)
         assertThat(savedMessage.expenseDate).isEqualTo(MANUAL_DATE)
         assertThat(savedMessage.description).isNull()
+        assertThat(savedExpenseResult.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(savedExpenseResult.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
 
         val expenses = findExpenses(userId)
@@ -167,6 +177,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
             userId = userId,
             chatId = chatId,
             callbackData = CallbackData.enterExpenseDateManually(),
+            callbackMessageId = CARD_MESSAGE_ID,
         )
 
         val result =
@@ -178,11 +189,13 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
         assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.EXPENSE_DATE_INVALID_FORMAT))
         assertThat(result.response.actions).containsExactly(BotAction.ShowCancel)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(
                     expenseDraft = EXPENSE_WITH_DESCRIPTION.copy(categoryId = category.id),
                     categoryName = category.name,
+                    cardMessageId = CARD_MESSAGE_ID,
                 ),
             )
         assertThat(findExpenses(userId)).isEmpty()
@@ -209,10 +222,12 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
                 userId = userId,
                 chatId = chatId,
                 callbackData = CallbackData.selectCategory(foreignCategory.id),
+                callbackMessageId = CARD_MESSAGE_ID,
             )
 
         assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
         assertThat(result.response.actions.single()).isInstanceOf(BotAction.ShowCategorySelection::class.java)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITH_DESCRIPTION))
         assertThat(findExpenses(userId)).isEmpty()
     }
@@ -305,14 +320,17 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
                 userId = userId,
                 chatId = chatId,
                 callbackData = CallbackData.selectCategory(category.id),
+                callbackMessageId = CARD_MESSAGE_ID,
             )
 
         assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
                     expenseDraft = expenseDraft.copy(categoryId = category.id),
                     categoryName = category.name,
+                    cardMessageId = CARD_MESSAGE_ID,
                 ),
             )
 
@@ -327,6 +345,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
             userId = userId,
             chatId = chatId,
             callbackData = CallbackData.selectExpenseDateToday(),
+            callbackMessageId = CARD_MESSAGE_ID,
         )
 
     private fun findExpenses(userId: Long): List<Expense> =
@@ -349,6 +368,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         const val EXPENSE_TEXT_WITHOUT_DESCRIPTION = "500"
         const val EXPENSE_DESCRIPTION = "такси"
         const val MANUAL_DATE_TEXT = "20.05.2026"
+        const val CARD_MESSAGE_ID = 789
         val MANUAL_DATE: LocalDate = LocalDate.parse("2026-05-20")
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val EXPENSE_WITH_DESCRIPTION: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
