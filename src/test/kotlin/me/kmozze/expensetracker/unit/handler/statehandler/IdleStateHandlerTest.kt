@@ -58,6 +58,20 @@ class IdleStateHandlerTest {
         assertThat(result.nextState).isEqualTo(UserState.Idle)
     }
 
+    @ParameterizedTest(name = "command: {0}")
+    @MethodSource("staleCallbackCommands")
+    fun `stale callback commands keep idle state with expired selection message`(command: UserCommand) {
+        val result =
+            handler.handle(
+                input = makeInput(command),
+                currentState = UserState.Idle,
+            )
+
+        assertThat(result.response.message).isEqualTo(BotMessage.SelectionExpired)
+        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(result.nextState).isEqualTo(UserState.Idle)
+    }
+
     private fun makeInput(command: UserCommand) =
         makeUserInput(
             userId = USER_ID,
@@ -81,12 +95,17 @@ class IdleStateHandlerTest {
         fun unsupportedCommands(): Stream<UserCommand> =
             Stream.of(
                 UserCommand.Unsupported,
-                UserCommand.Cancel,
-                UserCommand.InvalidCategorySelection,
-                UserCommand.InvalidExpenseDateSelection,
                 UserCommand.PlainText("500 такси"),
+            )
+
+        @JvmStatic
+        fun staleCallbackCommands(): Stream<UserCommand> =
+            Stream.of(
+                UserCommand.Cancel,
                 UserCommand.SelectCategory(UUID.fromString("00000000-0000-0000-0000-000000000001")),
                 UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY),
+                UserCommand.InvalidCategorySelection,
+                UserCommand.InvalidExpenseDateSelection,
             )
     }
 }
