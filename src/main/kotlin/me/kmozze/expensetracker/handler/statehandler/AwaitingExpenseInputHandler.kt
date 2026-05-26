@@ -39,7 +39,7 @@ class AwaitingExpenseInputHandler(
                 else -> return repeatExpenseInstructions()
             }
 
-        val parsedExpense =
+        val expenseDraft =
             try {
                 expenseService.parseExpense(text)
             } catch (e: BusinessException) {
@@ -63,12 +63,12 @@ class AwaitingExpenseInputHandler(
                 HandlerResponse(
                     message =
                         BotMessage.SelectCategory(
-                            amount = parsedExpense.amount,
-                            description = parsedExpense.description,
+                            amount = expenseDraft.amount,
+                            description = expenseDraft.description,
                         ),
                     actions = listOf(BotAction.ShowCategorySelection(categories)),
                 ),
-            nextState = UserState.AwaitingCategorySelection(parsedExpense),
+            nextState = UserState.AwaitingCategorySelection(expenseDraft),
         )
     }
 

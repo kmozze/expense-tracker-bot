@@ -6,6 +6,6 @@ sealed class UserState {
     data object AwaitingExpenseInput : UserState()
 
     data class AwaitingCategorySelection(
-        val parsedExpense: ParsedExpense,
+        val expenseDraft: ExpenseDraft,
     ) : UserState()
 }

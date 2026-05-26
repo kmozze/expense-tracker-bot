@@ -10,8 +10,8 @@ import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseInputHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
-import me.kmozze.expensetracker.model.domain.ParsedExpense
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
@@ -43,7 +43,7 @@ class AwaitingExpenseInputHandlerTest {
     @Test
     fun `plain text parses expense and opens category selection`() {
         val categories = listOf(category(id = FIRST_CATEGORY_ID), category(id = SECOND_CATEGORY_ID))
-        every { expenseService.parseExpense(EXPENSE_TEXT) } returns PARSED_EXPENSE
+        every { expenseService.parseExpense(EXPENSE_TEXT) } returns EXPENSE_DRAFT
         every { categoryService.getCategories(USER_ID) } returns categories
 
         val result = handle(UserCommand.PlainText(EXPENSE_TEXT))
@@ -51,7 +51,7 @@ class AwaitingExpenseInputHandlerTest {
         assertThat(result.response.message)
             .isEqualTo(BotMessage.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
         assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
-        assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(PARSED_EXPENSE))
+        assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_DRAFT))
         verify(exactly = 1) { expenseService.parseExpense(EXPENSE_TEXT) }
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(expenseService, categoryService)
@@ -72,7 +72,7 @@ class AwaitingExpenseInputHandlerTest {
 
     @Test
     fun `parsed expense without categories returns no categories message`() {
-        every { expenseService.parseExpense(EXPENSE_TEXT) } returns PARSED_EXPENSE
+        every { expenseService.parseExpense(EXPENSE_TEXT) } returns EXPENSE_DRAFT
         every { categoryService.getCategories(USER_ID) } returns emptyList()
 
         val result = handle(UserCommand.PlainText(EXPENSE_TEXT))
@@ -140,7 +140,7 @@ class AwaitingExpenseInputHandlerTest {
         const val EXPENSE_TEXT = "500 такси"
         const val EXPENSE_DESCRIPTION = "такси"
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
-        val PARSED_EXPENSE: ParsedExpense = ParsedExpense(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
+        val EXPENSE_DRAFT: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
         val FIRST_CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
         val SECOND_CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000002")
     }

@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.service
 
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.exception
-import me.kmozze.expensetracker.model.domain.ParsedExpense
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.entity.Expense
 import me.kmozze.expensetracker.repository.IExpenseRepository
 import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.util.UUID
 
 @Service
 class ExpenseService(
@@ -20,27 +19,27 @@ class ExpenseService(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    fun parseExpense(text: String): ParsedExpense {
-        val parsedExpense = expenseTextParser.parse(text)
-        logger.info("Expense parsed successfully: {}", parsedExpense)
+    fun parseExpense(text: String): ExpenseDraft {
+        val expenseDraft = expenseTextParser.parse(text)
+        logger.info("Expense parsed successfully: {}", expenseDraft)
 
-        return parsedExpense
+        return expenseDraft
     }
 
     @Transactional
     fun saveExpense(
         userId: Long,
-        categoryId: UUID,
-        parsedExpense: ParsedExpense,
+        expenseDraft: ExpenseDraft,
     ): Expense =
         try {
+            val categoryId = expenseDraft.requireCategoryId()
             val expense =
                 Expense(
                     categoryId = categoryId,
-                    amount = parsedExpense.amount,
+                    amount = expenseDraft.amount,
                     userId = userId,
-                    expenseDate = LocalDate.now(),
-                    description = parsedExpense.description,
+                    expenseDate = expenseDraft.expenseDate ?: LocalDate.now(),
+                    description = expenseDraft.description,
                 )
 
             expenseRepository.create(expense)

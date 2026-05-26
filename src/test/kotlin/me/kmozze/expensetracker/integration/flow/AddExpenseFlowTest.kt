@@ -6,9 +6,9 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.Money
-import me.kmozze.expensetracker.model.domain.ParsedExpense
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
@@ -244,8 +244,8 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         const val EXPENSE_TEXT_WITHOUT_DESCRIPTION = "500"
         const val EXPENSE_DESCRIPTION = "такси"
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
-        val EXPENSE_WITH_DESCRIPTION: ParsedExpense = ParsedExpense(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
-        val EXPENSE_WITHOUT_DESCRIPTION: ParsedExpense = ParsedExpense(EXPENSE_AMOUNT, null)
+        val EXPENSE_WITH_DESCRIPTION: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
+        val EXPENSE_WITHOUT_DESCRIPTION: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, null)
         val TEST_PERIOD_FROM: OffsetDateTime = OffsetDateTime.parse("2000-01-01T00:00:00Z")
         val TEST_PERIOD_TO: OffsetDateTime = OffsetDateTime.parse("2100-01-01T00:00:00Z")
     }
