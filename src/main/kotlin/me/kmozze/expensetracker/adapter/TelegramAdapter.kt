@@ -6,6 +6,7 @@ import me.kmozze.expensetracker.adapter.ui.MessageFormatter
 import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserInput
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -15,7 +16,6 @@ import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsume
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.generics.TelegramClient
 
@@ -30,6 +30,7 @@ class TelegramAdapter(
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     private val telegramClient: TelegramClient = OkHttpTelegramClient(botToken)
+    private val telegramMessageSender = TelegramMessageSender(telegramClient, keyboardApplier)
 
     override fun getBotToken(): String = botToken
 
@@ -43,7 +44,7 @@ class TelegramAdapter(
         val userInput = extractUserInput(update) ?: return
 
         val outcome: HandlerResult = dialogueRouter.process(userInput)
-        sendResponse(userInput.chatId, outcome.response)
+        sendResponse(userInput, outcome.response)
     }
 
     private fun extractUserInput(update: Update): UserInput? {
@@ -73,6 +74,7 @@ class TelegramAdapter(
                     chatId = msg.chatId,
                     text = null,
                     callbackData = callbackQuery.data,
+                    callbackMessageId = msg.messageId,
                     command = UserCommandParser.parse(text = null, callbackData = callbackQuery.data),
                 )
             }
@@ -102,20 +104,15 @@ class TelegramAdapter(
     }
 
     private fun sendResponse(
-        chatId: Long,
+        input: UserInput,
         response: HandlerResponse,
     ) {
         val text = messageFormatter.format(response.message)
 
-        val sendMessage = SendMessage(chatId.toString(), text)
-
-        keyboardApplier.apply(sendMessage, response.actions)
-
-        try {
-            telegramClient.execute(sendMessage)
-            logger.info("Successful to send message to chat $chatId")
-        } catch (e: Exception) {
-            logger.error("Failed to send message to chat $chatId", e)
+        when (val delivery = response.delivery) {
+            ResponseDelivery.SendNewMessage -> telegramMessageSender.sendNewMessage(input.chatId, text, response.actions)
+            is ResponseDelivery.EditMessage ->
+                telegramMessageSender.editMessage(input.chatId, delivery.messageId, text, response.actions)
         }
     }
 }

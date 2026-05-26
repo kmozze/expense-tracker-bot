@@ -3,6 +3,7 @@ package me.kmozze.expensetracker.adapter.ui
 import me.kmozze.expensetracker.model.domain.BotAction
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 
 @Component
 class KeyboardApplier {
@@ -20,6 +21,28 @@ class KeyboardApplier {
                     sendMessage.replyMarkup = Keyboards.expenseDateSelection()
                 is BotAction.ShowCancel ->
                     sendMessage.replyMarkup = Keyboards.cancel()
+                is BotAction.ClearInlineKeyboard ->
+                    Unit
+            }
+        }
+    }
+
+    fun apply(
+        editMessage: EditMessageText,
+        actions: List<BotAction>,
+    ) {
+        actions.forEach { action ->
+            when (action) {
+                is BotAction.ShowCategorySelection ->
+                    editMessage.replyMarkup = Keyboards.categorySelection(action.categories)
+                is BotAction.ShowExpenseDateSelection ->
+                    editMessage.replyMarkup = Keyboards.expenseDateSelection()
+                is BotAction.ShowCancel ->
+                    editMessage.replyMarkup = Keyboards.cancel()
+                is BotAction.ShowMainMenu,
+                is BotAction.ClearInlineKeyboard,
+                ->
+                    editMessage.replyMarkup = null
             }
         }
     }

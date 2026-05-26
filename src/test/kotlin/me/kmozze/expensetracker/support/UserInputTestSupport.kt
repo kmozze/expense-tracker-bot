@@ -11,6 +11,7 @@ fun makeUserInput(
     chatId: Long,
     text: String? = null,
     callbackData: String? = null,
+    callbackMessageId: Int? = null,
     command: UserCommand = UserCommandParser.parse(text = text, callbackData = callbackData),
 ): UserInput =
     UserInput(
@@ -18,6 +19,7 @@ fun makeUserInput(
         chatId = chatId,
         text = text,
         callbackData = callbackData,
+        callbackMessageId = callbackMessageId,
         command = command,
     )
 
@@ -26,6 +28,7 @@ fun DialogueRouter.processUserInput(
     chatId: Long,
     text: String? = null,
     callbackData: String? = null,
+    callbackMessageId: Int? = null,
     command: UserCommand = UserCommandParser.parse(text = text, callbackData = callbackData),
 ): HandlerResult =
     process(
@@ -34,6 +37,7 @@ fun DialogueRouter.processUserInput(
             chatId = chatId,
             text = text,
             callbackData = callbackData,
+            callbackMessageId = callbackMessageId,
             command = command,
         ),
     )

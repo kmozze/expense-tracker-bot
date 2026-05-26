@@ -12,6 +12,7 @@ import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Expense
@@ -58,7 +59,8 @@ class AwaitingExpenseDateSelectionHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.saveExpense(USER_ID, completeDraft) }
         confirmVerified(expenseService)
@@ -81,6 +83,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
                 ),
             )
         assertThat(result.nextState).isEqualTo(UserState.Idle)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         verify(exactly = 1) { expenseService.saveExpense(USER_ID, completeDraft) }
         confirmVerified(expenseService)
     }
@@ -98,11 +101,13 @@ class AwaitingExpenseDateSelectionHandlerTest {
                 ),
             )
         assertThat(result.response.actions).containsExactly(BotAction.ShowCancel)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(
                     expenseDraft = EXPENSE_DRAFT_WITH_CATEGORY,
                     categoryName = CATEGORY_NAME,
+                    cardMessageId = CARD_MESSAGE_ID,
                 ),
             )
         confirmVerified(expenseService)
@@ -114,6 +119,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
         assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION))
         assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_DATE_SELECTION)
         confirmVerified(expenseService)
     }
@@ -123,7 +129,8 @@ class AwaitingExpenseDateSelectionHandlerTest {
         val result = handle(UserCommand.Cancel)
 
         assertThat(result.response.message).isEqualTo(BotMessage.ExpenseCanceled)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         confirmVerified(expenseService)
     }
@@ -135,6 +142,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
                     userId = USER_ID,
                     chatId = CHAT_ID,
                     callbackData = "callback",
+                    callbackMessageId = CARD_MESSAGE_ID,
                     command = command,
                 ),
             currentState = AWAITING_EXPENSE_DATE_SELECTION,
@@ -152,6 +160,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
     private companion object {
         const val USER_ID = 123L
         const val CHAT_ID = 456L
+        const val CARD_MESSAGE_ID = 789
         const val CATEGORY_NAME = "Транспорт"
         const val EXPENSE_DESCRIPTION = "такси"
         val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
@@ -166,6 +175,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
             UserState.AwaitingExpenseDateSelection(
                 expenseDraft = EXPENSE_DRAFT_WITH_CATEGORY,
                 categoryName = CATEGORY_NAME,
+                cardMessageId = CARD_MESSAGE_ID,
             )
         val CLOCK: Clock = Clock.fixed(Instant.parse("2026-05-24T12:00:00Z"), ZoneOffset.UTC)
         val TODAY: LocalDate = LocalDate.parse("2026-05-24")

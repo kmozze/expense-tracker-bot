@@ -12,4 +12,6 @@ sealed class BotAction {
     data object ShowExpenseDateSelection : BotAction()
 
     data object ShowCancel : BotAction()
+
+    data object ClearInlineKeyboard : BotAction()
 }
