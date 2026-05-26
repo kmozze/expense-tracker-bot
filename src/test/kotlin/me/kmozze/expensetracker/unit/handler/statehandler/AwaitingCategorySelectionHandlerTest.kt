@@ -9,8 +9,8 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.handler.statehandler.AwaitingCategorySelectionHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
-import me.kmozze.expensetracker.model.domain.ParsedExpense
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
@@ -49,8 +49,7 @@ class AwaitingCategorySelectionHandlerTest {
         every {
             expenseService.saveExpense(
                 userId = USER_ID,
-                categoryId = CATEGORY_ID,
-                parsedExpense = PARSED_EXPENSE,
+                expenseDraft = EXPENSE_DRAFT.copy(categoryId = CATEGORY_ID),
             )
         } returns savedExpense
 
@@ -71,8 +70,7 @@ class AwaitingCategorySelectionHandlerTest {
         verify(exactly = 1) {
             expenseService.saveExpense(
                 userId = USER_ID,
-                categoryId = CATEGORY_ID,
-                parsedExpense = PARSED_EXPENSE,
+                expenseDraft = EXPENSE_DRAFT.copy(categoryId = CATEGORY_ID),
             )
         }
         confirmVerified(categoryService, expenseService)
@@ -168,9 +166,9 @@ class AwaitingCategorySelectionHandlerTest {
         const val EXPENSE_DESCRIPTION = "такси"
         val EXPENSE_DATE: LocalDate = LocalDate.parse("2026-05-24")
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
-        val PARSED_EXPENSE: ParsedExpense = ParsedExpense(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
+        val EXPENSE_DRAFT: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)
         val AWAITING_CATEGORY_SELECTION: UserState.AwaitingCategorySelection =
-            UserState.AwaitingCategorySelection(PARSED_EXPENSE)
+            UserState.AwaitingCategorySelection(EXPENSE_DRAFT)
         val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
         val SECOND_CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000002")
     }

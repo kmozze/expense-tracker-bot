@@ -8,10 +8,10 @@ import me.kmozze.expensetracker.handler.StartCommandHandler
 import me.kmozze.expensetracker.handler.UnknownCommandHandler
 import me.kmozze.expensetracker.handler.statehandler.StateHandler
 import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.Money
-import me.kmozze.expensetracker.model.domain.ParsedExpense
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.UserSessionService
@@ -35,11 +35,11 @@ class RoutingHandlerTest {
         val idleHandler = RecordingStateHandler(UserState.Idle::class)
         val firstState =
             UserState.AwaitingCategorySelection(
-                ParsedExpense(Money.of(BigDecimal("500")), "такси"),
+                ExpenseDraft(Money.of(BigDecimal("500")), "такси"),
             )
         val secondState =
             UserState.AwaitingCategorySelection(
-                ParsedExpense(Money.of(BigDecimal("750")), "обед"),
+                ExpenseDraft(Money.of(BigDecimal("750")), "обед"),
             )
 
         val router =

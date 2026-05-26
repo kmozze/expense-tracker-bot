@@ -67,12 +67,8 @@ class AwaitingCategorySelectionHandler(
                     errorCode = BusinessErrorCode.CATEGORY_NOT_FOUND,
                 )
 
-        val expense =
-            expenseService.saveExpense(
-                userId = input.userId,
-                categoryId = category.id,
-                parsedExpense = currentState.parsedExpense,
-            )
+        val expenseDraft = currentState.expenseDraft.copy(categoryId = category.id)
+        val expense = expenseService.saveExpense(input.userId, expenseDraft)
 
         return HandlerResult(
             response =
@@ -111,8 +107,8 @@ class AwaitingCategorySelectionHandler(
                 HandlerResponse(
                     message =
                         BotMessage.SelectCategory(
-                            amount = currentState.parsedExpense.amount,
-                            description = currentState.parsedExpense.description,
+                            amount = currentState.expenseDraft.amount,
+                            description = currentState.expenseDraft.description,
                         ),
                     actions = listOf(BotAction.ShowCategorySelection(categories)),
                 ),
