@@ -47,6 +47,27 @@ class CallbackDataParserTest {
         assertThat(command).isEqualTo(UserCommand.SelectExpenseDate(ExpenseDateSelection.MANUAL))
     }
 
+    @Test
+    fun `parse expense deletion request callback`() {
+        val command = CallbackDataParser.parse(CallbackData.requestExpenseDeletion(EXPENSE_ID))
+
+        assertThat(command).isEqualTo(UserCommand.RequestExpenseDeletion(EXPENSE_ID))
+    }
+
+    @Test
+    fun `parse expense deletion confirmation callback`() {
+        val command = CallbackDataParser.parse(CallbackData.confirmExpenseDeletion(EXPENSE_ID))
+
+        assertThat(command).isEqualTo(UserCommand.ConfirmExpenseDeletion(EXPENSE_ID))
+    }
+
+    @Test
+    fun `parse expense deletion cancel callback`() {
+        val command = CallbackDataParser.parse(CallbackData.cancelExpenseDeletion(EXPENSE_ID))
+
+        assertThat(command).isEqualTo(UserCommand.CancelExpenseDeletion(EXPENSE_ID))
+    }
+
     @ParameterizedTest(name = "callbackData: \"{0}\"")
     @MethodSource("invalidCategoryCallbacks")
     fun `parse invalid category selection callback`(callbackData: String) {
@@ -64,6 +85,14 @@ class CallbackDataParserTest {
     }
 
     @ParameterizedTest(name = "callbackData: \"{0}\"")
+    @MethodSource("invalidExpenseDeletionCallbacks")
+    fun `parse invalid expense deletion callback`(callbackData: String) {
+        val command = CallbackDataParser.parse(callbackData)
+
+        assertThat(command).isEqualTo(UserCommand.InvalidExpenseDeletion)
+    }
+
+    @ParameterizedTest(name = "callbackData: \"{0}\"")
     @MethodSource("unsupportedCallbacks")
     fun `parse unsupported callback`(callbackData: String?) {
         val command = CallbackDataParser.parse(callbackData)
@@ -73,6 +102,7 @@ class CallbackDataParserTest {
 
     private companion object {
         val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000101")
 
         @JvmStatic
         fun invalidCategoryCallbacks(): Stream<String> =
@@ -87,6 +117,17 @@ class CallbackDataParserTest {
             Stream.of(
                 "select_expense_date:",
                 "select_expense_date:not-a-date-choice",
+            )
+
+        @JvmStatic
+        fun invalidExpenseDeletionCallbacks(): Stream<String> =
+            Stream.of(
+                "delete_expense:",
+                "delete_expense:not-a-uuid",
+                "confirm_delete_expense:",
+                "confirm_delete_expense:not-a-uuid",
+                "cancel_delete_expense:",
+                "cancel_delete_expense:not-a-uuid",
             )
 
         @JvmStatic

@@ -11,4 +11,5 @@ object Icons {
     const val LIST = "📋"
     const val STATS = "📊"
     const val CANCEL = "❌"
+    const val DELETE = "🗑️"
 }

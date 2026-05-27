@@ -73,4 +73,34 @@ class MessageFormatterTest {
                     "Введите дату траты в формате ДД.ММ.ГГГГ.",
             )
     }
+
+    @Test
+    fun `saved expense message can include deletion confirmation question`() {
+        val text =
+            formatter.format(
+                BotMessage.ExpenseSaved(
+                    amount = Money.of(BigDecimal("500.00")),
+                    categoryName = "Еда",
+                    expenseDate = LocalDate.parse("2026-05-24"),
+                    description = null,
+                    showDeletionConfirmation = true,
+                ),
+            )
+
+        assertThat(text)
+            .isEqualTo(
+                "✅ Сохранено!\n" +
+                    "💰 Сумма: 500.00 ₽\n" +
+                    "📂 Категория: Еда\n" +
+                    "📅 Дата: 24.05.2026\n\n" +
+                    "Точно хотите удалить расход?",
+            )
+    }
+
+    @Test
+    fun `expense deleted message confirms deletion`() {
+        val text = formatter.format(BotMessage.ExpenseDeleted)
+
+        assertThat(text).isEqualTo("Расход удален")
+    }
 }

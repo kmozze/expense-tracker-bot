@@ -11,6 +11,12 @@ object CallbackDataParser {
             value == CallbackData.CANCEL_VALUE -> UserCommand.Cancel
             value?.startsWith(CallbackData.SELECT_CATEGORY_PREFIX) == true -> parseSelectCategory(value)
             value?.startsWith(CallbackData.SELECT_EXPENSE_DATE_PREFIX) == true -> parseSelectExpenseDate(value)
+            value?.startsWith(CallbackData.REQUEST_EXPENSE_DELETION_PREFIX) == true ->
+                parseExpenseDeletion(value, CallbackData.REQUEST_EXPENSE_DELETION_PREFIX, UserCommand::RequestExpenseDeletion)
+            value?.startsWith(CallbackData.CONFIRM_EXPENSE_DELETION_PREFIX) == true ->
+                parseExpenseDeletion(value, CallbackData.CONFIRM_EXPENSE_DELETION_PREFIX, UserCommand::ConfirmExpenseDeletion)
+            value?.startsWith(CallbackData.CANCEL_EXPENSE_DELETION_PREFIX) == true ->
+                parseExpenseDeletion(value, CallbackData.CANCEL_EXPENSE_DELETION_PREFIX, UserCommand::CancelExpenseDeletion)
             else -> UserCommand.Unsupported
         }
 
@@ -28,4 +34,15 @@ object CallbackDataParser {
             CallbackData.EXPENSE_DATE_MANUAL_VALUE -> UserCommand.SelectExpenseDate(ExpenseDateSelection.MANUAL)
             else -> UserCommand.InvalidExpenseDateSelection
         }
+
+    private fun parseExpenseDeletion(
+        value: String,
+        prefix: String,
+        command: (UUID) -> UserCommand,
+    ): UserCommand =
+        value
+            .removePrefix(prefix)
+            .let { runCatching { UUID.fromString(it) }.getOrNull() }
+            ?.let(command)
+            ?: UserCommand.InvalidExpenseDeletion
 }

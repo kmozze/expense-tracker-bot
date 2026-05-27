@@ -24,10 +24,14 @@ class JooqExpenseRepository(
             createdAt = this.createdAt,
         )
 
-    override fun findById(id: UUID): Expense? =
+    override fun findByIdForUser(
+        id: UUID,
+        userId: Long,
+    ): Expense? =
         dsl
             .selectFrom(EXPENSE)
             .where(EXPENSE.ID.eq(id))
+            .and(EXPENSE.USER_ID.eq(userId))
             .fetchOne()
             ?.toDomain()
 
@@ -56,11 +60,15 @@ class JooqExpenseRepository(
             .fetchSingle()
             .toDomain()
 
-    override fun delete(id: UUID): Boolean {
+    override fun deleteByIdForUser(
+        id: UUID,
+        userId: Long,
+    ): Boolean {
         val affectedRows =
             dsl
                 .deleteFrom(EXPENSE)
                 .where(EXPENSE.ID.eq(id))
+                .and(EXPENSE.USER_ID.eq(userId))
                 .execute()
 
         return affectedRows > 0

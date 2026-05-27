@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
+import java.util.UUID
 
 object Keyboards {
     fun mainMenu(): ReplyKeyboardMarkup {
@@ -88,6 +89,45 @@ object Keyboards {
             .builder()
             .keyboard(listOf(cancelRow()))
             .build()
+
+    fun expenseCardActions(expenseId: UUID): InlineKeyboardMarkup =
+        InlineKeyboardMarkup
+            .builder()
+            .keyboard(
+                listOf(
+                    InlineKeyboardRow(
+                        listOf(
+                            InlineKeyboardButton
+                                .builder()
+                                .text(Buttons.DELETE)
+                                .callbackData(CallbackData.requestExpenseDeletion(expenseId))
+                                .build(),
+                        ),
+                    ),
+                ),
+            ).build()
+
+    fun expenseDeletionConfirmation(expenseId: UUID): InlineKeyboardMarkup =
+        InlineKeyboardMarkup
+            .builder()
+            .keyboard(
+                listOf(
+                    InlineKeyboardRow(
+                        listOf(
+                            InlineKeyboardButton
+                                .builder()
+                                .text(Buttons.CONFIRM_DELETE)
+                                .callbackData(CallbackData.confirmExpenseDeletion(expenseId))
+                                .build(),
+                            InlineKeyboardButton
+                                .builder()
+                                .text(Buttons.NO)
+                                .callbackData(CallbackData.cancelExpenseDeletion(expenseId))
+                                .build(),
+                        ),
+                    ),
+                ),
+            ).build()
 
     private fun cancelRow(): InlineKeyboardRow =
         InlineKeyboardRow(

@@ -50,6 +50,10 @@ class AwaitingCategorySelectionHandler(
             UserCommand.Statistics,
             is UserCommand.SelectExpenseDate,
             UserCommand.InvalidExpenseDateSelection,
+            is UserCommand.RequestExpenseDeletion,
+            is UserCommand.ConfirmExpenseDeletion,
+            is UserCommand.CancelExpenseDeletion,
+            UserCommand.InvalidExpenseDeletion,
             is UserCommand.PlainText,
             -> repeatCategorySelection(input, currentState)
         }
@@ -68,7 +72,11 @@ class AwaitingCategorySelectionHandler(
                     errorCode = BusinessErrorCode.CATEGORY_NOT_FOUND,
                 )
 
-        val expenseDraft = currentState.expenseDraft.copy(categoryId = category.id)
+        val expenseDraft =
+            currentState.expenseDraft.copy(
+                categoryId = category.id,
+                categoryName = category.name,
+            )
         val delivery = responseDeliveryForExpenseCard(input.callbackMessageId)
 
         return HandlerResult(
@@ -86,7 +94,6 @@ class AwaitingCategorySelectionHandler(
             nextState =
                 UserState.AwaitingExpenseDateSelection(
                     expenseDraft = expenseDraft,
-                    categoryName = category.name,
                     cardMessageId = delivery.messageIdOrNull(),
                 ),
         )

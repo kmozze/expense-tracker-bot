@@ -6,7 +6,6 @@ import me.kmozze.expensetracker.exception.ErrorCode
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotMessage
 import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
-import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
@@ -17,6 +16,7 @@ import me.kmozze.expensetracker.service.ExpenseService
 import org.springframework.stereotype.Component
 import java.time.Clock
 import java.time.LocalDate
+import java.util.UUID
 import kotlin.reflect.KClass
 
 @Component
@@ -52,6 +52,10 @@ class AwaitingExpenseManualDateInputHandler(
             UserCommand.Statistics,
             is UserCommand.SelectCategory,
             UserCommand.InvalidCategorySelection,
+            is UserCommand.RequestExpenseDeletion,
+            is UserCommand.ConfirmExpenseDeletion,
+            is UserCommand.CancelExpenseDeletion,
+            UserCommand.InvalidExpenseDeletion,
             -> repeatManualDateInput(input, currentState)
         }
     }
@@ -92,9 +96,12 @@ class AwaitingExpenseManualDateInputHandler(
         val delivery = responseDeliveryForExpenseCard(input.callbackMessageId ?: currentState.cardMessageId)
 
         return expenseSavedResult(
-            expenseDraft = expenseDraft,
-            categoryName = currentState.categoryName,
-            expenseDate = expense.expenseDate,
+            message =
+                savedExpenseMessage(
+                    expense = expense,
+                    categoryName = expenseDraft.requireCategoryName(),
+                ),
+            expenseId = expense.id,
             delivery = delivery,
         )
     }
@@ -154,27 +161,20 @@ class AwaitingExpenseManualDateInputHandler(
     private fun UserState.AwaitingExpenseManualDateInput.toEnterExpenseDateManuallyMessage(): BotMessage.EnterExpenseDateManually =
         BotMessage.EnterExpenseDateManually(
             amount = expenseDraft.amount,
-            categoryName = categoryName,
+            categoryName = expenseDraft.requireCategoryName(),
             description = expenseDraft.description,
         )
 
     private fun expenseSavedResult(
-        expenseDraft: ExpenseDraft,
-        categoryName: String,
-        expenseDate: LocalDate,
+        message: BotMessage.ExpenseSaved,
+        expenseId: UUID,
         delivery: ResponseDelivery,
     ): HandlerResult =
         HandlerResult(
             response =
                 HandlerResponse(
-                    message =
-                        BotMessage.ExpenseSaved(
-                            amount = expenseDraft.amount,
-                            categoryName = categoryName,
-                            expenseDate = expenseDate,
-                            description = expenseDraft.description,
-                        ),
-                    actions = actionsForCompletedExpenseCard(delivery),
+                    message = message,
+                    actions = actionsForSavedExpenseCard(expenseId),
                     delivery = delivery,
                 ),
             nextState = UserState.Idle,

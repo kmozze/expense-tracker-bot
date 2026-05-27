@@ -1,6 +1,7 @@
 package me.kmozze.expensetracker.model.domain
 
 import me.kmozze.expensetracker.model.entity.Category
+import java.util.UUID
 
 sealed class BotAction {
     data object ShowMainMenu : BotAction()
@@ -12,6 +13,14 @@ sealed class BotAction {
     data object ShowExpenseDateSelection : BotAction()
 
     data object ShowCancel : BotAction()
+
+    data class ShowExpenseCardActions(
+        val expenseId: UUID,
+    ) : BotAction()
+
+    data class ShowExpenseDeletionConfirmation(
+        val expenseId: UUID,
+    ) : BotAction()
 
     data object ClearInlineKeyboard : BotAction()
 }

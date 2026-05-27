@@ -59,7 +59,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.saveExpense(USER_ID, completeDraft) }
@@ -106,7 +106,6 @@ class AwaitingExpenseDateSelectionHandlerTest {
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(
                     expenseDraft = EXPENSE_DRAFT_WITH_CATEGORY,
-                    categoryName = CATEGORY_NAME,
                     cardMessageId = CARD_MESSAGE_ID,
                 ),
             )
@@ -150,6 +149,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
     private fun expense(expenseDate: LocalDate): Expense =
         Expense(
+            id = EXPENSE_ID,
             categoryId = CATEGORY_ID,
             amount = EXPENSE_AMOUNT,
             userId = USER_ID,
@@ -164,17 +164,18 @@ class AwaitingExpenseDateSelectionHandlerTest {
         const val CATEGORY_NAME = "Транспорт"
         const val EXPENSE_DESCRIPTION = "такси"
         val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000101")
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val EXPENSE_DRAFT_WITH_CATEGORY: ExpenseDraft =
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = EXPENSE_DESCRIPTION,
                 categoryId = CATEGORY_ID,
+                categoryName = CATEGORY_NAME,
             )
         val AWAITING_EXPENSE_DATE_SELECTION: UserState.AwaitingExpenseDateSelection =
             UserState.AwaitingExpenseDateSelection(
                 expenseDraft = EXPENSE_DRAFT_WITH_CATEGORY,
-                categoryName = CATEGORY_NAME,
                 cardMessageId = CARD_MESSAGE_ID,
             )
         val CLOCK: Clock = Clock.fixed(Instant.parse("2026-05-24T12:00:00Z"), ZoneOffset.UTC)

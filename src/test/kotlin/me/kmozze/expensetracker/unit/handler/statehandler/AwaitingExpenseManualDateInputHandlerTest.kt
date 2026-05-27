@@ -61,7 +61,7 @@ class AwaitingExpenseManualDateInputHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.parseExpenseDate(MANUAL_DATE_TEXT) }
@@ -99,7 +99,7 @@ class AwaitingExpenseManualDateInputHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.saveExpense(USER_ID, completeDraft) }
@@ -162,6 +162,7 @@ class AwaitingExpenseManualDateInputHandlerTest {
 
     private fun expense(expenseDate: LocalDate): Expense =
         Expense(
+            id = EXPENSE_ID,
             categoryId = CATEGORY_ID,
             amount = EXPENSE_AMOUNT,
             userId = USER_ID,
@@ -177,17 +178,18 @@ class AwaitingExpenseManualDateInputHandlerTest {
         const val EXPENSE_DESCRIPTION = "такси"
         const val MANUAL_DATE_TEXT = "20.05.2026"
         val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000101")
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val EXPENSE_DRAFT_WITH_CATEGORY: ExpenseDraft =
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = EXPENSE_DESCRIPTION,
                 categoryId = CATEGORY_ID,
+                categoryName = CATEGORY_NAME,
             )
         val AWAITING_EXPENSE_MANUAL_DATE_INPUT: UserState.AwaitingExpenseManualDateInput =
             UserState.AwaitingExpenseManualDateInput(
                 expenseDraft = EXPENSE_DRAFT_WITH_CATEGORY,
-                categoryName = CATEGORY_NAME,
                 cardMessageId = CARD_MESSAGE_ID,
             )
         val CLOCK: Clock = Clock.fixed(Instant.parse("2026-05-24T12:00:00Z"), ZoneOffset.UTC)

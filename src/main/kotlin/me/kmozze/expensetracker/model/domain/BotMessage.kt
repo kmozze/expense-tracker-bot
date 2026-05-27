@@ -34,7 +34,12 @@ sealed class BotMessage {
         val categoryName: String,
         val expenseDate: LocalDate,
         val description: String?,
+        val showDeletionConfirmation: Boolean = false,
     ) : BotMessage()
+
+    data object ExpenseDeleted : BotMessage()
+
+    data object ExpenseUnavailable : BotMessage()
 
     data object ExpenseCanceled : BotMessage()
 

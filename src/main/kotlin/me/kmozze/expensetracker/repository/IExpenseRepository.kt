@@ -9,9 +9,15 @@ interface IExpenseRepository {
 
     fun update(expense: Expense): Expense
 
-    fun delete(id: UUID): Boolean
+    fun findByIdForUser(
+        id: UUID,
+        userId: Long,
+    ): Expense?
 
-    fun findById(id: UUID): Expense?
+    fun deleteByIdForUser(
+        id: UUID,
+        userId: Long,
+    ): Boolean
 
     /**
      * Returns expenses created from newest to oldest, including `from` and excluding `to`.

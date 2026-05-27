@@ -33,6 +33,20 @@ sealed class UserCommand {
 
     data object InvalidExpenseDateSelection : UserCommand()
 
+    data class RequestExpenseDeletion(
+        val expenseId: UUID,
+    ) : UserCommand()
+
+    data class ConfirmExpenseDeletion(
+        val expenseId: UUID,
+    ) : UserCommand()
+
+    data class CancelExpenseDeletion(
+        val expenseId: UUID,
+    ) : UserCommand()
+
+    data object InvalidExpenseDeletion : UserCommand()
+
     data class PlainText(
         val value: String,
     ) : UserCommand()

@@ -54,7 +54,16 @@ class MessageFormatter {
                     append("📂 Категория: ${message.categoryName}\n")
                     append("📅 Дата: ${message.expenseDate.formatForUser()}")
                     appendDescription(message.description)
+                    if (message.showDeletionConfirmation) {
+                        append("\n\nТочно хотите удалить расход?")
+                    }
                 }
+
+            is BotMessage.ExpenseDeleted ->
+                "Расход удален"
+
+            is BotMessage.ExpenseUnavailable ->
+                "Этот расход уже удален или недоступен."
 
             is BotMessage.ExpenseCanceled ->
                 "Добавление расхода отменено."

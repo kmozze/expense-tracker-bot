@@ -57,8 +57,11 @@ class AwaitingCategorySelectionHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
-                    expenseDraft = EXPENSE_DRAFT.copy(categoryId = CATEGORY_ID),
-                    categoryName = category.name,
+                    expenseDraft =
+                        EXPENSE_DRAFT.copy(
+                            categoryId = CATEGORY_ID,
+                            categoryName = category.name,
+                        ),
                     cardMessageId = CARD_MESSAGE_ID,
                 ),
             )
