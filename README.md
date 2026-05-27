@@ -51,7 +51,7 @@ src/test/kotlin/me/kmozze/expensetracker/
     repository/
 ```
 
-План будущего UX и поведения бота лежит в `UI.md`.
+План будущего UX и поведения бота лежит в `UX.md`.
 
 ## Локальный запуск с нуля
 
