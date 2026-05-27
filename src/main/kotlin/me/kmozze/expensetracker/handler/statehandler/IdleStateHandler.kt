@@ -1,7 +1,7 @@
 package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -27,8 +27,8 @@ class IdleStateHandler : StateHandler {
                 HandlerResult(
                     response =
                         HandlerResponse(
-                            message = BotMessage.AddExpenseInstructions,
-                            actions = listOf(BotAction.ShowMainMenu),
+                            text = BotText.AddExpenseInstructions,
+                            actions = emptyList(),
                         ),
                     nextState = UserState.AwaitingExpenseInput,
                 )
@@ -40,7 +40,7 @@ class IdleStateHandler : StateHandler {
                 HandlerResult(
                     response =
                         HandlerResponse(
-                            message = BotMessage.FeatureInProgress,
+                            text = BotText.FeatureInProgress,
                             actions = listOf(BotAction.ShowMainMenu),
                         ),
                     nextState = UserState.Idle,
@@ -55,7 +55,7 @@ class IdleStateHandler : StateHandler {
                 HandlerResult(
                     response =
                         HandlerResponse(
-                            message = BotMessage.SelectionExpired,
+                            text = BotText.SelectionExpired,
                             actions = listOf(BotAction.ShowMainMenu),
                         ),
                     nextState = UserState.Idle,
@@ -65,7 +65,7 @@ class IdleStateHandler : StateHandler {
                 HandlerResult(
                     response =
                         HandlerResponse(
-                            message = BotMessage.UnknownCommand,
+                            text = BotText.UnknownCommand,
                             actions = listOf(BotAction.ShowMainMenu),
                         ),
                     nextState = UserState.Idle,

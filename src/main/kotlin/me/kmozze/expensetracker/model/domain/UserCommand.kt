@@ -11,6 +11,8 @@ enum class ExpenseDateSelection {
 sealed class UserCommand {
     data object Start : UserCommand()
 
+    data object Menu : UserCommand()
+
     data object AddExpense : UserCommand()
 
     data object ViewExpenses : UserCommand()

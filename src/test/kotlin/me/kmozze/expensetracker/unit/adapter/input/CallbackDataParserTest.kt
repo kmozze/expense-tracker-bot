@@ -7,11 +7,23 @@ import me.kmozze.expensetracker.model.domain.UserCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.UUID
 import java.util.stream.Stream
 
 class CallbackDataParserTest {
+    @ParameterizedTest(name = "callbackData: \"{0}\"")
+    @MethodSource("menuCallbacks")
+    fun `parse menu callback`(
+        callbackData: String,
+        expectedCommand: UserCommand,
+    ) {
+        val command = CallbackDataParser.parse(callbackData)
+
+        assertThat(command).isEqualTo(expectedCommand)
+    }
+
     @Test
     fun `parse cancel callback`() {
         val command = CallbackDataParser.parse(CallbackData.cancel())
@@ -73,6 +85,27 @@ class CallbackDataParserTest {
 
     private companion object {
         val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+
+        @JvmStatic
+        fun menuCallbacks(): Stream<Arguments> =
+            Stream.of(
+                Arguments.arguments(
+                    CallbackData.menuAddExpense(),
+                    UserCommand.AddExpense,
+                ),
+                Arguments.arguments(
+                    CallbackData.menuViewExpenses(),
+                    UserCommand.ViewExpenses,
+                ),
+                Arguments.arguments(
+                    CallbackData.menuCategories(),
+                    UserCommand.Categories,
+                ),
+                Arguments.arguments(
+                    CallbackData.menuStatistics(),
+                    UserCommand.Statistics,
+                ),
+            )
 
         @JvmStatic
         fun invalidCategoryCallbacks(): Stream<String> =

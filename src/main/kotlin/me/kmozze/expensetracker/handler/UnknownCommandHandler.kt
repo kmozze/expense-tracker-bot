@@ -1,6 +1,6 @@
 package me.kmozze.expensetracker.handler
 
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -12,7 +12,7 @@ class UnknownCommandHandler {
         HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.UnknownCommand,
+                    text = BotText.UnknownCommand,
                     actions = listOf(),
                 ),
         )

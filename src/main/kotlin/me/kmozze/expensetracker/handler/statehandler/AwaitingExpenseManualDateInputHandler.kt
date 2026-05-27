@@ -4,7 +4,7 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.exception.ErrorCode
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
@@ -46,6 +46,7 @@ class AwaitingExpenseManualDateInputHandler(
                 )
             UserCommand.Unsupported,
             UserCommand.Start,
+            UserCommand.Menu,
             UserCommand.AddExpense,
             UserCommand.ViewExpenses,
             UserCommand.Categories,
@@ -108,7 +109,7 @@ class AwaitingExpenseManualDateInputHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = currentState.toEnterExpenseDateManuallyMessage(),
+                    text = currentState.toEnterExpenseDateManuallyMessage(),
                     actions = listOf(BotAction.ShowCancel),
                     delivery = delivery,
                 ),
@@ -126,7 +127,7 @@ class AwaitingExpenseManualDateInputHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.Error(errorCode),
+                    text = BotText.Error(errorCode),
                     actions = listOf(BotAction.ShowCancel),
                     delivery = delivery,
                 ),
@@ -143,7 +144,7 @@ class AwaitingExpenseManualDateInputHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.ExpenseCanceled,
+                    text = BotText.ExpenseCanceled,
                     actions = actionsForCompletedExpenseCard(delivery),
                     delivery = delivery,
                 ),
@@ -151,8 +152,8 @@ class AwaitingExpenseManualDateInputHandler(
         )
     }
 
-    private fun UserState.AwaitingExpenseManualDateInput.toEnterExpenseDateManuallyMessage(): BotMessage.EnterExpenseDateManually =
-        BotMessage.EnterExpenseDateManually(
+    private fun UserState.AwaitingExpenseManualDateInput.toEnterExpenseDateManuallyMessage(): BotText.EnterExpenseDateManually =
+        BotText.EnterExpenseDateManually(
             amount = expenseDraft.amount,
             categoryName = categoryName,
             description = expenseDraft.description,
@@ -167,8 +168,8 @@ class AwaitingExpenseManualDateInputHandler(
         HandlerResult(
             response =
                 HandlerResponse(
-                    message =
-                        BotMessage.ExpenseSaved(
+                    text =
+                        BotText.ExpenseSaved(
                             amount = expenseDraft.amount,
                             categoryName = categoryName,
                             expenseDate = expenseDate,

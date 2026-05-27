@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -46,8 +46,8 @@ class AwaitingExpenseInputHandler(
                 return HandlerResult(
                     response =
                         HandlerResponse(
-                            message = BotMessage.Error(e.errorCode),
-                            actions = listOf(BotAction.ShowMainMenu),
+                            text = BotText.Error(e.errorCode),
+                            actions = emptyList(),
                         ),
                     nextState = UserState.AwaitingExpenseInput,
                 )
@@ -61,8 +61,8 @@ class AwaitingExpenseInputHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message =
-                        BotMessage.SelectCategory(
+                    text =
+                        BotText.SelectCategory(
                             amount = expenseDraft.amount,
                             description = expenseDraft.description,
                         ),
@@ -76,8 +76,8 @@ class AwaitingExpenseInputHandler(
         HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.AddExpenseInstructions,
-                    actions = listOf(BotAction.ShowMainMenu),
+                    text = BotText.AddExpenseInstructions,
+                    actions = emptyList(),
                 ),
             nextState = UserState.AwaitingExpenseInput,
         )
@@ -86,7 +86,7 @@ class AwaitingExpenseInputHandler(
         HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.FeatureInProgress,
+                    text = BotText.FeatureInProgress,
                     actions = listOf(BotAction.ShowMainMenu),
                 ),
             nextState = UserState.Idle,
@@ -96,7 +96,7 @@ class AwaitingExpenseInputHandler(
         HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.NoCategories,
+                    text = BotText.NoCategories,
                     actions = listOf(BotAction.ShowMainMenu),
                 ),
             nextState = UserState.Idle,

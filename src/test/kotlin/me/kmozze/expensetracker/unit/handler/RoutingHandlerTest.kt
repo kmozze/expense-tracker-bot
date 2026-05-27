@@ -4,14 +4,17 @@ import io.mockk.mockk
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.handler.ErrorHandler
+import me.kmozze.expensetracker.handler.MenuCommandHandler
 import me.kmozze.expensetracker.handler.StartCommandHandler
 import me.kmozze.expensetracker.handler.UnknownCommandHandler
 import me.kmozze.expensetracker.handler.statehandler.StateHandler
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotAction
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.UserSessionService
@@ -25,6 +28,7 @@ import kotlin.reflect.KClass
 class RoutingHandlerTest {
     private val userSessionService = UserSessionService()
     private val startCommandHandler: StartCommandHandler = mockk()
+    private val menuCommandHandler = MenuCommandHandler()
     private val unknownCommandHandler = UnknownCommandHandler()
     private val errorHandler = ErrorHandler()
 
@@ -77,10 +81,122 @@ class RoutingHandlerTest {
         assertThat(idleHandler.calls).isEmpty()
     }
 
+    @Test
+    fun `menu command clears current state and returns main menu`() {
+        val userId = 43L
+        val awaitingCategoryState =
+            UserState.AwaitingCategorySelection(
+                ExpenseDraft(Money.of(BigDecimal("500")), "такси"),
+            )
+        val router = routerWith(RecordingStateHandler(UserState.AwaitingCategorySelection::class))
+
+        userSessionService.setState(userId, awaitingCategoryState)
+        val result =
+            router.process(
+                makeUserInput(
+                    userId = userId,
+                    chatId = 1L,
+                    text = "/menu",
+                ),
+            )
+
+        assertThat(result.response.outgoingMessages)
+            .containsExactly(
+                OutgoingMessage(
+                    text = BotText.Done,
+                    actions = listOf(BotAction.RemoveReplyKeyboard),
+                ),
+                OutgoingMessage(
+                    text = BotText.MainMenu,
+                    actions = listOf(BotAction.ShowMainMenu),
+                ),
+            )
+        assertThat(result.nextState).isEqualTo(UserState.Idle)
+        assertThat(userSessionService.getState(userId)).isEqualTo(UserState.Idle)
+    }
+
+    @Test
+    fun `menu callback during active dialog returns callback answer without routing`() {
+        val userId = 44L
+        val awaitingCategoryHandler = RecordingStateHandler(UserState.AwaitingCategorySelection::class)
+        val awaitingCategoryState =
+            UserState.AwaitingCategorySelection(
+                ExpenseDraft(Money.of(BigDecimal("500")), "такси"),
+            )
+        val router = routerWith(awaitingCategoryHandler)
+
+        userSessionService.setState(userId, awaitingCategoryState)
+        val result =
+            router.process(
+                makeUserInput(
+                    userId = userId,
+                    chatId = 1L,
+                    callbackData = CallbackData.menuViewExpenses(),
+                ),
+            )
+
+        assertThat(result.response.outgoingMessages).isEmpty()
+        assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(userSessionService.getState(userId)).isEqualTo(awaitingCategoryState)
+        assertThat(awaitingCategoryHandler.calls).isEmpty()
+    }
+
+    @Test
+    fun `stale add flow callback during another active step returns callback answer without routing`() {
+        val userId = 45L
+        val awaitingInputHandler = RecordingStateHandler(UserState.AwaitingExpenseInput::class)
+        val router = routerWith(awaitingInputHandler)
+
+        userSessionService.setState(userId, UserState.AwaitingExpenseInput)
+        val result =
+            router.process(
+                makeUserInput(
+                    userId = userId,
+                    chatId = 1L,
+                    callbackData = CallbackData.selectCategory(UUID.randomUUID()),
+                ),
+            )
+
+        assertThat(result.response.outgoingMessages).isEmpty()
+        assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(userSessionService.getState(userId)).isEqualTo(UserState.AwaitingExpenseInput)
+        assertThat(awaitingInputHandler.calls).isEmpty()
+    }
+
+    @Test
+    fun `stale date callback during manual date input returns callback answer without routing`() {
+        val userId = 46L
+        val awaitingManualDateHandler = RecordingStateHandler(UserState.AwaitingExpenseManualDateInput::class)
+        val currentState =
+            UserState.AwaitingExpenseManualDateInput(
+                expenseDraft = ExpenseDraft(Money.of(BigDecimal("500")), "такси"),
+                categoryName = "Транспорт",
+                cardMessageId = 123,
+            )
+        val router = routerWith(awaitingManualDateHandler)
+
+        userSessionService.setState(userId, currentState)
+        val result =
+            router.process(
+                makeUserInput(
+                    userId = userId,
+                    chatId = 1L,
+                    callbackData = CallbackData.selectExpenseDateToday(),
+                    callbackMessageId = 123,
+                ),
+            )
+
+        assertThat(result.response.outgoingMessages).isEmpty()
+        assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(userSessionService.getState(userId)).isEqualTo(currentState)
+        assertThat(awaitingManualDateHandler.calls).isEmpty()
+    }
+
     private fun routerWith(vararg stateHandlers: StateHandler): DialogueRouter =
         DialogueRouter(
             userSessionService = userSessionService,
             startCommandHandler = startCommandHandler,
+            menuCommandHandler = menuCommandHandler,
             unknownCommandHandler = unknownCommandHandler,
             errorHandler = errorHandler,
             stateHandlers = stateHandlers.toList(),
@@ -100,7 +216,7 @@ class RoutingHandlerTest {
             return HandlerResult(
                 response =
                     HandlerResponse(
-                        message = BotMessage.FeatureInProgress,
+                        text = BotText.FeatureInProgress,
                         actions = emptyList(),
                     ),
             )

@@ -1,7 +1,7 @@
 package me.kmozze.expensetracker.unit.adapter.ui
 
 import me.kmozze.expensetracker.adapter.ui.MessageFormatter
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.Money
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -12,10 +12,31 @@ class MessageFormatterTest {
     private val formatter = MessageFormatter()
 
     @Test
+    fun `main menu text`() {
+        val text = formatter.format(BotText.MainMenu)
+
+        assertThat(text).isEqualTo("Главное меню")
+    }
+
+    @Test
+    fun `done text`() {
+        val text = formatter.format(BotText.Done)
+
+        assertThat(text).isEqualTo("Готово")
+    }
+
+    @Test
+    fun `finish current dialog callback text`() {
+        val text = formatter.format(BotText.FinishCurrentDialog)
+
+        assertThat(text).isEqualTo("Сначала завершите или отмените текущий диалог.")
+    }
+
+    @Test
     fun `select category message omits description line when description is missing`() {
         val text =
             formatter.format(
-                BotMessage.SelectCategory(
+                BotText.SelectCategory(
                     amount = Money.of(BigDecimal("500.00")),
                     description = null,
                 ),
@@ -28,7 +49,7 @@ class MessageFormatterTest {
     fun `saved expense message omits description line when description is missing`() {
         val text =
             formatter.format(
-                BotMessage.ExpenseSaved(
+                BotText.ExpenseSaved(
                     amount = Money.of(BigDecimal("500.00")),
                     categoryName = "Еда",
                     expenseDate = LocalDate.parse("2026-05-24"),
@@ -44,7 +65,7 @@ class MessageFormatterTest {
     fun `select expense date message includes category and description`() {
         val text =
             formatter.format(
-                BotMessage.SelectExpenseDate(
+                BotText.SelectExpenseDate(
                     amount = Money.of(BigDecimal("500.00")),
                     categoryName = "Транспорт",
                     description = "такси",
@@ -59,7 +80,7 @@ class MessageFormatterTest {
     fun `manual expense date message includes input format`() {
         val text =
             formatter.format(
-                BotMessage.EnterExpenseDateManually(
+                BotText.EnterExpenseDateManually(
                     amount = Money.of(BigDecimal("500.00")),
                     categoryName = "Транспорт",
                     description = null,

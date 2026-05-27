@@ -8,7 +8,7 @@ import io.mockk.verify
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseDateSelectionHandler
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
@@ -50,9 +50,9 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY))
 
-        assertThat(result.response.message)
+        assertThat(result.response.text)
             .isEqualTo(
-                BotMessage.ExpenseSaved(
+                BotText.ExpenseSaved(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY_NAME,
                     expenseDate = TODAY,
@@ -73,9 +73,9 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateSelection.YESTERDAY))
 
-        assertThat(result.response.message)
+        assertThat(result.response.text)
             .isEqualTo(
-                BotMessage.ExpenseSaved(
+                BotText.ExpenseSaved(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY_NAME,
                     expenseDate = YESTERDAY,
@@ -92,9 +92,9 @@ class AwaitingExpenseDateSelectionHandlerTest {
     fun `manual selection asks user to enter date`() {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateSelection.MANUAL))
 
-        assertThat(result.response.message)
+        assertThat(result.response.text)
             .isEqualTo(
-                BotMessage.EnterExpenseDateManually(
+                BotText.EnterExpenseDateManually(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY_NAME,
                     description = EXPENSE_DESCRIPTION,
@@ -117,7 +117,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
     fun `invalid date callback keeps date selection open with error`() {
         val result = handle(UserCommand.InvalidExpenseDateSelection)
 
-        assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION))
+        assertThat(result.response.text).isEqualTo(BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION))
         assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseDateSelection)
         assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_DATE_SELECTION)
@@ -128,7 +128,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
     fun `cancel returns idle without saving expense`() {
         val result = handle(UserCommand.Cancel)
 
-        assertThat(result.response.message).isEqualTo(BotMessage.ExpenseCanceled)
+        assertThat(result.response.text).isEqualTo(BotText.ExpenseCanceled)
         assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
         assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)

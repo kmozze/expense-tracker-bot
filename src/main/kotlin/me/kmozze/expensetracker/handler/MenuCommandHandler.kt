@@ -5,33 +5,19 @@ import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
-import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
-import me.kmozze.expensetracker.service.CategoryService
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class StartCommandHandler(
-    private val categoryService: CategoryService,
-) {
-    private val logger = LoggerFactory.getLogger(javaClass)
-
-    fun handle(input: UserInput): HandlerResult {
-        val userId = input.userId
-        logger.info("Initializing start sequence for user {}", userId)
-
-        val isFirstTime = categoryService.initDefaultCategories(userId)
-
-        val welcomeText = if (isFirstTime) BotText.WelcomeFirstTime else BotText.WelcomeBack
-
-        return HandlerResult(
+class MenuCommandHandler {
+    fun handle(): HandlerResult =
+        HandlerResult(
             response =
                 HandlerResponse(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text = welcomeText,
+                                text = BotText.Done,
                                 actions = listOf(BotAction.RemoveReplyKeyboard),
                             ),
                             OutgoingMessage(
@@ -42,5 +28,4 @@ class StartCommandHandler(
                 ),
             nextState = UserState.Idle,
         )
-    }
 }

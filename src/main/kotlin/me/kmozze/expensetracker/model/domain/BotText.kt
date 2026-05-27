@@ -3,48 +3,54 @@ package me.kmozze.expensetracker.model.domain
 import me.kmozze.expensetracker.exception.ErrorCode
 import java.time.LocalDate
 
-sealed class BotMessage {
-    data object WelcomeFirstTime : BotMessage()
+sealed class BotText {
+    data object WelcomeFirstTime : BotText()
 
-    data object WelcomeBack : BotMessage()
+    data object WelcomeBack : BotText()
 
-    data object UnknownCommand : BotMessage()
+    data object MainMenu : BotText()
 
-    data object AddExpenseInstructions : BotMessage()
+    data object Done : BotText()
+
+    data object FinishCurrentDialog : BotText()
+
+    data object UnknownCommand : BotText()
+
+    data object AddExpenseInstructions : BotText()
 
     data class SelectCategory(
         val amount: Money,
         val description: String?,
-    ) : BotMessage()
+    ) : BotText()
 
     data class SelectExpenseDate(
         val amount: Money,
         val categoryName: String,
         val description: String?,
-    ) : BotMessage()
+    ) : BotText()
 
     data class EnterExpenseDateManually(
         val amount: Money,
         val categoryName: String,
         val description: String?,
-    ) : BotMessage()
+    ) : BotText()
 
     data class ExpenseSaved(
         val amount: Money,
         val categoryName: String,
         val expenseDate: LocalDate,
         val description: String?,
-    ) : BotMessage()
+    ) : BotText()
 
-    data object ExpenseCanceled : BotMessage()
+    data object ExpenseCanceled : BotText()
 
-    data object SelectionExpired : BotMessage()
+    data object SelectionExpired : BotText()
 
-    data object NoCategories : BotMessage()
+    data object NoCategories : BotText()
 
-    data object FeatureInProgress : BotMessage()
+    data object FeatureInProgress : BotText()
 
     data class Error(
         val errorCode: ErrorCode,
-    ) : BotMessage()
+    ) : BotText()
 }

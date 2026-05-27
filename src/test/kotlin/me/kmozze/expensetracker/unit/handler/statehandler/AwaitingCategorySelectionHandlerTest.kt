@@ -8,7 +8,7 @@ import io.mockk.verify
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.handler.statehandler.AwaitingCategorySelectionHandler
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
@@ -44,9 +44,9 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.SelectCategory(CATEGORY_ID))
 
-        assertThat(result.response.message)
+        assertThat(result.response.text)
             .isEqualTo(
-                BotMessage.SelectExpenseDate(
+                BotText.SelectExpenseDate(
                     amount = EXPENSE_AMOUNT,
                     categoryName = category.name,
                     description = EXPENSE_DESCRIPTION,
@@ -74,7 +74,7 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.SelectCategory(CATEGORY_ID))
 
-        assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
+        assertThat(result.response.text).isEqualTo(BotText.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
         assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
         assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
@@ -90,8 +90,8 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.InvalidCategorySelection)
 
-        assertThat(result.response.message)
-            .isEqualTo(BotMessage.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION))
+        assertThat(result.response.text)
+            .isEqualTo(BotText.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION))
         assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
         assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
@@ -103,7 +103,7 @@ class AwaitingCategorySelectionHandlerTest {
     fun `cancel returns idle without service calls`() {
         val result = handle(UserCommand.Cancel)
 
-        assertThat(result.response.message).isEqualTo(BotMessage.ExpenseCanceled)
+        assertThat(result.response.text).isEqualTo(BotText.ExpenseCanceled)
         assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
         assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
@@ -117,8 +117,8 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.PlainText("700 кофе"))
 
-        assertThat(result.response.message)
-            .isEqualTo(BotMessage.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
+        assertThat(result.response.text)
+            .isEqualTo(BotText.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
         assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
         assertThat(result.response.delivery).isEqualTo(ResponseDelivery.SendNewMessage)
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)

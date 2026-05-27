@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -44,6 +44,7 @@ class AwaitingCategorySelectionHandler(
                 )
             UserCommand.Unsupported,
             UserCommand.Start,
+            UserCommand.Menu,
             UserCommand.AddExpense,
             UserCommand.ViewExpenses,
             UserCommand.Categories,
@@ -74,8 +75,8 @@ class AwaitingCategorySelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message =
-                        BotMessage.SelectExpenseDate(
+                    text =
+                        BotText.SelectExpenseDate(
                             amount = expenseDraft.amount,
                             categoryName = category.name,
                             description = expenseDraft.description,
@@ -98,7 +99,7 @@ class AwaitingCategorySelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.ExpenseCanceled,
+                    text = BotText.ExpenseCanceled,
                     actions = actionsForCompletedExpenseCard(delivery),
                     delivery = delivery,
                 ),
@@ -116,8 +117,8 @@ class AwaitingCategorySelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message =
-                        BotMessage.SelectCategory(
+                    text =
+                        BotText.SelectCategory(
                             amount = currentState.expenseDraft.amount,
                             description = currentState.expenseDraft.description,
                         ),
@@ -139,7 +140,7 @@ class AwaitingCategorySelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.Error(errorCode),
+                    text = BotText.Error(errorCode),
                     actions = listOf(BotAction.ShowCategorySelection(categories)),
                     delivery = delivery,
                 ),

@@ -3,35 +3,44 @@ package me.kmozze.expensetracker.adapter.ui
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.ErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Component
 class MessageFormatter {
-    fun format(message: BotMessage): String =
+    fun format(message: BotText): String =
         when (message) {
-            is BotMessage.WelcomeFirstTime ->
+            is BotText.WelcomeFirstTime ->
                 "👋 Добро пожаловать! Я создал для тебя базовые категории расходов."
 
-            is BotMessage.WelcomeBack ->
+            is BotText.WelcomeBack ->
                 "С возвращением! 💸 Я готов записывать твои новые траты."
 
-            is BotMessage.UnknownCommand ->
-                "Я не понял команду 😕\nЧто бы вернуться в главное меню напиши /start"
+            is BotText.MainMenu ->
+                "Главное меню"
 
-            is BotMessage.AddExpenseInstructions ->
+            is BotText.Done ->
+                "Готово"
+
+            is BotText.FinishCurrentDialog ->
+                "Сначала завершите или отмените текущий диалог."
+
+            is BotText.UnknownCommand ->
+                "Я не понял команду 😕\nЧтобы вернуться в главное меню, напишите /menu"
+
+            is BotText.AddExpenseInstructions ->
                 "Введите сумму одним сообщением. Можно добавить описание.\nНапример: `500`, `500 такси` или `такси 500`."
 
-            is BotMessage.SelectCategory ->
+            is BotText.SelectCategory ->
                 buildString {
                     append("💰 *${message.amount.format()} ₽*")
                     appendDescription(message.description)
                     append("\n\nКуда запишем?")
                 }
 
-            is BotMessage.SelectExpenseDate ->
+            is BotText.SelectExpenseDate ->
                 buildString {
                     append("💰 Сумма: ${message.amount.format()} ₽\n")
                     append("📂 Категория: ${message.categoryName}")
@@ -39,7 +48,7 @@ class MessageFormatter {
                     append("\n\nКогда была трата?")
                 }
 
-            is BotMessage.EnterExpenseDateManually ->
+            is BotText.EnterExpenseDateManually ->
                 buildString {
                     append("💰 Сумма: ${message.amount.format()} ₽\n")
                     append("📂 Категория: ${message.categoryName}")
@@ -47,7 +56,7 @@ class MessageFormatter {
                     append("\n\nВведите дату траты в формате ДД.ММ.ГГГГ.")
                 }
 
-            is BotMessage.ExpenseSaved ->
+            is BotText.ExpenseSaved ->
                 buildString {
                     append("✅ Сохранено!\n")
                     append("💰 Сумма: ${message.amount.format()} ₽\n")
@@ -56,19 +65,19 @@ class MessageFormatter {
                     appendDescription(message.description)
                 }
 
-            is BotMessage.ExpenseCanceled ->
+            is BotText.ExpenseCanceled ->
                 "Добавление расхода отменено."
 
-            is BotMessage.SelectionExpired ->
+            is BotText.SelectionExpired ->
                 "Этот выбор уже неактуален. Используйте главное меню."
 
-            is BotMessage.NoCategories ->
+            is BotText.NoCategories ->
                 "У вас нет ни одной категории. Создайте хотя бы одну, чтобы записывать расходы."
 
-            is BotMessage.FeatureInProgress ->
+            is BotText.FeatureInProgress ->
                 "Этот раздел пока в работе."
 
-            is BotMessage.Error -> "❌ ${formatError(message.errorCode)}"
+            is BotText.Error -> "❌ ${formatError(message.errorCode)}"
         }
 
     private fun formatError(errorCode: ErrorCode): String =

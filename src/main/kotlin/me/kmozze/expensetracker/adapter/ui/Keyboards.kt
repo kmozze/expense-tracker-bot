@@ -3,26 +3,23 @@ package me.kmozze.expensetracker.adapter.ui
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.model.entity.Category
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
 
 object Keyboards {
-    fun mainMenu(): ReplyKeyboardMarkup {
+    fun mainMenu(): InlineKeyboardMarkup {
         val rows =
             listOf(
-                KeyboardRow(KeyboardButton(Buttons.ADD_EXPENSE)),
-                KeyboardRow(KeyboardButton(Buttons.VIEW_EXPENSES)),
-                KeyboardRow(KeyboardButton(Buttons.CATEGORIES)),
-                KeyboardRow(KeyboardButton(Buttons.STATISTICS)),
+                menuRow(Buttons.ADD_EXPENSE, CallbackData.menuAddExpense()),
+                menuRow(Buttons.VIEW_EXPENSES, CallbackData.menuViewExpenses()),
+                menuRow(Buttons.CATEGORIES, CallbackData.menuCategories()),
+                menuRow(Buttons.STATISTICS, CallbackData.menuStatistics()),
             )
 
-        return ReplyKeyboardMarkup(rows).apply {
-            resizeKeyboard = true
-            isPersistent = true
-        }
+        return InlineKeyboardMarkup
+            .builder()
+            .keyboard(rows)
+            .build()
     }
 
     fun categorySelection(categories: List<Category>): InlineKeyboardMarkup {
@@ -96,6 +93,20 @@ object Keyboards {
                     .builder()
                     .text(Buttons.CANCEL)
                     .callbackData(CallbackData.cancel())
+                    .build(),
+            ),
+        )
+
+    private fun menuRow(
+        text: String,
+        callbackData: String,
+    ): InlineKeyboardRow =
+        InlineKeyboardRow(
+            listOf(
+                InlineKeyboardButton
+                    .builder()
+                    .text(text)
+                    .callbackData(callbackData)
                     .build(),
             ),
         )
