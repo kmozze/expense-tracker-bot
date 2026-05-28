@@ -248,8 +248,13 @@ class RoutingHandlerTest {
             return HandlerResult(
                 response =
                     HandlerResponse(
-                        text = BotText.FeatureInProgress,
-                        actions = emptyList(),
+                        outgoingMessages =
+                            listOf(
+                                OutgoingMessage(
+                                    text = BotText.FeatureInProgress,
+                                    actions = emptyList(),
+                                ),
+                            ),
                     ),
             )
         }

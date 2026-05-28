@@ -50,17 +50,28 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY))
 
-        assertThat(result.response.text)
-            .isEqualTo(
-                BotText.ExpenseSaved(
-                    amount = EXPENSE_AMOUNT,
-                    categoryName = CATEGORY_NAME,
-                    expenseDate = TODAY,
-                    description = EXPENSE_DESCRIPTION,
-                ),
-            )
-        assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(
+            BotText.ExpenseSaved(
+                amount = EXPENSE_AMOUNT,
+                categoryName = CATEGORY_NAME,
+                expenseDate = TODAY,
+                description = EXPENSE_DESCRIPTION,
+            ),
+        )
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.saveExpense(USER_ID, completeDraft) }
         confirmVerified(expenseService)
@@ -73,17 +84,24 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateSelection.YESTERDAY))
 
-        assertThat(result.response.text)
-            .isEqualTo(
-                BotText.ExpenseSaved(
-                    amount = EXPENSE_AMOUNT,
-                    categoryName = CATEGORY_NAME,
-                    expenseDate = YESTERDAY,
-                    description = EXPENSE_DESCRIPTION,
-                ),
-            )
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(
+            BotText.ExpenseSaved(
+                amount = EXPENSE_AMOUNT,
+                categoryName = CATEGORY_NAME,
+                expenseDate = YESTERDAY,
+                description = EXPENSE_DESCRIPTION,
+            ),
+        )
         assertThat(result.nextState).isEqualTo(UserState.Idle)
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         verify(exactly = 1) { expenseService.saveExpense(USER_ID, completeDraft) }
         confirmVerified(expenseService)
     }
@@ -92,16 +110,27 @@ class AwaitingExpenseDateSelectionHandlerTest {
     fun `manual selection asks user to enter date`() {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateSelection.MANUAL))
 
-        assertThat(result.response.text)
-            .isEqualTo(
-                BotText.EnterExpenseDateManually(
-                    amount = EXPENSE_AMOUNT,
-                    categoryName = CATEGORY_NAME,
-                    description = EXPENSE_DESCRIPTION,
-                ),
-            )
-        assertThat(result.response.actions).containsExactly(BotAction.ShowCancel)
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(
+            BotText.EnterExpenseDateManually(
+                amount = EXPENSE_AMOUNT,
+                categoryName = CATEGORY_NAME,
+                description = EXPENSE_DESCRIPTION,
+            ),
+        )
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowCancel)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(
@@ -117,9 +146,21 @@ class AwaitingExpenseDateSelectionHandlerTest {
     fun `invalid date callback keeps date selection open with error`() {
         val result = handle(UserCommand.InvalidExpenseDateSelection)
 
-        assertThat(result.response.text).isEqualTo(BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION))
-        assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseDateSelection)
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_DATE_SELECTION)
         confirmVerified(expenseService)
     }
@@ -128,9 +169,21 @@ class AwaitingExpenseDateSelectionHandlerTest {
     fun `cancel returns idle without saving expense`() {
         val result = handle(UserCommand.Cancel)
 
-        assertThat(result.response.text).isEqualTo(BotText.ExpenseCanceled)
-        assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.ExpenseCanceled)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         confirmVerified(expenseService)
     }

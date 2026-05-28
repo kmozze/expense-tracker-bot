@@ -44,16 +44,27 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.SelectCategory(CATEGORY_ID))
 
-        assertThat(result.response.text)
-            .isEqualTo(
-                BotText.SelectExpenseDate(
-                    amount = EXPENSE_AMOUNT,
-                    categoryName = category.name,
-                    description = EXPENSE_DESCRIPTION,
-                ),
-            )
-        assertThat(result.response.actions).containsExactly(BotAction.ShowExpenseDateSelection)
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(
+            BotText.SelectExpenseDate(
+                amount = EXPENSE_AMOUNT,
+                categoryName = category.name,
+                description = EXPENSE_DESCRIPTION,
+            ),
+        )
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
@@ -74,9 +85,21 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.SelectCategory(CATEGORY_ID))
 
-        assertThat(result.response.text).isEqualTo(BotText.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
-        assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowCategorySelection(categories))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
@@ -90,10 +113,21 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.InvalidCategorySelection)
 
-        assertThat(result.response.text)
-            .isEqualTo(BotText.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION))
-        assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowCategorySelection(categories))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)
@@ -103,9 +137,21 @@ class AwaitingCategorySelectionHandlerTest {
     fun `cancel returns idle without service calls`() {
         val result = handle(UserCommand.Cancel)
 
-        assertThat(result.response.text).isEqualTo(BotText.ExpenseCanceled)
-        assertThat(result.response.actions).containsExactly(BotAction.ClearInlineKeyboard)
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.ExpenseCanceled)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         confirmVerified(categoryService)
     }
@@ -117,10 +163,21 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.PlainText("700 кофе"))
 
-        assertThat(result.response.text)
-            .isEqualTo(BotText.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
-        assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
-        assertThat(result.response.delivery).isEqualTo(ResponseDelivery.SendNewMessage)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowCategorySelection(categories))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.SendNewMessage)
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)

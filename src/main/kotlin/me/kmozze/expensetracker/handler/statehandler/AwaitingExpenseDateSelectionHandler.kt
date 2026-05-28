@@ -7,6 +7,7 @@ import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -93,9 +94,14 @@ class AwaitingExpenseDateSelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text = currentState.toEnterExpenseDateManuallyMessage(),
-                    actions = listOf(BotAction.ShowCancel),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = currentState.toEnterExpenseDateManuallyMessage(),
+                                actions = listOf(BotAction.ShowCancel),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState =
                 UserState.AwaitingExpenseManualDateInput(
@@ -115,9 +121,14 @@ class AwaitingExpenseDateSelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text = currentState.toSelectExpenseDateMessage(),
-                    actions = listOf(BotAction.ShowExpenseDateSelection),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = currentState.toSelectExpenseDateMessage(),
+                                actions = listOf(BotAction.ShowExpenseDateSelection),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState = currentState,
         )
@@ -133,9 +144,14 @@ class AwaitingExpenseDateSelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text = BotText.Error(errorCode),
-                    actions = listOf(BotAction.ShowExpenseDateSelection),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.Error(errorCode),
+                                actions = listOf(BotAction.ShowExpenseDateSelection),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState = currentState,
         )
@@ -150,9 +166,14 @@ class AwaitingExpenseDateSelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text = BotText.ExpenseCanceled,
-                    actions = actionsForCompletedExpenseCard(delivery),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.ExpenseCanceled,
+                                actions = actionsForCompletedExpenseCard(delivery),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState = UserState.Idle,
         )
@@ -181,15 +202,20 @@ class AwaitingExpenseDateSelectionHandler(
         HandlerResult(
             response =
                 HandlerResponse(
-                    text =
-                        BotText.ExpenseSaved(
-                            amount = expenseDraft.amount,
-                            categoryName = categoryName,
-                            expenseDate = expenseDate,
-                            description = expenseDraft.description,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text =
+                                    BotText.ExpenseSaved(
+                                        amount = expenseDraft.amount,
+                                        categoryName = categoryName,
+                                        expenseDate = expenseDate,
+                                        description = expenseDraft.description,
+                                    ),
+                                actions = actionsForCompletedExpenseCard(delivery),
+                                delivery = delivery,
+                            ),
                         ),
-                    actions = actionsForCompletedExpenseCard(delivery),
-                    delivery = delivery,
                 ),
             nextState = UserState.Idle,
         )

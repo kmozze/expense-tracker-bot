@@ -6,6 +6,7 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserState
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -33,8 +34,13 @@ class ErrorHandler {
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text = errorMessage,
-                    actions = listOf(BotAction.ShowMainMenu),
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = errorMessage,
+                                actions = listOf(BotAction.ShowMainMenu),
+                            ),
+                        ),
                 ),
             nextState = UserState.Idle,
         )

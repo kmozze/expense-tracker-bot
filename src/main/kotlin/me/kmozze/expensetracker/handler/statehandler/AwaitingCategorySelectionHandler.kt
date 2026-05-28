@@ -5,6 +5,7 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -75,14 +76,19 @@ class AwaitingCategorySelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text =
-                        BotText.SelectExpenseDate(
-                            amount = expenseDraft.amount,
-                            categoryName = category.name,
-                            description = expenseDraft.description,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text =
+                                    BotText.SelectExpenseDate(
+                                        amount = expenseDraft.amount,
+                                        categoryName = category.name,
+                                        description = expenseDraft.description,
+                                    ),
+                                actions = listOf(BotAction.ShowExpenseDateSelection),
+                                delivery = delivery,
+                            ),
                         ),
-                    actions = listOf(BotAction.ShowExpenseDateSelection),
-                    delivery = delivery,
                 ),
             nextState =
                 UserState.AwaitingExpenseDateSelection(
@@ -99,9 +105,14 @@ class AwaitingCategorySelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text = BotText.ExpenseCanceled,
-                    actions = actionsForCompletedExpenseCard(delivery),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.ExpenseCanceled,
+                                actions = actionsForCompletedExpenseCard(delivery),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState = UserState.Idle,
         )
@@ -117,13 +128,18 @@ class AwaitingCategorySelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text =
-                        BotText.SelectCategory(
-                            amount = currentState.expenseDraft.amount,
-                            description = currentState.expenseDraft.description,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text =
+                                    BotText.SelectCategory(
+                                        amount = currentState.expenseDraft.amount,
+                                        description = currentState.expenseDraft.description,
+                                    ),
+                                actions = listOf(BotAction.ShowCategorySelection(categories)),
+                                delivery = delivery,
+                            ),
                         ),
-                    actions = listOf(BotAction.ShowCategorySelection(categories)),
-                    delivery = delivery,
                 ),
             nextState = currentState,
         )
@@ -140,9 +156,14 @@ class AwaitingCategorySelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text = BotText.Error(errorCode),
-                    actions = listOf(BotAction.ShowCategorySelection(categories)),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.Error(errorCode),
+                                actions = listOf(BotAction.ShowCategorySelection(categories)),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState = currentState,
         )

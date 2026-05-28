@@ -5,6 +5,7 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -46,8 +47,13 @@ class AwaitingExpenseInputHandler(
                 return HandlerResult(
                     response =
                         HandlerResponse(
-                            text = BotText.Error(e.errorCode),
-                            actions = emptyList(),
+                            outgoingMessages =
+                                listOf(
+                                    OutgoingMessage(
+                                        text = BotText.Error(e.errorCode),
+                                        actions = emptyList(),
+                                    ),
+                                ),
                         ),
                     nextState = UserState.AwaitingExpenseInput,
                 )
@@ -61,12 +67,17 @@ class AwaitingExpenseInputHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    text =
-                        BotText.SelectCategory(
-                            amount = expenseDraft.amount,
-                            description = expenseDraft.description,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text =
+                                    BotText.SelectCategory(
+                                        amount = expenseDraft.amount,
+                                        description = expenseDraft.description,
+                                    ),
+                                actions = listOf(BotAction.ShowCategorySelection(categories)),
+                            ),
                         ),
-                    actions = listOf(BotAction.ShowCategorySelection(categories)),
                 ),
             nextState = UserState.AwaitingCategorySelection(expenseDraft),
         )
@@ -76,8 +87,13 @@ class AwaitingExpenseInputHandler(
         HandlerResult(
             response =
                 HandlerResponse(
-                    text = BotText.AddExpenseInstructions,
-                    actions = emptyList(),
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.AddExpenseInstructions,
+                                actions = emptyList(),
+                            ),
+                        ),
                 ),
             nextState = UserState.AwaitingExpenseInput,
         )
@@ -86,8 +102,13 @@ class AwaitingExpenseInputHandler(
         HandlerResult(
             response =
                 HandlerResponse(
-                    text = BotText.FeatureInProgress,
-                    actions = listOf(BotAction.ShowMainMenu),
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.FeatureInProgress,
+                                actions = listOf(BotAction.ShowMainMenu),
+                            ),
+                        ),
                 ),
             nextState = UserState.Idle,
         )
@@ -96,8 +117,13 @@ class AwaitingExpenseInputHandler(
         HandlerResult(
             response =
                 HandlerResponse(
-                    text = BotText.NoCategories,
-                    actions = listOf(BotAction.ShowMainMenu),
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.NoCategories,
+                                actions = listOf(BotAction.ShowMainMenu),
+                            ),
+                        ),
                 ),
             nextState = UserState.Idle,
         )

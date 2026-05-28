@@ -4,6 +4,7 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -27,8 +28,13 @@ class IdleStateHandler : StateHandler {
                 HandlerResult(
                     response =
                         HandlerResponse(
-                            text = BotText.AddExpenseInstructions,
-                            actions = emptyList(),
+                            outgoingMessages =
+                                listOf(
+                                    OutgoingMessage(
+                                        text = BotText.AddExpenseInstructions,
+                                        actions = emptyList(),
+                                    ),
+                                ),
                         ),
                     nextState = UserState.AwaitingExpenseInput,
                 )
@@ -40,8 +46,13 @@ class IdleStateHandler : StateHandler {
                 HandlerResult(
                     response =
                         HandlerResponse(
-                            text = BotText.FeatureInProgress,
-                            actions = emptyList(),
+                            outgoingMessages =
+                                listOf(
+                                    OutgoingMessage(
+                                        text = BotText.FeatureInProgress,
+                                        actions = emptyList(),
+                                    ),
+                                ),
                         ),
                     nextState = UserState.Idle,
                 )
@@ -55,8 +66,13 @@ class IdleStateHandler : StateHandler {
                 HandlerResult(
                     response =
                         HandlerResponse(
-                            text = BotText.SelectionExpired,
-                            actions = listOf(BotAction.ShowMainMenu),
+                            outgoingMessages =
+                                listOf(
+                                    OutgoingMessage(
+                                        text = BotText.SelectionExpired,
+                                        actions = listOf(BotAction.ShowMainMenu),
+                                    ),
+                                ),
                         ),
                     nextState = UserState.Idle,
                 )
@@ -65,8 +81,13 @@ class IdleStateHandler : StateHandler {
                 HandlerResult(
                     response =
                         HandlerResponse(
-                            text = BotText.UnknownCommand,
-                            actions = listOf(BotAction.ShowMainMenu),
+                            outgoingMessages =
+                                listOf(
+                                    OutgoingMessage(
+                                        text = BotText.UnknownCommand,
+                                        actions = listOf(BotAction.ShowMainMenu),
+                                    ),
+                                ),
                         ),
                     nextState = UserState.Idle,
                 )
