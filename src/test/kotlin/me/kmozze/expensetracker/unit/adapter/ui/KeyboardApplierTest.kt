@@ -54,6 +54,17 @@ class KeyboardApplierTest {
     }
 
     @Test
+    fun `edit message uses inline keyboard for expense deletion confirmation`() {
+        val editMessage = EditMessageText("text")
+
+        keyboardApplier.apply(editMessage, listOf(BotAction.ShowExpenseDeletionConfirmation(EXPENSE_ID)))
+
+        val keyboard = editMessage.replyMarkup as InlineKeyboardMarkup
+        assertThat(keyboard.keyboard).hasSize(1)
+        assertThat(keyboard.keyboard.first()).hasSize(2)
+    }
+
+    @Test
     fun `edit message clears inline keyboard for finish actions`() {
         val editMessage = EditMessageText("text")
 

@@ -37,6 +37,20 @@ class CallbackDataParserTest {
         assertThat(command).isEqualTo(UserCommand.RequestExpenseDeletion(EXPENSE_ID))
     }
 
+    @Test
+    fun `parse expense deletion confirmation callback`() {
+        val command = CallbackDataParser.parse(CallbackData.confirmExpenseDeletion(EXPENSE_ID))
+
+        assertThat(command).isEqualTo(UserCommand.ConfirmExpenseDeletion(EXPENSE_ID))
+    }
+
+    @Test
+    fun `parse expense deletion cancellation callback`() {
+        val command = CallbackDataParser.parse(CallbackData.cancelExpenseDeletion(EXPENSE_ID))
+
+        assertThat(command).isEqualTo(UserCommand.CancelExpenseDeletion(EXPENSE_ID))
+    }
+
     @ParameterizedTest(name = "callbackData: \"{0}\"")
     @MethodSource("invalidExpenseActionCallbacks")
     fun `parse invalid expense action callback`(callbackData: String) {
@@ -86,6 +100,12 @@ class CallbackDataParserTest {
                 "expense:delete:",
                 "expense:delete:not-a-uuid",
                 "expense:delete:00000000-0000-0000-0000-00000000000x",
+                "expense:delete:confirm:",
+                "expense:delete:confirm:not-a-uuid",
+                "expense:delete:confirm:00000000-0000-0000-0000-00000000000x",
+                "expense:delete:cancel:",
+                "expense:delete:cancel:not-a-uuid",
+                "expense:delete:cancel:00000000-0000-0000-0000-00000000000x",
             )
 
         @JvmStatic

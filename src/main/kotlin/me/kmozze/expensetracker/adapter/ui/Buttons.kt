@@ -11,4 +11,6 @@ object Buttons {
     const val CANCEL = "${Icons.CANCEL} Отмена"
     const val EDIT_EXPENSE = "${Icons.EDIT} Изменить"
     const val DELETE_EXPENSE = "${Icons.DELETE} Удалить"
+    const val CONFIRM_DELETE_EXPENSE = "${Icons.DELETE} Да, удалить"
+    const val CANCEL_DELETE_EXPENSE = "${Icons.CANCEL} Нет"
 }

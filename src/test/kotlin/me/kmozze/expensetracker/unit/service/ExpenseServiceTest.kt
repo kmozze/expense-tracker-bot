@@ -71,6 +71,45 @@ class ExpenseServiceTest {
     }
 
     @Test
+    fun `find expense for user returns repository result`() {
+        val userId = 123L
+        val expenseId = UUID.randomUUID()
+        val expense =
+            Expense(
+                id = expenseId,
+                categoryId = UUID.randomUUID(),
+                amount = EXPENSE_AMOUNT,
+                userId = userId,
+                expenseDate = LocalDate.parse("2026-05-24"),
+            )
+        every { expenseRepository.findByIdForUser(expenseId, userId) } returns expense
+
+        val result = service.findExpenseForUser(userId = userId, expenseId = expenseId)
+
+        assertEquals(expense, result)
+        verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `find expense for user wraps DataAccessException into SystemException`() {
+        val userId = 123L
+        val expenseId = UUID.randomUUID()
+        val cause = DataAccessException("DB connection failed")
+        every { expenseRepository.findByIdForUser(expenseId, userId) } throws cause
+
+        val exception =
+            assertThrows<SystemException> {
+                service.findExpenseForUser(userId = userId, expenseId = expenseId)
+            }
+
+        assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
+        assertEquals(cause, exception.cause)
+        verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
     fun `save expense creates expense from complete draft`() {
         val userId = 123L
         val categoryId = UUID.randomUUID()
@@ -139,6 +178,37 @@ class ExpenseServiceTest {
         assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
         assertEquals(cause, exception.cause)
         verify(exactly = 1) { expenseRepository.create(any()) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `delete expense for user returns repository result`() {
+        val userId = 123L
+        val expenseId = UUID.randomUUID()
+        every { expenseRepository.deleteByIdForUser(expenseId, userId) } returns true
+
+        val result = service.deleteExpenseForUser(userId = userId, expenseId = expenseId)
+
+        assertEquals(true, result)
+        verify(exactly = 1) { expenseRepository.deleteByIdForUser(expenseId, userId) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `delete expense for user wraps DataAccessException into SystemException`() {
+        val userId = 123L
+        val expenseId = UUID.randomUUID()
+        val cause = DataAccessException("DB connection failed")
+        every { expenseRepository.deleteByIdForUser(expenseId, userId) } throws cause
+
+        val exception =
+            assertThrows<SystemException> {
+                service.deleteExpenseForUser(userId = userId, expenseId = expenseId)
+            }
+
+        assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
+        assertEquals(cause, exception.cause)
+        verify(exactly = 1) { expenseRepository.deleteByIdForUser(expenseId, userId) }
         confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
     }
 

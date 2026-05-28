@@ -18,6 +18,10 @@ sealed class BotAction {
         val expenseId: UUID,
     ) : BotAction()
 
+    data class ShowExpenseDeletionConfirmation(
+        val expenseId: UUID,
+    ) : BotAction()
+
     data object ClearInlineKeyboard : BotAction()
 
     data object RemoveReplyKeyboard : BotAction()

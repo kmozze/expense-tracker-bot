@@ -78,6 +78,28 @@ object Keyboards {
                 ),
             ).build()
 
+    fun expenseDeletionConfirmation(expenseId: UUID): InlineKeyboardMarkup =
+        InlineKeyboardMarkup
+            .builder()
+            .keyboard(
+                listOf(
+                    InlineKeyboardRow(
+                        listOf(
+                            InlineKeyboardButton
+                                .builder()
+                                .text(Buttons.CONFIRM_DELETE_EXPENSE)
+                                .callbackData(CallbackData.confirmExpenseDeletion(expenseId))
+                                .build(),
+                            InlineKeyboardButton
+                                .builder()
+                                .text(Buttons.CANCEL_DELETE_EXPENSE)
+                                .callbackData(CallbackData.cancelExpenseDeletion(expenseId))
+                                .build(),
+                        ),
+                    ),
+                ),
+            ).build()
+
     private fun cancelReplyRow(): KeyboardRow = KeyboardRow(KeyboardButton(Buttons.CANCEL))
 
     private fun dialogKeyboard(rows: List<KeyboardRow>): ReplyKeyboardMarkup =

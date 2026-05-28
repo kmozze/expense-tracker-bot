@@ -12,6 +12,8 @@ object CallbackDataParser {
             value == CallbackData.MENU_CATEGORIES_VALUE -> UserCommand.Categories
             value == CallbackData.MENU_STATISTICS_VALUE -> UserCommand.Statistics
             value?.startsWith(CallbackData.EXPENSE_EDIT_PREFIX) == true -> parseExpenseEdit(value)
+            value?.startsWith(CallbackData.EXPENSE_DELETE_CONFIRM_PREFIX) == true -> parseExpenseDeletionConfirmation(value)
+            value?.startsWith(CallbackData.EXPENSE_DELETE_CANCEL_PREFIX) == true -> parseExpenseDeletionCancellation(value)
             value?.startsWith(CallbackData.EXPENSE_DELETE_PREFIX) == true -> parseExpenseDeletion(value)
             else -> UserCommand.Unsupported
         }
@@ -28,5 +30,19 @@ object CallbackDataParser {
             .removePrefix(CallbackData.EXPENSE_DELETE_PREFIX)
             .let { runCatching { UUID.fromString(it) }.getOrNull() }
             ?.let { UserCommand.RequestExpenseDeletion(it) }
+            ?: UserCommand.InvalidExpenseAction
+
+    private fun parseExpenseDeletionConfirmation(value: String): UserCommand =
+        value
+            .removePrefix(CallbackData.EXPENSE_DELETE_CONFIRM_PREFIX)
+            .let { runCatching { UUID.fromString(it) }.getOrNull() }
+            ?.let { UserCommand.ConfirmExpenseDeletion(it) }
+            ?: UserCommand.InvalidExpenseAction
+
+    private fun parseExpenseDeletionCancellation(value: String): UserCommand =
+        value
+            .removePrefix(CallbackData.EXPENSE_DELETE_CANCEL_PREFIX)
+            .let { runCatching { UUID.fromString(it) }.getOrNull() }
+            ?.let { UserCommand.CancelExpenseDeletion(it) }
             ?: UserCommand.InvalidExpenseAction
 }
