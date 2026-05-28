@@ -3,7 +3,6 @@ package me.kmozze.expensetracker.unit.handler.statehandler
 import me.kmozze.expensetracker.handler.statehandler.IdleStateHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.support.makeUserInput
@@ -121,6 +120,8 @@ class IdleStateHandlerTest {
                 UserCommand.ViewExpenses,
                 UserCommand.Categories,
                 UserCommand.Statistics,
+                UserCommand.RequestExpenseEdit(EXPENSE_ID),
+                UserCommand.RequestExpenseDeletion(EXPENSE_ID),
             )
 
         @JvmStatic
@@ -134,10 +135,9 @@ class IdleStateHandlerTest {
         fun staleCallbackCommands(): Stream<UserCommand> =
             Stream.of(
                 UserCommand.Cancel,
-                UserCommand.SelectCategory(UUID.fromString("00000000-0000-0000-0000-000000000001")),
-                UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY),
-                UserCommand.InvalidCategorySelection,
-                UserCommand.InvalidExpenseDateSelection,
+                UserCommand.InvalidExpenseAction,
             )
+
+        val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
     }
 }

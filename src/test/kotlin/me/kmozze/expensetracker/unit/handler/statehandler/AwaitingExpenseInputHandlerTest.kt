@@ -139,7 +139,7 @@ class AwaitingExpenseInputHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .actions,
-        ).containsExactly(BotAction.ShowMainMenu)
+        ).isEmpty()
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         confirmVerified(expenseService, categoryService)
     }

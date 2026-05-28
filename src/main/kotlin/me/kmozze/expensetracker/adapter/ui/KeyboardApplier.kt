@@ -22,6 +22,8 @@ class KeyboardApplier {
                     sendMessage.replyMarkup = Keyboards.expenseDateSelection()
                 is BotAction.ShowCancel ->
                     sendMessage.replyMarkup = Keyboards.cancel()
+                is BotAction.ShowExpenseCardActions ->
+                    sendMessage.replyMarkup = Keyboards.expenseCardActions(action.expenseId)
                 is BotAction.ClearInlineKeyboard ->
                     Unit
                 is BotAction.RemoveReplyKeyboard ->
@@ -39,11 +41,13 @@ class KeyboardApplier {
                 is BotAction.ShowMainMenu ->
                     editMessage.replyMarkup = Keyboards.mainMenu()
                 is BotAction.ShowCategorySelection ->
-                    editMessage.replyMarkup = Keyboards.categorySelection(action.categories)
+                    Unit
                 is BotAction.ShowExpenseDateSelection ->
-                    editMessage.replyMarkup = Keyboards.expenseDateSelection()
+                    Unit
                 is BotAction.ShowCancel ->
-                    editMessage.replyMarkup = Keyboards.cancel()
+                    Unit
+                is BotAction.ShowExpenseCardActions ->
+                    editMessage.replyMarkup = Keyboards.expenseCardActions(action.expenseId)
                 is BotAction.ClearInlineKeyboard,
                 is BotAction.RemoveReplyKeyboard,
                 ->

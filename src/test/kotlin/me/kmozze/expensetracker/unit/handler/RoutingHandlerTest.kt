@@ -52,19 +52,17 @@ class RoutingHandlerTest {
                 awaitingCategoryHandler,
             )
 
-        val firstCategoryId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-        val secondCategoryId = UUID.fromString("00000000-0000-0000-0000-000000000002")
         val firstInput =
             makeUserInput(
                 userId = userId,
                 chatId = 1L,
-                callbackData = CallbackData.selectCategory(firstCategoryId),
+                text = "Еда",
             )
         val secondInput =
             makeUserInput(
                 userId = userId,
                 chatId = 1L,
-                callbackData = CallbackData.selectCategory(secondCategoryId),
+                text = "Транспорт",
             )
 
         userSessionService.setState(userId, firstState)
@@ -172,7 +170,7 @@ class RoutingHandlerTest {
     }
 
     @Test
-    fun `stale add flow callback during another active step returns callback answer without routing`() {
+    fun `card action callback during active dialog returns callback answer without routing`() {
         val userId = 45L
         val awaitingInputHandler = RecordingStateHandler(UserState.AwaitingExpenseInput::class)
         val router = routerWith(awaitingInputHandler)
@@ -183,7 +181,7 @@ class RoutingHandlerTest {
                 makeUserInput(
                     userId = userId,
                     chatId = 1L,
-                    callbackData = CallbackData.selectCategory(UUID.randomUUID()),
+                    callbackData = CallbackData.deleteExpense(UUID.randomUUID()),
                 ),
             )
 
@@ -195,14 +193,13 @@ class RoutingHandlerTest {
     }
 
     @Test
-    fun `stale date callback during manual date input returns callback answer without routing`() {
+    fun `menu callback during manual date input returns callback answer without routing`() {
         val userId = 46L
         val awaitingManualDateHandler = RecordingStateHandler(UserState.AwaitingExpenseManualDateInput::class)
         val currentState =
             UserState.AwaitingExpenseManualDateInput(
                 expenseDraft = ExpenseDraft(Money.of(BigDecimal("500")), "такси"),
                 categoryName = "Транспорт",
-                cardMessageId = 123,
             )
         val router = routerWith(awaitingManualDateHandler)
 
@@ -212,8 +209,7 @@ class RoutingHandlerTest {
                 makeUserInput(
                     userId = userId,
                     chatId = 1L,
-                    callbackData = CallbackData.selectExpenseDateToday(),
-                    callbackMessageId = 123,
+                    callbackData = CallbackData.menuStatistics(),
                 ),
             )
 

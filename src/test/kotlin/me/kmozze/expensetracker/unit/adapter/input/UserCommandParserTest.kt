@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.unit.adapter.input
 
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.input.UserCommandParser
-import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
+import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.model.domain.UserCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -43,21 +43,10 @@ class UserCommandParserTest {
         val command =
             UserCommandParser.parse(
                 text = "500 такси",
-                callbackData = CallbackData.cancel(),
+                callbackData = CallbackData.deleteExpense(EXPENSE_ID),
             )
 
-        assertThat(command).isEqualTo(UserCommand.Cancel)
-    }
-
-    @Test
-    fun `parse expense date callback data before text`() {
-        val command =
-            UserCommandParser.parse(
-                text = "500 такси",
-                callbackData = CallbackData.selectExpenseDateToday(),
-            )
-
-        assertThat(command).isEqualTo(UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY))
+        assertThat(command).isEqualTo(UserCommand.RequestExpenseDeletion(EXPENSE_ID))
     }
 
     @Test
@@ -72,8 +61,8 @@ class UserCommandParserTest {
     }
 
     private companion object {
-        val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
-        val SELECT_CATEGORY_CALLBACK: String = CallbackData.selectCategory(CATEGORY_ID)
+        val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        const val OLD_SELECT_CATEGORY_CALLBACK: String = "select_category:00000000-0000-0000-0000-000000000001"
 
         @JvmStatic
         fun textCommands(): Stream<Arguments> =
@@ -82,7 +71,9 @@ class UserCommandParserTest {
                 Arguments.arguments("/START", UserCommand.Start),
                 Arguments.arguments("/menu", UserCommand.Menu),
                 Arguments.arguments("/MENU", UserCommand.Menu),
-                Arguments.arguments(SELECT_CATEGORY_CALLBACK, UserCommand.PlainText(SELECT_CATEGORY_CALLBACK)),
+                Arguments.arguments(Buttons.CANCEL, UserCommand.Cancel),
+                Arguments.arguments(Buttons.TODAY, UserCommand.PlainText(Buttons.TODAY)),
+                Arguments.arguments(OLD_SELECT_CATEGORY_CALLBACK, UserCommand.PlainText(OLD_SELECT_CATEGORY_CALLBACK)),
             )
     }
 }

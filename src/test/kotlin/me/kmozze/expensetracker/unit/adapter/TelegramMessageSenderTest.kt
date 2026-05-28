@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.generics.TelegramClient
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
+import java.util.UUID
 
 class TelegramMessageSenderTest {
     @Test
@@ -52,7 +53,7 @@ class TelegramMessageSenderTest {
             chatId = CHAT_ID,
             messageId = MESSAGE_ID,
             text = TEXT,
-            actions = listOf(BotAction.ShowExpenseDateSelection),
+            actions = listOf(BotAction.ShowExpenseCardActions(EXPENSE_ID)),
         )
 
         assertThat(fakeTelegramClient.calls).hasSize(2)
@@ -71,7 +72,7 @@ class TelegramMessageSenderTest {
             chatId = CHAT_ID,
             messageId = MESSAGE_ID,
             text = TEXT,
-            actions = listOf(BotAction.ShowExpenseDateSelection),
+            actions = listOf(BotAction.ShowExpenseCardActions(EXPENSE_ID)),
         )
 
         assertThat(fakeTelegramClient.calls).hasSize(1)
@@ -128,5 +129,6 @@ class TelegramMessageSenderTest {
         const val CHAT_ID = 123L
         const val MESSAGE_ID = 456
         const val TEXT = "Расход сохранен"
+        val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
     }
 }

@@ -62,25 +62,7 @@ class DialogueRouter(
         currentState: UserState,
     ): Boolean =
         input.callbackData != null &&
-            currentState !is UserState.Idle &&
-            !currentState.acceptsCurrentAddExpenseCallback(input.command)
-
-    private fun UserState.acceptsCurrentAddExpenseCallback(command: UserCommand): Boolean =
-        when (this) {
-            is UserState.AwaitingCategorySelection ->
-                command is UserCommand.SelectCategory ||
-                    command is UserCommand.InvalidCategorySelection ||
-                    command is UserCommand.Cancel
-            is UserState.AwaitingExpenseDateSelection ->
-                command is UserCommand.SelectExpenseDate ||
-                    command is UserCommand.InvalidExpenseDateSelection ||
-                    command is UserCommand.Cancel
-            is UserState.AwaitingExpenseManualDateInput ->
-                command is UserCommand.Cancel
-            UserState.AwaitingExpenseInput,
-            UserState.Idle,
-            -> false
-        }
+            currentState !is UserState.Idle
 
     private fun callbackBlockedResult(): HandlerResult =
         HandlerResult(

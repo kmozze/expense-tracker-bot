@@ -12,12 +12,10 @@ sealed class UserState {
     data class AwaitingExpenseDateSelection(
         val expenseDraft: ExpenseDraft,
         val categoryName: String,
-        val cardMessageId: Int? = null,
     ) : UserState()
 
     data class AwaitingExpenseManualDateInput(
         val expenseDraft: ExpenseDraft,
         val categoryName: String,
-        val cardMessageId: Int? = null,
     ) : UserState()
 }

@@ -3,8 +3,12 @@ package me.kmozze.expensetracker.adapter.ui
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.model.entity.Category
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
+import java.util.UUID
 
 object Keyboards {
     fun mainMenu(): InlineKeyboardMarkup {
@@ -22,80 +26,64 @@ object Keyboards {
             .build()
     }
 
-    fun categorySelection(categories: List<Category>): InlineKeyboardMarkup {
-        val buttons =
-            categories.map { category ->
-                InlineKeyboardButton
-                    .builder()
-                    .text(category.name)
-                    .callbackData(CallbackData.selectCategory(category.id))
-                    .build()
-            }
-        val rows: List<InlineKeyboardRow> =
-            buttons
+    fun categorySelection(categories: List<Category>): ReplyKeyboardMarkup {
+        val rows =
+            categories
                 .chunked(2)
-                .map { InlineKeyboardRow(it) } +
-                listOf(
-                    cancelRow(),
-                )
+                .map { categoriesChunk ->
+                    KeyboardRow(categoriesChunk.map { KeyboardButton(it.name) })
+                } +
+                listOf(cancelReplyRow())
 
-        return InlineKeyboardMarkup
-            .builder()
-            .keyboard(rows)
-            .build()
+        return dialogKeyboard(rows)
     }
 
-    fun expenseDateSelection(): InlineKeyboardMarkup {
+    fun expenseDateSelection(): ReplyKeyboardMarkup {
         val rows =
             listOf(
-                InlineKeyboardRow(
+                KeyboardRow(
                     listOf(
-                        InlineKeyboardButton
-                            .builder()
-                            .text(Buttons.TODAY)
-                            .callbackData(CallbackData.selectExpenseDateToday())
-                            .build(),
-                        InlineKeyboardButton
-                            .builder()
-                            .text(Buttons.YESTERDAY)
-                            .callbackData(CallbackData.selectExpenseDateYesterday())
-                            .build(),
+                        KeyboardButton(Buttons.TODAY),
+                        KeyboardButton(Buttons.YESTERDAY),
                     ),
                 ),
-                InlineKeyboardRow(
-                    listOf(
-                        InlineKeyboardButton
-                            .builder()
-                            .text(Buttons.ENTER_DATE_MANUALLY)
-                            .callbackData(CallbackData.enterExpenseDateManually())
-                            .build(),
-                    ),
-                ),
-                cancelRow(),
+                KeyboardRow(KeyboardButton(Buttons.ENTER_DATE_MANUALLY)),
+                cancelReplyRow(),
             )
 
-        return InlineKeyboardMarkup
-            .builder()
-            .keyboard(rows)
-            .build()
+        return dialogKeyboard(rows)
     }
 
-    fun cancel(): InlineKeyboardMarkup =
+    fun cancel(): ReplyKeyboardMarkup = dialogKeyboard(listOf(cancelReplyRow()))
+
+    fun expenseCardActions(expenseId: UUID): InlineKeyboardMarkup =
         InlineKeyboardMarkup
             .builder()
-            .keyboard(listOf(cancelRow()))
-            .build()
+            .keyboard(
+                listOf(
+                    InlineKeyboardRow(
+                        listOf(
+                            InlineKeyboardButton
+                                .builder()
+                                .text(Buttons.EDIT_EXPENSE)
+                                .callbackData(CallbackData.editExpense(expenseId))
+                                .build(),
+                            InlineKeyboardButton
+                                .builder()
+                                .text(Buttons.DELETE_EXPENSE)
+                                .callbackData(CallbackData.deleteExpense(expenseId))
+                                .build(),
+                        ),
+                    ),
+                ),
+            ).build()
 
-    private fun cancelRow(): InlineKeyboardRow =
-        InlineKeyboardRow(
-            listOf(
-                InlineKeyboardButton
-                    .builder()
-                    .text(Buttons.CANCEL)
-                    .callbackData(CallbackData.cancel())
-                    .build(),
-            ),
-        )
+    private fun cancelReplyRow(): KeyboardRow = KeyboardRow(KeyboardButton(Buttons.CANCEL))
+
+    private fun dialogKeyboard(rows: List<KeyboardRow>): ReplyKeyboardMarkup =
+        ReplyKeyboardMarkup(rows).apply {
+            resizeKeyboard = true
+        }
 
     private fun menuRow(
         text: String,

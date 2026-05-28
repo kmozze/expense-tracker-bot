@@ -42,6 +42,8 @@ class IdleStateHandler : StateHandler {
             UserCommand.ViewExpenses,
             UserCommand.Categories,
             UserCommand.Statistics,
+            is UserCommand.RequestExpenseEdit,
+            is UserCommand.RequestExpenseDeletion,
             ->
                 HandlerResult(
                     response =
@@ -58,10 +60,7 @@ class IdleStateHandler : StateHandler {
                 )
 
             UserCommand.Cancel,
-            is UserCommand.SelectCategory,
-            UserCommand.InvalidCategorySelection,
-            is UserCommand.SelectExpenseDate,
-            UserCommand.InvalidExpenseDateSelection,
+            UserCommand.InvalidExpenseAction,
             ->
                 HandlerResult(
                     response =
