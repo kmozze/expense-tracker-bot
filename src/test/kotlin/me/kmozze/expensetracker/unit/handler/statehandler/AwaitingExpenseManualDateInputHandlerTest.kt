@@ -10,10 +10,8 @@ import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseManualDateInputHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
-import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Expense
@@ -24,10 +22,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.math.BigDecimal
-import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 import java.util.UUID
 
 @ExtendWith(MockKExtension::class)
@@ -40,7 +35,6 @@ class AwaitingExpenseManualDateInputHandlerTest {
         handler =
             AwaitingExpenseManualDateInputHandler(
                 expenseService = expenseService,
-                clock = CLOCK,
             )
     }
 
@@ -52,28 +46,19 @@ class AwaitingExpenseManualDateInputHandlerTest {
 
         val result = handle(UserCommand.PlainText(MANUAL_DATE_TEXT))
 
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.ExpenseSaved(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY_NAME,
-                expenseDate = MANUAL_DATE,
-                description = EXPENSE_DESCRIPTION,
-            ),
-        )
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ClearInlineKeyboard)
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(result.response.outgoingMessages).hasSize(2)
+        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
+        assertThat(result.response.outgoingMessages[1].text)
+            .isEqualTo(
+                BotText.ExpenseSaved(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = CATEGORY_NAME,
+                    expenseDate = MANUAL_DATE,
+                    description = EXPENSE_DESCRIPTION,
+                ),
+            )
+        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.parseExpenseDate(MANUAL_DATE_TEXT) }
         verify(exactly = 1) { expenseService.saveExpense(USER_ID, completeDraft) }
@@ -96,32 +81,23 @@ class AwaitingExpenseManualDateInputHandlerTest {
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowCancel)
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_MANUAL_DATE_INPUT)
         verify(exactly = 1) { expenseService.parseExpenseDate("дата") }
         confirmVerified(expenseService)
     }
 
     @Test
-    fun `today callback from previous date keyboard saves expense`() {
-        val completeDraft = EXPENSE_DRAFT_WITH_CATEGORY.copy(expenseDate = TODAY)
-        every { expenseService.saveExpense(USER_ID, completeDraft) } returns expense(expenseDate = TODAY)
-
-        val result = handle(UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY))
+    fun `non-text command repeats manual input`() {
+        val result = handle(UserCommand.RequestExpenseEdit(EXPENSE_ID))
 
         assertThat(
             result.response.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(
-            BotText.ExpenseSaved(
+            BotText.EnterExpenseDateManually(
                 amount = EXPENSE_AMOUNT,
                 categoryName = CATEGORY_NAME,
-                expenseDate = TODAY,
                 description = EXPENSE_DESCRIPTION,
             ),
         )
@@ -129,36 +105,7 @@ class AwaitingExpenseManualDateInputHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .actions,
-        ).containsExactly(BotAction.ClearInlineKeyboard)
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
-        verify(exactly = 1) { expenseService.saveExpense(USER_ID, completeDraft) }
-        confirmVerified(expenseService)
-    }
-
-    @Test
-    fun `invalid date callback keeps manual input open with error`() {
-        val result = handle(UserCommand.InvalidExpenseDateSelection)
-
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION))
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
         ).containsExactly(BotAction.ShowCancel)
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_MANUAL_DATE_INPUT)
         confirmVerified(expenseService)
     }
@@ -176,12 +123,7 @@ class AwaitingExpenseManualDateInputHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .actions,
-        ).containsExactly(BotAction.ClearInlineKeyboard)
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        ).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         confirmVerified(expenseService)
     }
@@ -193,8 +135,6 @@ class AwaitingExpenseManualDateInputHandlerTest {
                     userId = USER_ID,
                     chatId = CHAT_ID,
                     text = textFor(command),
-                    callbackData = callbackDataFor(command),
-                    callbackMessageId = callbackMessageIdFor(command),
                     command = command,
                 ),
             currentState = AWAITING_EXPENSE_MANUAL_DATE_INPUT,
@@ -206,20 +146,9 @@ class AwaitingExpenseManualDateInputHandlerTest {
             else -> null
         }
 
-    private fun callbackDataFor(command: UserCommand): String? =
-        when (command) {
-            is UserCommand.PlainText -> null
-            else -> "callback"
-        }
-
-    private fun callbackMessageIdFor(command: UserCommand): Int? =
-        when (command) {
-            is UserCommand.PlainText -> null
-            else -> CARD_MESSAGE_ID
-        }
-
     private fun expense(expenseDate: LocalDate): Expense =
         Expense(
+            id = EXPENSE_ID,
             categoryId = CATEGORY_ID,
             amount = EXPENSE_AMOUNT,
             userId = USER_ID,
@@ -230,11 +159,11 @@ class AwaitingExpenseManualDateInputHandlerTest {
     private companion object {
         const val USER_ID = 123L
         const val CHAT_ID = 456L
-        const val CARD_MESSAGE_ID = 789
         const val CATEGORY_NAME = "Транспорт"
         const val EXPENSE_DESCRIPTION = "такси"
         const val MANUAL_DATE_TEXT = "20.05.2026"
         val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000010")
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val EXPENSE_DRAFT_WITH_CATEGORY: ExpenseDraft =
             ExpenseDraft(
@@ -246,10 +175,7 @@ class AwaitingExpenseManualDateInputHandlerTest {
             UserState.AwaitingExpenseManualDateInput(
                 expenseDraft = EXPENSE_DRAFT_WITH_CATEGORY,
                 categoryName = CATEGORY_NAME,
-                cardMessageId = CARD_MESSAGE_ID,
             )
-        val CLOCK: Clock = Clock.fixed(Instant.parse("2026-05-24T12:00:00Z"), ZoneOffset.UTC)
-        val TODAY: LocalDate = LocalDate.parse("2026-05-24")
         val MANUAL_DATE: LocalDate = LocalDate.parse("2026-05-20")
     }
 }

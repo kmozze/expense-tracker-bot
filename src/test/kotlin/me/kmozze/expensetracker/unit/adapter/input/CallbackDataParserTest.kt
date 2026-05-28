@@ -2,7 +2,6 @@ package me.kmozze.expensetracker.unit.adapter.input
 
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.input.CallbackDataParser
-import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.UserCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -25,54 +24,25 @@ class CallbackDataParserTest {
     }
 
     @Test
-    fun `parse cancel callback`() {
-        val command = CallbackDataParser.parse(CallbackData.cancel())
+    fun `parse expense edit callback`() {
+        val command = CallbackDataParser.parse(CallbackData.editExpense(EXPENSE_ID))
 
-        assertThat(command).isEqualTo(UserCommand.Cancel)
+        assertThat(command).isEqualTo(UserCommand.RequestExpenseEdit(EXPENSE_ID))
     }
 
     @Test
-    fun `parse valid category selection callback`() {
-        val command = CallbackDataParser.parse(CallbackData.selectCategory(CATEGORY_ID))
+    fun `parse expense deletion callback`() {
+        val command = CallbackDataParser.parse(CallbackData.deleteExpense(EXPENSE_ID))
 
-        assertThat(command).isEqualTo(UserCommand.SelectCategory(CATEGORY_ID))
-    }
-
-    @Test
-    fun `parse today expense date callback`() {
-        val command = CallbackDataParser.parse(CallbackData.selectExpenseDateToday())
-
-        assertThat(command).isEqualTo(UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY))
-    }
-
-    @Test
-    fun `parse yesterday expense date callback`() {
-        val command = CallbackDataParser.parse(CallbackData.selectExpenseDateYesterday())
-
-        assertThat(command).isEqualTo(UserCommand.SelectExpenseDate(ExpenseDateSelection.YESTERDAY))
-    }
-
-    @Test
-    fun `parse manual expense date callback`() {
-        val command = CallbackDataParser.parse(CallbackData.enterExpenseDateManually())
-
-        assertThat(command).isEqualTo(UserCommand.SelectExpenseDate(ExpenseDateSelection.MANUAL))
+        assertThat(command).isEqualTo(UserCommand.RequestExpenseDeletion(EXPENSE_ID))
     }
 
     @ParameterizedTest(name = "callbackData: \"{0}\"")
-    @MethodSource("invalidCategoryCallbacks")
-    fun `parse invalid category selection callback`(callbackData: String) {
+    @MethodSource("invalidExpenseActionCallbacks")
+    fun `parse invalid expense action callback`(callbackData: String) {
         val command = CallbackDataParser.parse(callbackData)
 
-        assertThat(command).isEqualTo(UserCommand.InvalidCategorySelection)
-    }
-
-    @ParameterizedTest(name = "callbackData: \"{0}\"")
-    @MethodSource("invalidExpenseDateCallbacks")
-    fun `parse invalid expense date callback`(callbackData: String) {
-        val command = CallbackDataParser.parse(callbackData)
-
-        assertThat(command).isEqualTo(UserCommand.InvalidExpenseDateSelection)
+        assertThat(command).isEqualTo(UserCommand.InvalidExpenseAction)
     }
 
     @ParameterizedTest(name = "callbackData: \"{0}\"")
@@ -84,7 +54,7 @@ class CallbackDataParserTest {
     }
 
     private companion object {
-        val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
 
         @JvmStatic
         fun menuCallbacks(): Stream<Arguments> =
@@ -108,18 +78,14 @@ class CallbackDataParserTest {
             )
 
         @JvmStatic
-        fun invalidCategoryCallbacks(): Stream<String> =
+        fun invalidExpenseActionCallbacks(): Stream<String> =
             Stream.of(
-                "select_category:",
-                "select_category:not-a-uuid",
-                "select_category:00000000-0000-0000-0000-00000000000x",
-            )
-
-        @JvmStatic
-        fun invalidExpenseDateCallbacks(): Stream<String> =
-            Stream.of(
-                "select_expense_date:",
-                "select_expense_date:not-a-date-choice",
+                "expense:edit:",
+                "expense:edit:not-a-uuid",
+                "expense:edit:00000000-0000-0000-0000-00000000000x",
+                "expense:delete:",
+                "expense:delete:not-a-uuid",
+                "expense:delete:00000000-0000-0000-0000-00000000000x",
             )
 
         @JvmStatic
@@ -128,7 +94,8 @@ class CallbackDataParserTest {
                 null,
                 "",
                 "unknown",
-                "select-category:$CATEGORY_ID",
+                "select_category:$EXPENSE_ID",
+                "select_expense_date:today",
                 "cancel:extra",
             )
     }

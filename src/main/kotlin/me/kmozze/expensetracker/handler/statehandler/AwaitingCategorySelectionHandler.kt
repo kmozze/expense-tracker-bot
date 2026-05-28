@@ -9,10 +9,9 @@ import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
-import me.kmozze.expensetracker.model.domain.messageIdOrNull
+import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.service.CategoryService
 import org.springframework.stereotype.Component
-import java.util.UUID
 import kotlin.reflect.KClass
 
 @Component
@@ -30,18 +29,12 @@ class AwaitingCategorySelectionHandler(
         }
 
         return when (val command = input.command) {
-            UserCommand.Cancel -> cancelExpenseCreation(input)
-            is UserCommand.SelectCategory ->
+            UserCommand.Cancel -> cancelExpenseCreation()
+            is UserCommand.PlainText ->
                 selectCategory(
                     input = input,
                     currentState = currentState,
-                    categoryId = command.categoryId,
-                )
-            UserCommand.InvalidCategorySelection ->
-                categorySelectionError(
-                    input = input,
-                    currentState = currentState,
-                    errorCode = BusinessErrorCode.INVALID_CATEGORY_SELECTION,
+                    categoryName = command.value,
                 )
             UserCommand.Unsupported,
             UserCommand.Start,
@@ -50,9 +43,9 @@ class AwaitingCategorySelectionHandler(
             UserCommand.ViewExpenses,
             UserCommand.Categories,
             UserCommand.Statistics,
-            is UserCommand.SelectExpenseDate,
-            UserCommand.InvalidExpenseDateSelection,
-            is UserCommand.PlainText,
+            is UserCommand.RequestExpenseEdit,
+            is UserCommand.RequestExpenseDeletion,
+            UserCommand.InvalidExpenseAction,
             -> repeatCategorySelection(input, currentState)
         }
     }
@@ -60,18 +53,18 @@ class AwaitingCategorySelectionHandler(
     private fun selectCategory(
         input: UserInput,
         currentState: UserState.AwaitingCategorySelection,
-        categoryId: UUID,
+        categoryName: String,
     ): HandlerResult {
+        val categories = categoryService.getCategories(input.userId)
         val category =
-            categoryService.findCategoryForUser(categoryId, input.userId)
+            categories.firstOrNull { it.name == categoryName }
                 ?: return categorySelectionError(
-                    input = input,
                     currentState = currentState,
+                    categories = categories,
                     errorCode = BusinessErrorCode.CATEGORY_NOT_FOUND,
                 )
 
         val expenseDraft = currentState.expenseDraft.copy(categoryId = category.id)
-        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId)
 
         return HandlerResult(
             response =
@@ -86,7 +79,6 @@ class AwaitingCategorySelectionHandler(
                                         description = expenseDraft.description,
                                     ),
                                 actions = listOf(BotAction.ShowExpenseDateSelection),
-                                delivery = delivery,
                             ),
                         ),
                 ),
@@ -94,36 +86,30 @@ class AwaitingCategorySelectionHandler(
                 UserState.AwaitingExpenseDateSelection(
                     expenseDraft = expenseDraft,
                     categoryName = category.name,
-                    cardMessageId = delivery.messageIdOrNull(),
                 ),
         )
     }
 
-    private fun cancelExpenseCreation(input: UserInput): HandlerResult {
-        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId)
-
-        return HandlerResult(
+    private fun cancelExpenseCreation(): HandlerResult =
+        HandlerResult(
             response =
                 HandlerResponse(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
                                 text = BotText.ExpenseCanceled,
-                                actions = actionsForCompletedExpenseCard(delivery),
-                                delivery = delivery,
+                                actions = listOf(BotAction.RemoveReplyKeyboard),
                             ),
                         ),
                 ),
             nextState = UserState.Idle,
         )
-    }
 
     private fun repeatCategorySelection(
         input: UserInput,
         currentState: UserState.AwaitingCategorySelection,
     ): HandlerResult {
         val categories = categoryService.getCategories(input.userId)
-        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId)
 
         return HandlerResult(
             response =
@@ -137,7 +123,6 @@ class AwaitingCategorySelectionHandler(
                                         description = currentState.expenseDraft.description,
                                     ),
                                 actions = listOf(BotAction.ShowCategorySelection(categories)),
-                                delivery = delivery,
                             ),
                         ),
                 ),
@@ -146,14 +131,11 @@ class AwaitingCategorySelectionHandler(
     }
 
     private fun categorySelectionError(
-        input: UserInput,
         currentState: UserState.AwaitingCategorySelection,
+        categories: List<Category>,
         errorCode: BusinessErrorCode,
-    ): HandlerResult {
-        val categories = categoryService.getCategories(input.userId)
-        val delivery = responseDeliveryForExpenseCard(input.callbackMessageId)
-
-        return HandlerResult(
+    ): HandlerResult =
+        HandlerResult(
             response =
                 HandlerResponse(
                     outgoingMessages =
@@ -161,11 +143,9 @@ class AwaitingCategorySelectionHandler(
                             OutgoingMessage(
                                 text = BotText.Error(errorCode),
                                 actions = listOf(BotAction.ShowCategorySelection(categories)),
-                                delivery = delivery,
                             ),
                         ),
                 ),
             nextState = currentState,
         )
-    }
 }

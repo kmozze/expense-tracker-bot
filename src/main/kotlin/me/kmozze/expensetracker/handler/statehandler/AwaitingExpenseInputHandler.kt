@@ -106,7 +106,7 @@ class AwaitingExpenseInputHandler(
                         listOf(
                             OutgoingMessage(
                                 text = BotText.FeatureInProgress,
-                                actions = listOf(BotAction.ShowMainMenu),
+                                actions = emptyList(),
                             ),
                         ),
                 ),

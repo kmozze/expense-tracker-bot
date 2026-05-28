@@ -11,7 +11,6 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
-import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
@@ -39,10 +38,10 @@ class AwaitingCategorySelectionHandlerTest {
 
     @Test
     fun `selected category opens expense date selection`() {
-        val category = category(id = CATEGORY_ID)
-        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns category
+        val category = category(id = CATEGORY_ID, name = CATEGORY_NAME)
+        every { categoryService.getCategories(USER_ID) } returns listOf(category)
 
-        val result = handle(UserCommand.SelectCategory(CATEGORY_ID))
+        val result = handle(UserCommand.PlainText(CATEGORY_NAME))
 
         assertThat(
             result.response.outgoingMessages
@@ -60,30 +59,23 @@ class AwaitingCategorySelectionHandlerTest {
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowExpenseDateSelection)
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
                     expenseDraft = EXPENSE_DRAFT.copy(categoryId = CATEGORY_ID),
                     categoryName = category.name,
-                    cardMessageId = CARD_MESSAGE_ID,
                 ),
             )
-        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
+        verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)
     }
 
     @Test
     fun `missing category keeps category selection open with error`() {
-        val categories = listOf(category(id = CATEGORY_ID), category(id = SECOND_CATEGORY_ID))
-        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns null
+        val categories = listOf(category(id = CATEGORY_ID, name = CATEGORY_NAME))
         every { categoryService.getCategories(USER_ID) } returns categories
 
-        val result = handle(UserCommand.SelectCategory(CATEGORY_ID))
+        val result = handle(UserCommand.PlainText("Такси"))
 
         assertThat(
             result.response.outgoingMessages
@@ -95,39 +87,6 @@ class AwaitingCategorySelectionHandlerTest {
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowCategorySelection(categories))
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
-        assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
-        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
-        verify(exactly = 1) { categoryService.getCategories(USER_ID) }
-        confirmVerified(categoryService)
-    }
-
-    @Test
-    fun `invalid category selection keeps category selection open with error`() {
-        val categories = listOf(category(id = CATEGORY_ID), category(id = SECOND_CATEGORY_ID))
-        every { categoryService.getCategories(USER_ID) } returns categories
-
-        val result = handle(UserCommand.InvalidCategorySelection)
-
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.Error(BusinessErrorCode.INVALID_CATEGORY_SELECTION))
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(categories))
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)
@@ -146,12 +105,7 @@ class AwaitingCategorySelectionHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .actions,
-        ).containsExactly(BotAction.ClearInlineKeyboard)
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        ).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         confirmVerified(categoryService)
     }
@@ -161,7 +115,7 @@ class AwaitingCategorySelectionHandlerTest {
         val categories = listOf(category(id = CATEGORY_ID), category(id = SECOND_CATEGORY_ID))
         every { categoryService.getCategories(USER_ID) } returns categories
 
-        val result = handle(UserCommand.PlainText("700 кофе"))
+        val result = handle(UserCommand.AddExpense)
 
         assertThat(
             result.response.outgoingMessages
@@ -173,11 +127,6 @@ class AwaitingCategorySelectionHandlerTest {
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowCategorySelection(categories))
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.SendNewMessage)
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)
@@ -189,36 +138,32 @@ class AwaitingCategorySelectionHandlerTest {
                 makeUserInput(
                     userId = USER_ID,
                     chatId = CHAT_ID,
-                    callbackData = callbackDataFor(command),
-                    callbackMessageId = callbackMessageIdFor(command),
+                    text = textFor(command),
                     command = command,
                 ),
             currentState = AWAITING_CATEGORY_SELECTION,
         )
 
-    private fun callbackDataFor(command: UserCommand): String? =
+    private fun textFor(command: UserCommand): String? =
         when (command) {
-            is UserCommand.PlainText -> null
-            else -> "callback"
+            is UserCommand.PlainText -> command.value
+            else -> null
         }
 
-    private fun callbackMessageIdFor(command: UserCommand): Int? =
-        when (command) {
-            is UserCommand.PlainText -> null
-            else -> CARD_MESSAGE_ID
-        }
-
-    private fun category(id: UUID): Category =
+    private fun category(
+        id: UUID,
+        name: String = "Еда",
+    ): Category =
         Category(
             id = id,
-            name = "Еда",
+            name = name,
             userId = USER_ID,
         )
 
     private companion object {
         const val USER_ID = 123L
         const val CHAT_ID = 456L
-        const val CARD_MESSAGE_ID = 789
+        const val CATEGORY_NAME = "Транспорт"
         const val EXPENSE_DESCRIPTION = "такси"
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val EXPENSE_DRAFT: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION)

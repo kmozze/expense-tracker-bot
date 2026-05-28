@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove
+import java.util.UUID
 
 class KeyboardApplierTest {
     private val keyboardApplier = KeyboardApplier()
@@ -32,12 +34,23 @@ class KeyboardApplierTest {
     }
 
     @Test
-    fun `edit message uses inline keyboard for inline actions`() {
-        val editMessage = EditMessageText("text")
+    fun `send message uses reply keyboard for date selection`() {
+        val sendMessage = SendMessage("123", "text")
 
-        keyboardApplier.apply(editMessage, listOf(BotAction.ShowExpenseDateSelection))
+        keyboardApplier.apply(sendMessage, listOf(BotAction.ShowExpenseDateSelection))
 
-        assertThat(editMessage.replyMarkup.keyboard).hasSize(3)
+        val keyboard = sendMessage.replyMarkup as ReplyKeyboardMarkup
+        assertThat(keyboard.keyboard).hasSize(3)
+    }
+
+    @Test
+    fun `send message uses inline keyboard for expense card actions`() {
+        val sendMessage = SendMessage("123", "text")
+
+        keyboardApplier.apply(sendMessage, listOf(BotAction.ShowExpenseCardActions(EXPENSE_ID)))
+
+        val keyboard = sendMessage.replyMarkup as InlineKeyboardMarkup
+        assertThat(keyboard.keyboard).hasSize(1)
     }
 
     @Test
@@ -57,5 +70,9 @@ class KeyboardApplierTest {
 
         val keyboard = editMessage.replyMarkup as InlineKeyboardMarkup
         assertThat(keyboard.keyboard).hasSize(4)
+    }
+
+    private companion object {
+        val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
     }
 }

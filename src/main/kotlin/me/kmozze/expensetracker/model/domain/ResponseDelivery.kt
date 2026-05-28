@@ -7,9 +7,3 @@ sealed class ResponseDelivery {
         val messageId: Int,
     ) : ResponseDelivery()
 }
-
-internal fun ResponseDelivery.messageIdOrNull(): Int? =
-    when (this) {
-        is ResponseDelivery.EditMessage -> messageId
-        ResponseDelivery.SendNewMessage -> null
-    }

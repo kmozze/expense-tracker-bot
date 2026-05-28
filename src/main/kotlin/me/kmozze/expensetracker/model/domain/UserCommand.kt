@@ -2,12 +2,6 @@ package me.kmozze.expensetracker.model.domain
 
 import java.util.UUID
 
-enum class ExpenseDateSelection {
-    TODAY,
-    YESTERDAY,
-    MANUAL,
-}
-
 sealed class UserCommand {
     data object Start : UserCommand()
 
@@ -23,17 +17,15 @@ sealed class UserCommand {
 
     data object Cancel : UserCommand()
 
-    data class SelectCategory(
-        val categoryId: UUID,
+    data class RequestExpenseEdit(
+        val expenseId: UUID,
     ) : UserCommand()
 
-    data object InvalidCategorySelection : UserCommand()
-
-    data class SelectExpenseDate(
-        val selection: ExpenseDateSelection,
+    data class RequestExpenseDeletion(
+        val expenseId: UUID,
     ) : UserCommand()
 
-    data object InvalidExpenseDateSelection : UserCommand()
+    data object InvalidExpenseAction : UserCommand()
 
     data class PlainText(
         val value: String,

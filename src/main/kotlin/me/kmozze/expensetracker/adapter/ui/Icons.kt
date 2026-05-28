@@ -7,6 +7,7 @@ object Icons {
     const val CATEGORY = "📂"
     const val CALENDAR = "📅"
     const val EDIT = "✏️"
+    const val DELETE = "🗑️"
     const val PLUS = "➕"
     const val LIST = "📋"
     const val STATS = "📊"
