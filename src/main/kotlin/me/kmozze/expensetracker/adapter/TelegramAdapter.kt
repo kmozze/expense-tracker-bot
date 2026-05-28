@@ -4,8 +4,10 @@ import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.adapter.ui.KeyboardApplier
 import me.kmozze.expensetracker.adapter.ui.MessageFormatter
 import me.kmozze.expensetracker.handler.DialogueRouter
+import me.kmozze.expensetracker.model.domain.CallbackAnswer
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserInput
 import org.slf4j.LoggerFactory
@@ -37,13 +39,16 @@ class TelegramAdapter(
     override fun getUpdatesConsumer(): LongPollingUpdateConsumer = this
 
     override fun consume(update: Update) {
-        if (update.hasCallbackQuery()) {
-            acknowledgeCallback(update.callbackQuery)
-        }
-
-        val userInput = extractUserInput(update) ?: return
+        val callbackQuery = if (update.hasCallbackQuery()) update.callbackQuery else null
+        val userInput =
+            extractUserInput(update)
+                ?: run {
+                    callbackQuery?.let { acknowledgeCallback(it) }
+                    return
+                }
 
         val outcome: HandlerResult = dialogueRouter.process(userInput)
+        callbackQuery?.let { acknowledgeCallback(it, outcome.response.callbackAnswer) }
         sendResponse(userInput, outcome.response)
     }
 
@@ -88,12 +93,12 @@ class TelegramAdapter(
 
     private fun acknowledgeCallback(
         callbackQuery: org.telegram.telegrambots.meta.api.objects.CallbackQuery,
-        notificationText: String? = null,
+        callbackAnswer: CallbackAnswer? = null,
     ) {
         val answer =
             AnswerCallbackQuery(callbackQuery.id).apply {
-                text = notificationText
-                showAlert = false
+                text = callbackAnswer?.text?.let { messageFormatter.format(it) }
+                showAlert = callbackAnswer?.showAlert ?: false
             }
         try {
             telegramClient.execute(answer)
@@ -107,12 +112,21 @@ class TelegramAdapter(
         input: UserInput,
         response: HandlerResponse,
     ) {
-        val text = messageFormatter.format(response.message)
+        response.outgoingMessages.forEach { outgoingMessage ->
+            sendOutgoingMessage(input.chatId, outgoingMessage)
+        }
+    }
 
-        when (val delivery = response.delivery) {
-            ResponseDelivery.SendNewMessage -> telegramMessageSender.sendNewMessage(input.chatId, text, response.actions)
+    private fun sendOutgoingMessage(
+        chatId: Long,
+        outgoingMessage: OutgoingMessage,
+    ) {
+        val text = messageFormatter.format(outgoingMessage.text)
+
+        when (val delivery = outgoingMessage.delivery) {
+            ResponseDelivery.SendNewMessage -> telegramMessageSender.sendNewMessage(chatId, text, outgoingMessage.actions)
             is ResponseDelivery.EditMessage ->
-                telegramMessageSender.editMessage(input.chatId, delivery.messageId, text, response.actions)
+                telegramMessageSender.editMessage(chatId, delivery.messageId, text, outgoingMessage.actions)
         }
     }
 }

@@ -9,7 +9,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import org.telegram.telegrambots.meta.generics.TelegramClient
 import java.lang.reflect.InvocationHandler
@@ -40,7 +39,7 @@ class TelegramMessageSenderTest {
             .isInstanceOfSatisfying(SendMessage::class.java) {
                 assertThat(it.chatId).isEqualTo(CHAT_ID.toString())
                 assertThat(it.text).isEqualTo(TEXT)
-                assertThat(it.replyMarkup).isInstanceOf(ReplyKeyboardMarkup::class.java)
+                assertThat(it.replyMarkup).isInstanceOf(InlineKeyboardMarkup::class.java)
             }
     }
 

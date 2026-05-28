@@ -9,7 +9,7 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseInputHandler
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -48,9 +48,16 @@ class AwaitingExpenseInputHandlerTest {
 
         val result = handle(UserCommand.PlainText(EXPENSE_TEXT))
 
-        assertThat(result.response.message)
-            .isEqualTo(BotMessage.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
-        assertThat(result.response.actions).containsExactly(BotAction.ShowCategorySelection(categories))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowCategorySelection(categories))
         assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_DRAFT))
         verify(exactly = 1) { expenseService.parseExpense(EXPENSE_TEXT) }
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
@@ -63,8 +70,16 @@ class AwaitingExpenseInputHandlerTest {
 
         val result = handle(UserCommand.PlainText(EXPENSE_TEXT))
 
-        assertThat(result.response.message).isEqualTo(BotMessage.Error(BusinessErrorCode.EXPENSE_INVALID_FORMAT))
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.Error(BusinessErrorCode.EXPENSE_INVALID_FORMAT))
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).isEmpty()
         assertThat(result.nextState).isEqualTo(UserState.AwaitingExpenseInput)
         verify(exactly = 1) { expenseService.parseExpense(EXPENSE_TEXT) }
         confirmVerified(expenseService, categoryService)
@@ -77,8 +92,16 @@ class AwaitingExpenseInputHandlerTest {
 
         val result = handle(UserCommand.PlainText(EXPENSE_TEXT))
 
-        assertThat(result.response.message).isEqualTo(BotMessage.NoCategories)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.NoCategories)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowMainMenu)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.parseExpense(EXPENSE_TEXT) }
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
@@ -89,8 +112,16 @@ class AwaitingExpenseInputHandlerTest {
     fun `add expense command repeats input instructions without parsing`() {
         val result = handle(UserCommand.AddExpense)
 
-        assertThat(result.response.message).isEqualTo(BotMessage.AddExpenseInstructions)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.AddExpenseInstructions)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).isEmpty()
         assertThat(result.nextState).isEqualTo(UserState.AwaitingExpenseInput)
         confirmVerified(expenseService, categoryService)
     }
@@ -99,8 +130,16 @@ class AwaitingExpenseInputHandlerTest {
     fun `menu command leaves expense input with feature in progress`() {
         val result = handle(UserCommand.ViewExpenses)
 
-        assertThat(result.response.message).isEqualTo(BotMessage.FeatureInProgress)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.FeatureInProgress)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowMainMenu)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         confirmVerified(expenseService, categoryService)
     }
@@ -109,8 +148,16 @@ class AwaitingExpenseInputHandlerTest {
     fun `unsupported command repeats input instructions without parsing`() {
         val result = handle(UserCommand.Unsupported)
 
-        assertThat(result.response.message).isEqualTo(BotMessage.AddExpenseInstructions)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.AddExpenseInstructions)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).isEmpty()
         assertThat(result.nextState).isEqualTo(UserState.AwaitingExpenseInput)
         confirmVerified(expenseService, categoryService)
     }

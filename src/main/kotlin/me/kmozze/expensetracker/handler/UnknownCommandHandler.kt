@@ -1,8 +1,9 @@
 package me.kmozze.expensetracker.handler
 
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserInput
 import org.springframework.stereotype.Component
 
@@ -12,8 +13,13 @@ class UnknownCommandHandler {
         HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.UnknownCommand,
-                    actions = listOf(),
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.UnknownCommand,
+                                actions = emptyList(),
+                            ),
+                        ),
                 ),
         )
 }

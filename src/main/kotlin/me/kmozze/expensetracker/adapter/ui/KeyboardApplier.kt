@@ -4,6 +4,7 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove
 
 @Component
 class KeyboardApplier {
@@ -23,6 +24,8 @@ class KeyboardApplier {
                     sendMessage.replyMarkup = Keyboards.cancel()
                 is BotAction.ClearInlineKeyboard ->
                     Unit
+                is BotAction.RemoveReplyKeyboard ->
+                    sendMessage.replyMarkup = ReplyKeyboardRemove.builder().removeKeyboard(true).build()
             }
         }
     }
@@ -33,14 +36,16 @@ class KeyboardApplier {
     ) {
         actions.forEach { action ->
             when (action) {
+                is BotAction.ShowMainMenu ->
+                    editMessage.replyMarkup = Keyboards.mainMenu()
                 is BotAction.ShowCategorySelection ->
                     editMessage.replyMarkup = Keyboards.categorySelection(action.categories)
                 is BotAction.ShowExpenseDateSelection ->
                     editMessage.replyMarkup = Keyboards.expenseDateSelection()
                 is BotAction.ShowCancel ->
                     editMessage.replyMarkup = Keyboards.cancel()
-                is BotAction.ShowMainMenu,
                 is BotAction.ClearInlineKeyboard,
+                is BotAction.RemoveReplyKeyboard,
                 ->
                     editMessage.replyMarkup = null
             }

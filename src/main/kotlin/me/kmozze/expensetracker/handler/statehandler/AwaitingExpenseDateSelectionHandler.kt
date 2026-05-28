@@ -2,11 +2,12 @@ package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -44,6 +45,7 @@ class AwaitingExpenseDateSelectionHandler(
                 )
             UserCommand.Unsupported,
             UserCommand.Start,
+            UserCommand.Menu,
             UserCommand.AddExpense,
             UserCommand.ViewExpenses,
             UserCommand.Categories,
@@ -92,9 +94,14 @@ class AwaitingExpenseDateSelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = currentState.toEnterExpenseDateManuallyMessage(),
-                    actions = listOf(BotAction.ShowCancel),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = currentState.toEnterExpenseDateManuallyMessage(),
+                                actions = listOf(BotAction.ShowCancel),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState =
                 UserState.AwaitingExpenseManualDateInput(
@@ -114,9 +121,14 @@ class AwaitingExpenseDateSelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = currentState.toSelectExpenseDateMessage(),
-                    actions = listOf(BotAction.ShowExpenseDateSelection),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = currentState.toSelectExpenseDateMessage(),
+                                actions = listOf(BotAction.ShowExpenseDateSelection),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState = currentState,
         )
@@ -132,9 +144,14 @@ class AwaitingExpenseDateSelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.Error(errorCode),
-                    actions = listOf(BotAction.ShowExpenseDateSelection),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.Error(errorCode),
+                                actions = listOf(BotAction.ShowExpenseDateSelection),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState = currentState,
         )
@@ -149,23 +166,28 @@ class AwaitingExpenseDateSelectionHandler(
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = BotMessage.ExpenseCanceled,
-                    actions = actionsForCompletedExpenseCard(delivery),
-                    delivery = delivery,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.ExpenseCanceled,
+                                actions = actionsForCompletedExpenseCard(delivery),
+                                delivery = delivery,
+                            ),
+                        ),
                 ),
             nextState = UserState.Idle,
         )
     }
 
-    private fun UserState.AwaitingExpenseDateSelection.toSelectExpenseDateMessage(): BotMessage.SelectExpenseDate =
-        BotMessage.SelectExpenseDate(
+    private fun UserState.AwaitingExpenseDateSelection.toSelectExpenseDateMessage(): BotText.SelectExpenseDate =
+        BotText.SelectExpenseDate(
             amount = expenseDraft.amount,
             categoryName = categoryName,
             description = expenseDraft.description,
         )
 
-    private fun UserState.AwaitingExpenseDateSelection.toEnterExpenseDateManuallyMessage(): BotMessage.EnterExpenseDateManually =
-        BotMessage.EnterExpenseDateManually(
+    private fun UserState.AwaitingExpenseDateSelection.toEnterExpenseDateManuallyMessage(): BotText.EnterExpenseDateManually =
+        BotText.EnterExpenseDateManually(
             amount = expenseDraft.amount,
             categoryName = categoryName,
             description = expenseDraft.description,
@@ -180,15 +202,20 @@ class AwaitingExpenseDateSelectionHandler(
         HandlerResult(
             response =
                 HandlerResponse(
-                    message =
-                        BotMessage.ExpenseSaved(
-                            amount = expenseDraft.amount,
-                            categoryName = categoryName,
-                            expenseDate = expenseDate,
-                            description = expenseDraft.description,
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text =
+                                    BotText.ExpenseSaved(
+                                        amount = expenseDraft.amount,
+                                        categoryName = categoryName,
+                                        expenseDate = expenseDate,
+                                        description = expenseDraft.description,
+                                    ),
+                                actions = actionsForCompletedExpenseCard(delivery),
+                                delivery = delivery,
+                            ),
                         ),
-                    actions = actionsForCompletedExpenseCard(delivery),
-                    delivery = delivery,
                 ),
             nextState = UserState.Idle,
         )

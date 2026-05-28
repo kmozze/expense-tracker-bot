@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.unit.handler.statehandler
 
 import me.kmozze.expensetracker.handler.statehandler.IdleStateHandler
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -25,8 +25,16 @@ class IdleStateHandlerTest {
                 currentState = UserState.Idle,
             )
 
-        assertThat(result.response.message).isEqualTo(BotMessage.AddExpenseInstructions)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.AddExpenseInstructions)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).isEmpty()
         assertThat(result.nextState).isEqualTo(UserState.AwaitingExpenseInput)
     }
 
@@ -39,8 +47,16 @@ class IdleStateHandlerTest {
                 currentState = UserState.Idle,
             )
 
-        assertThat(result.response.message).isEqualTo(BotMessage.FeatureInProgress)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.FeatureInProgress)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).isEmpty()
         assertThat(result.nextState).isEqualTo(UserState.Idle)
     }
 
@@ -53,8 +69,16 @@ class IdleStateHandlerTest {
                 currentState = UserState.Idle,
             )
 
-        assertThat(result.response.message).isEqualTo(BotMessage.UnknownCommand)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.UnknownCommand)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowMainMenu)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
     }
 
@@ -67,8 +91,16 @@ class IdleStateHandlerTest {
                 currentState = UserState.Idle,
             )
 
-        assertThat(result.response.message).isEqualTo(BotMessage.SelectionExpired)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.SelectionExpired)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowMainMenu)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
     }
 

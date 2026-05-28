@@ -3,9 +3,10 @@ package me.kmozze.expensetracker.handler
 import me.kmozze.expensetracker.exception.AppException
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotMessage
+import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserState
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -22,19 +23,24 @@ class ErrorHandler {
             when (exception) {
                 is AppException -> {
                     logger.warn("AppException for user {}: {}", userId, exception.message, exception)
-                    BotMessage.Error(exception.errorCode)
+                    BotText.Error(exception.errorCode)
                 }
                 else -> {
                     logger.error("Unexpected exception for user {}", userId, exception)
-                    BotMessage.Error(SystemErrorCode.INTERNAL_ERROR)
+                    BotText.Error(SystemErrorCode.INTERNAL_ERROR)
                 }
             }
 
         return HandlerResult(
             response =
                 HandlerResponse(
-                    message = errorMessage,
-                    actions = listOf(BotAction.ShowMainMenu),
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = errorMessage,
+                                actions = listOf(BotAction.ShowMainMenu),
+                            ),
+                        ),
                 ),
             nextState = UserState.Idle,
         )

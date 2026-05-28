@@ -2,7 +2,6 @@ package me.kmozze.expensetracker.unit.adapter.input
 
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.input.UserCommandParser
-import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.model.domain.ExpenseDateSelection
 import me.kmozze.expensetracker.model.domain.UserCommand
 import org.assertj.core.api.Assertions.assertThat
@@ -43,7 +42,7 @@ class UserCommandParserTest {
     fun `parse callback data before text`() {
         val command =
             UserCommandParser.parse(
-                text = Buttons.ADD_EXPENSE,
+                text = "500 такси",
                 callbackData = CallbackData.cancel(),
             )
 
@@ -54,11 +53,22 @@ class UserCommandParserTest {
     fun `parse expense date callback data before text`() {
         val command =
             UserCommandParser.parse(
-                text = Buttons.ADD_EXPENSE,
+                text = "500 такси",
                 callbackData = CallbackData.selectExpenseDateToday(),
             )
 
         assertThat(command).isEqualTo(UserCommand.SelectExpenseDate(ExpenseDateSelection.TODAY))
+    }
+
+    @Test
+    fun `parse menu callback data before text`() {
+        val command =
+            UserCommandParser.parse(
+                text = "500 такси",
+                callbackData = CallbackData.menuAddExpense(),
+            )
+
+        assertThat(command).isEqualTo(UserCommand.AddExpense)
     }
 
     private companion object {
@@ -70,10 +80,8 @@ class UserCommandParserTest {
             Stream.of(
                 Arguments.arguments("/start", UserCommand.Start),
                 Arguments.arguments("/START", UserCommand.Start),
-                Arguments.arguments(Buttons.ADD_EXPENSE, UserCommand.AddExpense),
-                Arguments.arguments(Buttons.VIEW_EXPENSES, UserCommand.ViewExpenses),
-                Arguments.arguments(Buttons.CATEGORIES, UserCommand.Categories),
-                Arguments.arguments(Buttons.STATISTICS, UserCommand.Statistics),
+                Arguments.arguments("/menu", UserCommand.Menu),
+                Arguments.arguments("/MENU", UserCommand.Menu),
                 Arguments.arguments(SELECT_CATEGORY_CALLBACK, UserCommand.PlainText(SELECT_CATEGORY_CALLBACK)),
             )
     }

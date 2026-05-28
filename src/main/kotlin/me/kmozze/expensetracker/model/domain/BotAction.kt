@@ -14,4 +14,6 @@ sealed class BotAction {
     data object ShowCancel : BotAction()
 
     data object ClearInlineKeyboard : BotAction()
+
+    data object RemoveReplyKeyboard : BotAction()
 }
