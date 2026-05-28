@@ -41,7 +41,7 @@ class IdleStateHandler : StateHandler {
                     response =
                         HandlerResponse(
                             text = BotText.FeatureInProgress,
-                            actions = listOf(BotAction.ShowMainMenu),
+                            actions = emptyList(),
                         ),
                     nextState = UserState.Idle,
                 )

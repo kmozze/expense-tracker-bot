@@ -19,6 +19,25 @@ class MessageFormatterTest {
     }
 
     @Test
+    fun `main menu info text`() {
+        val text = formatter.format(BotText.MainMenuInfo)
+
+        assertThat(text)
+            .isEqualTo(
+                "🧭 Главное меню\n\n" +
+                    "/menu — открыть это меню в любой момент.\n" +
+                    "/start — запустить бота. Если категорий нет, будут созданы базовые.",
+            )
+    }
+
+    @Test
+    fun `main menu actions text`() {
+        val text = formatter.format(BotText.MainMenuActions)
+
+        assertThat(text).isEqualTo("Что хотите сделать?")
+    }
+
+    @Test
     fun `done text`() {
         val text = formatter.format(BotText.Done)
 

@@ -10,6 +10,10 @@ sealed class BotText {
 
     data object MainMenu : BotText()
 
+    data object MainMenuInfo : BotText()
+
+    data object MainMenuActions : BotText()
+
     data object Done : BotText()
 
     data object FinishCurrentDialog : BotText()

@@ -21,6 +21,14 @@ class MessageFormatter {
             is BotText.MainMenu ->
                 "Главное меню"
 
+            is BotText.MainMenuInfo ->
+                "🧭 Главное меню\n\n" +
+                    "/menu — открыть это меню в любой момент.\n" +
+                    "/start — запустить бота. Если категорий нет, будут созданы базовые."
+
+            is BotText.MainMenuActions ->
+                "Что хотите сделать?"
+
             is BotText.Done ->
                 "Готово"
 

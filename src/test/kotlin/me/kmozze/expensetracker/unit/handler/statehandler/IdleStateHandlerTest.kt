@@ -40,7 +40,7 @@ class IdleStateHandlerTest {
             )
 
         assertThat(result.response.text).isEqualTo(BotText.FeatureInProgress)
-        assertThat(result.response.actions).containsExactly(BotAction.ShowMainMenu)
+        assertThat(result.response.actions).isEmpty()
         assertThat(result.nextState).isEqualTo(UserState.Idle)
     }
 

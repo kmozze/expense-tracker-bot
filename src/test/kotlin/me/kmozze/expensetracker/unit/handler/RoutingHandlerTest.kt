@@ -103,11 +103,11 @@ class RoutingHandlerTest {
         assertThat(result.response.outgoingMessages)
             .containsExactly(
                 OutgoingMessage(
-                    text = BotText.Done,
+                    text = BotText.MainMenuInfo,
                     actions = listOf(BotAction.RemoveReplyKeyboard),
                 ),
                 OutgoingMessage(
-                    text = BotText.MainMenu,
+                    text = BotText.MainMenuActions,
                     actions = listOf(BotAction.ShowMainMenu),
                 ),
             )
@@ -137,6 +137,7 @@ class RoutingHandlerTest {
 
         assertThat(result.response.outgoingMessages).isEmpty()
         assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(result.response.callbackAnswer?.showAlert).isTrue()
         assertThat(userSessionService.getState(userId)).isEqualTo(awaitingCategoryState)
         assertThat(awaitingCategoryHandler.calls).isEmpty()
     }
@@ -159,6 +160,7 @@ class RoutingHandlerTest {
 
         assertThat(result.response.outgoingMessages).isEmpty()
         assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(result.response.callbackAnswer?.showAlert).isTrue()
         assertThat(userSessionService.getState(userId)).isEqualTo(UserState.AwaitingExpenseInput)
         assertThat(awaitingInputHandler.calls).isEmpty()
     }
@@ -188,6 +190,7 @@ class RoutingHandlerTest {
 
         assertThat(result.response.outgoingMessages).isEmpty()
         assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(result.response.callbackAnswer?.showAlert).isTrue()
         assertThat(userSessionService.getState(userId)).isEqualTo(currentState)
         assertThat(awaitingManualDateHandler.calls).isEmpty()
     }

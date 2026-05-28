@@ -32,8 +32,9 @@ class DialogueRouter(
             }
 
             if (input.command == UserCommand.Menu) {
+                val currentState = userSessionService.getState(input.userId)
                 userSessionService.clear(input.userId)
-                return menuCommandHandler.handle()
+                return menuCommandHandler.handle(removeReplyKeyboard = currentState !is UserState.Idle)
             }
 
             val currentState = userSessionService.getState(input.userId)
@@ -86,7 +87,7 @@ class DialogueRouter(
             response =
                 HandlerResponse(
                     outgoingMessages = emptyList(),
-                    callbackAnswer = CallbackAnswer(text = BotText.FinishCurrentDialog),
+                    callbackAnswer = CallbackAnswer(text = BotText.FinishCurrentDialog, showAlert = true),
                 ),
         )
 }

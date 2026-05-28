@@ -10,22 +10,30 @@ import org.springframework.stereotype.Component
 
 @Component
 class MenuCommandHandler {
-    fun handle(): HandlerResult =
+    fun handle(removeReplyKeyboard: Boolean): HandlerResult =
         HandlerResult(
             response =
                 HandlerResponse(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text = BotText.Done,
-                                actions = listOf(BotAction.RemoveReplyKeyboard),
+                                text = BotText.MainMenuInfo,
+                                actions =
+                                    if (removeReplyKeyboard) {
+                                        listOf(BotAction.RemoveReplyKeyboard)
+                                    } else {
+                                        emptyList()
+                                    },
                             ),
-                            OutgoingMessage(
-                                text = BotText.MainMenu,
-                                actions = listOf(BotAction.ShowMainMenu),
-                            ),
+                            mainMenuActionsMessage(),
                         ),
                 ),
             nextState = UserState.Idle,
+        )
+
+    private fun mainMenuActionsMessage(): OutgoingMessage =
+        OutgoingMessage(
+            text = BotText.MainMenuActions,
+            actions = listOf(BotAction.ShowMainMenu),
         )
 }
