@@ -5,14 +5,23 @@ import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
+import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
+import me.kmozze.expensetracker.model.entity.Category
+import me.kmozze.expensetracker.model.entity.Expense
+import me.kmozze.expensetracker.service.CategoryService
+import me.kmozze.expensetracker.service.ExpenseService
 import org.springframework.stereotype.Component
+import java.util.UUID
 import kotlin.reflect.KClass
 
 @Component
-class IdleStateHandler : StateHandler {
+class IdleStateHandler(
+    private val expenseService: ExpenseService,
+    private val categoryService: CategoryService,
+) : StateHandler {
     override val supportedStateClass: KClass<out UserState> = UserState.Idle::class
 
     override fun handle(
@@ -23,7 +32,7 @@ class IdleStateHandler : StateHandler {
             "IdleStateHandler requires Idle state"
         }
 
-        return when (input.command) {
+        return when (val command = input.command) {
             UserCommand.AddExpense ->
                 HandlerResult(
                     response =
@@ -43,7 +52,6 @@ class IdleStateHandler : StateHandler {
             UserCommand.Categories,
             UserCommand.Statistics,
             is UserCommand.RequestExpenseEdit,
-            is UserCommand.RequestExpenseDeletion,
             ->
                 HandlerResult(
                     response =
@@ -58,6 +66,15 @@ class IdleStateHandler : StateHandler {
                         ),
                     nextState = UserState.Idle,
                 )
+
+            is UserCommand.RequestExpenseDeletion ->
+                requestExpenseDeletion(input, command.expenseId)
+
+            is UserCommand.ConfirmExpenseDeletion ->
+                confirmExpenseDeletion(input, command.expenseId)
+
+            is UserCommand.CancelExpenseDeletion ->
+                cancelExpenseDeletion(input, command.expenseId)
 
             UserCommand.Cancel,
             UserCommand.InvalidExpenseAction,
@@ -92,4 +109,119 @@ class IdleStateHandler : StateHandler {
                 )
         }
     }
+
+    private fun requestExpenseDeletion(
+        input: UserInput,
+        expenseId: UUID,
+    ): HandlerResult =
+        expenseCardResult(
+            input = input,
+            expenseId = expenseId,
+            textFactory = { expense, category ->
+                BotText.ExpenseDeletionConfirmation(
+                    amount = expense.amount,
+                    categoryName = category.name,
+                    expenseDate = expense.expenseDate,
+                    description = expense.description,
+                )
+            },
+            actionsFactory = { listOf(BotAction.ShowExpenseDeletionConfirmation(expenseId)) },
+        )
+
+    private fun cancelExpenseDeletion(
+        input: UserInput,
+        expenseId: UUID,
+    ): HandlerResult =
+        expenseCardResult(
+            input = input,
+            expenseId = expenseId,
+            textFactory = { expense, category ->
+                BotText.ExpenseSaved(
+                    amount = expense.amount,
+                    categoryName = category.name,
+                    expenseDate = expense.expenseDate,
+                    description = expense.description,
+                )
+            },
+            actionsFactory = { listOf(BotAction.ShowExpenseCardActions(expenseId)) },
+        )
+
+    private fun confirmExpenseDeletion(
+        input: UserInput,
+        expenseId: UUID,
+    ): HandlerResult {
+        val deleted =
+            expenseService.deleteExpenseForUser(
+                userId = input.userId,
+                expenseId = expenseId,
+            )
+
+        return editExpenseCardResult(
+            input = input,
+            text =
+                if (deleted) {
+                    BotText.ExpenseDeleted
+                } else {
+                    BotText.ExpenseUnavailable
+                },
+            actions = listOf(BotAction.ClearInlineKeyboard),
+        )
+    }
+
+    private fun expenseCardResult(
+        input: UserInput,
+        expenseId: UUID,
+        textFactory: (Expense, Category) -> BotText,
+        actionsFactory: () -> List<BotAction>,
+    ): HandlerResult {
+        val expense =
+            expenseService.findExpenseForUser(
+                userId = input.userId,
+                expenseId = expenseId,
+            ) ?: return expenseUnavailableResult(input)
+
+        val category =
+            categoryService.findCategoryForUser(
+                categoryId = expense.categoryId,
+                userId = input.userId,
+            ) ?: return expenseUnavailableResult(input)
+
+        return editExpenseCardResult(
+            input = input,
+            text = textFactory(expense, category),
+            actions = actionsFactory(),
+        )
+    }
+
+    private fun expenseUnavailableResult(input: UserInput): HandlerResult =
+        editExpenseCardResult(
+            input = input,
+            text = BotText.ExpenseUnavailable,
+            actions = listOf(BotAction.ClearInlineKeyboard),
+        )
+
+    private fun editExpenseCardResult(
+        input: UserInput,
+        text: BotText,
+        actions: List<BotAction>,
+    ): HandlerResult =
+        HandlerResult(
+            response =
+                HandlerResponse(
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = text,
+                                actions = actions,
+                                delivery = input.callbackMessageDelivery(),
+                            ),
+                        ),
+                ),
+            nextState = UserState.Idle,
+        )
+
+    private fun UserInput.callbackMessageDelivery(): ResponseDelivery =
+        callbackMessageId
+            ?.let { ResponseDelivery.EditMessage(it) }
+            ?: ResponseDelivery.SendNewMessage
 }

@@ -8,6 +8,8 @@ object CallbackData {
     internal const val MENU_CATEGORIES_VALUE = "menu:categories"
     internal const val MENU_STATISTICS_VALUE = "menu:statistics"
     internal const val EXPENSE_EDIT_PREFIX = "expense:edit:"
+    internal const val EXPENSE_DELETE_CONFIRM_PREFIX = "expense:delete:confirm:"
+    internal const val EXPENSE_DELETE_CANCEL_PREFIX = "expense:delete:cancel:"
     internal const val EXPENSE_DELETE_PREFIX = "expense:delete:"
 
     fun editExpense(expenseId: UUID): String = "$EXPENSE_EDIT_PREFIX$expenseId"
@@ -21,4 +23,8 @@ object CallbackData {
     fun menuStatistics(): String = MENU_STATISTICS_VALUE
 
     fun deleteExpense(expenseId: UUID): String = "$EXPENSE_DELETE_PREFIX$expenseId"
+
+    fun confirmExpenseDeletion(expenseId: UUID): String = "$EXPENSE_DELETE_CONFIRM_PREFIX$expenseId"
+
+    fun cancelExpenseDeletion(expenseId: UUID): String = "$EXPENSE_DELETE_CANCEL_PREFIX$expenseId"
 }

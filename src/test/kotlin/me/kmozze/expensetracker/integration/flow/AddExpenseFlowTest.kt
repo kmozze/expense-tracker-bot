@@ -10,6 +10,7 @@ import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
+import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
@@ -224,6 +225,114 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
     }
 
     @Test
+    fun `expense card deletion asks for confirmation and deletes expense after confirmation`() {
+        val userId = 2010L
+        val chatId = 3010L
+
+        startExpenseInput(userId, chatId)
+        val categorySelection = submitExpenseForCategorySelection(userId, chatId, EXPENSE_TEXT_WITH_DESCRIPTION)
+        val category = categorySelection.category
+        selectCategoryForDateSelection(userId, chatId, category, EXPENSE_WITH_DESCRIPTION)
+        selectTodayDate(userId, chatId)
+        val expense = findExpenses(userId).single()
+
+        val deleteRequest =
+            dialogueRouter.processUserInput(
+                userId = userId,
+                chatId = chatId,
+                callbackData = CallbackData.deleteExpense(expense.id),
+                callbackMessageId = CARD_MESSAGE_ID,
+            )
+
+        assertThat(
+            deleteRequest.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(
+            BotText.ExpenseDeletionConfirmation(
+                amount = EXPENSE_AMOUNT,
+                categoryName = category.name,
+                expenseDate = expense.expenseDate,
+                description = EXPENSE_DESCRIPTION,
+            ),
+        )
+        assertThat(
+            deleteRequest.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowExpenseDeletionConfirmation(expense.id))
+        assertThat(
+            deleteRequest.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(findExpenses(userId)).hasSize(1)
+
+        val cancellation =
+            dialogueRouter.processUserInput(
+                userId = userId,
+                chatId = chatId,
+                callbackData = CallbackData.cancelExpenseDeletion(expense.id),
+                callbackMessageId = CARD_MESSAGE_ID,
+            )
+
+        assertThat(
+            cancellation.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(
+            BotText.ExpenseSaved(
+                amount = EXPENSE_AMOUNT,
+                categoryName = category.name,
+                expenseDate = expense.expenseDate,
+                description = EXPENSE_DESCRIPTION,
+            ),
+        )
+        assertThat(
+            cancellation.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ShowExpenseCardActions(expense.id))
+        assertThat(
+            cancellation.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+
+        dialogueRouter.processUserInput(
+            userId = userId,
+            chatId = chatId,
+            callbackData = CallbackData.deleteExpense(expense.id),
+            callbackMessageId = CARD_MESSAGE_ID,
+        )
+        val confirmation =
+            dialogueRouter.processUserInput(
+                userId = userId,
+                chatId = chatId,
+                callbackData = CallbackData.confirmExpenseDeletion(expense.id),
+                callbackMessageId = CARD_MESSAGE_ID,
+            )
+
+        assertThat(
+            confirmation.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.ExpenseDeleted)
+        assertThat(
+            confirmation.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(
+            confirmation.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        assertThat(confirmation.nextState).isEqualTo(UserState.Idle)
+        assertThat(findExpenses(userId)).isEmpty()
+    }
+
+    @Test
     fun `unknown category text keeps category selection open without saving expense`() {
         val userId = 2004L
         val chatId = 3004L
@@ -423,5 +532,6 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         val EXPENSE_WITHOUT_DESCRIPTION: ExpenseDraft = ExpenseDraft(EXPENSE_AMOUNT, null)
         val TEST_PERIOD_FROM: OffsetDateTime = OffsetDateTime.parse("2000-01-01T00:00:00Z")
         val TEST_PERIOD_TO: OffsetDateTime = OffsetDateTime.parse("2100-01-01T00:00:00Z")
+        const val CARD_MESSAGE_ID = 777
     }
 }

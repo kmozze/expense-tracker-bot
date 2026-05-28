@@ -25,6 +25,14 @@ sealed class UserCommand {
         val expenseId: UUID,
     ) : UserCommand()
 
+    data class ConfirmExpenseDeletion(
+        val expenseId: UUID,
+    ) : UserCommand()
+
+    data class CancelExpenseDeletion(
+        val expenseId: UUID,
+    ) : UserCommand()
+
     data object InvalidExpenseAction : UserCommand()
 
     data class PlainText(

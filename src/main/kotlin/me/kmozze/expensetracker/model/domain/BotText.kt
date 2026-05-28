@@ -46,6 +46,17 @@ sealed class BotText {
         val description: String?,
     ) : BotText()
 
+    data class ExpenseDeletionConfirmation(
+        val amount: Money,
+        val categoryName: String,
+        val expenseDate: LocalDate,
+        val description: String?,
+    ) : BotText()
+
+    data object ExpenseDeleted : BotText()
+
+    data object ExpenseUnavailable : BotText()
+
     data object ExpenseCanceled : BotText()
 
     data object SelectionExpired : BotText()

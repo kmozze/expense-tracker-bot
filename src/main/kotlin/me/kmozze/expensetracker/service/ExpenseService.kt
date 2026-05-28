@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import java.util.UUID
 
 @Service
 class ExpenseService(
@@ -29,6 +30,24 @@ class ExpenseService(
     }
 
     fun parseExpenseDate(text: String): LocalDate = expenseDateParser.parse(text)
+
+    fun findExpenseForUser(
+        userId: Long,
+        expenseId: UUID,
+    ): Expense? =
+        try {
+            expenseRepository.findByIdForUser(
+                id = expenseId,
+                userId = userId,
+            )
+        } catch (e: DataAccessException) {
+            logger.error("Failed to load expense $expenseId for user $userId", e)
+
+            throw SystemErrorCode.DATABASE_ERROR.exception(
+                customMessage = "Ошибка при получении расхода $expenseId",
+                cause = e,
+            )
+        }
 
     @Transactional
     fun saveExpense(
@@ -53,6 +72,25 @@ class ExpenseService(
 
             throw SystemErrorCode.DATABASE_ERROR.exception(
                 customMessage = "Ошибка при сохранении расхода пользователя $userId",
+                cause = e,
+            )
+        }
+
+    @Transactional
+    fun deleteExpenseForUser(
+        userId: Long,
+        expenseId: UUID,
+    ): Boolean =
+        try {
+            expenseRepository.deleteByIdForUser(
+                id = expenseId,
+                userId = userId,
+            )
+        } catch (e: DataAccessException) {
+            logger.error("Failed to delete expense $expenseId for user $userId", e)
+
+            throw SystemErrorCode.DATABASE_ERROR.exception(
+                customMessage = "Ошибка при удалении расхода $expenseId",
                 cause = e,
             )
         }

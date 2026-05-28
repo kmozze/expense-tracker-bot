@@ -65,4 +65,44 @@ class ExpenseRepositoryTest : AbstractIntegrationTest() {
 
         assertThat(result).isEmpty()
     }
+
+    @Test
+    fun `find by id for user returns only own expense`() {
+        val expenseId = UUID.fromString("00000000-0000-0000-0000-000000000101")
+
+        val ownExpense =
+            expenseRepository.findByIdForUser(
+                id = expenseId,
+                userId = 40001L,
+            )
+        val anotherUserExpense =
+            expenseRepository.findByIdForUser(
+                id = expenseId,
+                userId = 40002L,
+            )
+
+        assertThat(ownExpense).isNotNull()
+        assertThat(ownExpense?.id).isEqualTo(expenseId)
+        assertThat(anotherUserExpense).isNull()
+    }
+
+    @Test
+    fun `delete by id for user deletes only own expense`() {
+        val expenseId = UUID.fromString("00000000-0000-0000-0000-000000000101")
+
+        val deletedForAnotherUser =
+            expenseRepository.deleteByIdForUser(
+                id = expenseId,
+                userId = 40002L,
+            )
+        val deletedForOwner =
+            expenseRepository.deleteByIdForUser(
+                id = expenseId,
+                userId = 40001L,
+            )
+
+        assertThat(deletedForAnotherUser).isFalse()
+        assertThat(deletedForOwner).isTrue()
+        assertThat(expenseRepository.findByIdForUser(expenseId, 40001L)).isNull()
+    }
 }

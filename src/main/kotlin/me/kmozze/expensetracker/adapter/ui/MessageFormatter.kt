@@ -4,6 +4,7 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.ErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.Money
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -65,13 +66,26 @@ class MessageFormatter {
                 }
 
             is BotText.ExpenseSaved ->
-                buildString {
-                    append("✅ Сохранено!\n")
-                    append("💰 Сумма: ${message.amount.format()} ₽\n")
-                    append("📂 Категория: ${message.categoryName}\n")
-                    append("📅 Дата: ${message.expenseDate.formatForUser()}")
-                    appendDescription(message.description)
-                }
+                formatExpenseCard(
+                    amount = message.amount,
+                    categoryName = message.categoryName,
+                    expenseDate = message.expenseDate,
+                    description = message.description,
+                )
+
+            is BotText.ExpenseDeletionConfirmation ->
+                formatExpenseCard(
+                    amount = message.amount,
+                    categoryName = message.categoryName,
+                    expenseDate = message.expenseDate,
+                    description = message.description,
+                ) + "\n\nТочно хотите удалить расход?"
+
+            is BotText.ExpenseDeleted ->
+                "Расход удален"
+
+            is BotText.ExpenseUnavailable ->
+                "Расход уже удален или недоступен."
 
             is BotText.ExpenseCanceled ->
                 "Добавление расхода отменено."
@@ -106,6 +120,20 @@ class MessageFormatter {
             append("\n📝 $description")
         }
     }
+
+    private fun formatExpenseCard(
+        amount: Money,
+        categoryName: String,
+        expenseDate: LocalDate,
+        description: String?,
+    ): String =
+        buildString {
+            append("✅ Сохранено!\n")
+            append("💰 Сумма: ${amount.format()} ₽\n")
+            append("📂 Категория: $categoryName\n")
+            append("📅 Дата: ${expenseDate.formatForUser()}")
+            appendDescription(description)
+        }
 
     private fun LocalDate.formatForUser(): String = format(USER_DATE_FORMATTER)
 

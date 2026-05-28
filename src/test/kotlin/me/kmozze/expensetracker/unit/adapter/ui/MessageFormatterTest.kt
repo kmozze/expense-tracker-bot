@@ -81,6 +81,35 @@ class MessageFormatterTest {
     }
 
     @Test
+    fun `expense deletion confirmation includes card and question`() {
+        val text =
+            formatter.format(
+                BotText.ExpenseDeletionConfirmation(
+                    amount = Money.of(BigDecimal("500.00")),
+                    categoryName = "Еда",
+                    expenseDate = LocalDate.parse("2026-05-24"),
+                    description = "обед",
+                ),
+            )
+
+        assertThat(text)
+            .isEqualTo(
+                "✅ Сохранено!\n" +
+                    "💰 Сумма: 500.00 ₽\n" +
+                    "📂 Категория: Еда\n" +
+                    "📅 Дата: 24.05.2026\n" +
+                    "📝 обед\n\n" +
+                    "Точно хотите удалить расход?",
+            )
+    }
+
+    @Test
+    fun `expense deletion result texts`() {
+        assertThat(formatter.format(BotText.ExpenseDeleted)).isEqualTo("Расход удален")
+        assertThat(formatter.format(BotText.ExpenseUnavailable)).isEqualTo("Расход уже удален или недоступен.")
+    }
+
+    @Test
     fun `select expense date message includes category and description`() {
         val text =
             formatter.format(
