@@ -82,7 +82,7 @@ class RoutingHandlerTest {
     }
 
     @Test
-    fun `menu command clears current state and returns main menu`() {
+    fun `menu command from active dialog clears current state and returns main menu`() {
         val userId = 43L
         val awaitingCategoryState =
             UserState.AwaitingCategorySelection(
@@ -105,6 +105,35 @@ class RoutingHandlerTest {
                 OutgoingMessage(
                     text = BotText.MainMenuInfo,
                     actions = listOf(BotAction.RemoveReplyKeyboard),
+                ),
+                OutgoingMessage(
+                    text = BotText.MainMenuActions,
+                    actions = listOf(BotAction.ShowMainMenu),
+                ),
+            )
+        assertThat(result.nextState).isEqualTo(UserState.Idle)
+        assertThat(userSessionService.getState(userId)).isEqualTo(UserState.Idle)
+    }
+
+    @Test
+    fun `menu command from idle returns menu info and actions`() {
+        val userId = 47L
+        val router = routerWith(RecordingStateHandler(UserState.Idle::class))
+
+        val result =
+            router.process(
+                makeUserInput(
+                    userId = userId,
+                    chatId = 1L,
+                    text = "/menu",
+                ),
+            )
+
+        assertThat(result.response.outgoingMessages)
+            .containsExactly(
+                OutgoingMessage(
+                    text = BotText.MainMenuInfo,
+                    actions = emptyList(),
                 ),
                 OutgoingMessage(
                     text = BotText.MainMenuActions,
