@@ -66,9 +66,13 @@ jobs:
 
           for report in "${test_reports[@]}"; do
             total=$(( total + $(grep -o '<testcase ' "$report" | wc -l) ))
-            failed=$(( failed + $(grep -c '<failure' "$report") ))
-            errors=$(( errors + $(grep -c '<error' "$report") ))
-            skipped=$(( skipped + $(grep -c '<skipped' "$report") ))
+            failures=$(grep -c '<failure' "$report" || true)
+            errors_count=$(grep -c '<error' "$report" || true)
+            skipped_count=$(grep -c '<skipped' "$report" || true)
+
+            failed=$(( failed + failures ))
+            errors=$(( errors + errors_count ))
+            skipped=$(( skipped + skipped_count ))
           done
 
           failed_total=$(( failed + errors ))
