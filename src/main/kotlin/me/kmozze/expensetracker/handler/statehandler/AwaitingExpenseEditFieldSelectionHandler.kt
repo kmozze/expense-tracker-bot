@@ -1,0 +1,193 @@
+package me.kmozze.expensetracker.handler.statehandler
+
+import me.kmozze.expensetracker.adapter.ui.Buttons
+import me.kmozze.expensetracker.model.domain.BotAction
+import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.HandlerResponse
+import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.OutgoingMessage
+import me.kmozze.expensetracker.model.domain.UserCommand
+import me.kmozze.expensetracker.model.domain.UserInput
+import me.kmozze.expensetracker.model.domain.UserState
+import me.kmozze.expensetracker.service.CategoryService
+import me.kmozze.expensetracker.service.ExpenseService
+import org.springframework.stereotype.Component
+import java.util.UUID
+import kotlin.reflect.KClass
+
+@Component
+class AwaitingExpenseEditFieldSelectionHandler(
+    private val expenseService: ExpenseService,
+    private val categoryService: CategoryService,
+) : StateHandler {
+    override val supportedStateClass: KClass<out UserState> = UserState.AwaitingExpenseEditFieldSelection::class
+
+    override fun handle(
+        input: UserInput,
+        currentState: UserState,
+    ): HandlerResult {
+        require(currentState is UserState.AwaitingExpenseEditFieldSelection) {
+            "AwaitingExpenseEditFieldSelectionHandler requires AwaitingExpenseEditFieldSelection state"
+        }
+
+        return when (val command = input.command) {
+            UserCommand.Cancel ->
+                cancelExpenseEdit(
+                    expenseService = expenseService,
+                    categoryService = categoryService,
+                    userId = input.userId,
+                    expenseId = currentState.expenseId,
+                )
+
+            is UserCommand.PlainText -> selectEditField(input, currentState, command.value)
+            else -> repeatEditFieldSelection(input.userId, currentState.expenseId)
+        }
+    }
+
+    private fun selectEditField(
+        input: UserInput,
+        currentState: UserState.AwaitingExpenseEditFieldSelection,
+        selectedField: String,
+    ): HandlerResult =
+        when (selectedField) {
+            Buttons.EDIT_EXPENSE_AMOUNT ->
+                HandlerResult(
+                    response =
+                        HandlerResponse(
+                            outgoingMessages =
+                                listOf(
+                                    OutgoingMessage(
+                                        text = BotText.EnterExpenseAmount,
+                                        actions = listOf(BotAction.ShowCancel),
+                                    ),
+                                ),
+                        ),
+                    nextState = UserState.AwaitingExpenseAmountEdit(currentState.expenseId),
+                )
+
+            Buttons.EDIT_EXPENSE_CATEGORY -> showCategorySelectionForEdit(input, currentState)
+
+            Buttons.EDIT_EXPENSE_DATE -> requestDateSelection(input, currentState)
+
+            Buttons.EDIT_EXPENSE_DESCRIPTION ->
+                HandlerResult(
+                    response =
+                        HandlerResponse(
+                            outgoingMessages =
+                                listOf(
+                                    OutgoingMessage(
+                                        text = BotText.EnterExpenseDescription,
+                                        actions = listOf(BotAction.ShowCancel),
+                                    ),
+                                ),
+                        ),
+                    nextState = UserState.AwaitingExpenseDescriptionEdit(currentState.expenseId),
+                )
+
+            else -> repeatEditFieldSelection(input.userId, currentState.expenseId)
+        }
+
+    private fun showCategorySelectionForEdit(
+        input: UserInput,
+        currentState: UserState.AwaitingExpenseEditFieldSelection,
+    ): HandlerResult {
+        val expense =
+            expenseService.findExpenseForUser(
+                userId = input.userId,
+                expenseId = currentState.expenseId,
+            ) ?: return expenseEditUnavailableResult()
+
+        val categories = categoryService.getCategories(input.userId)
+
+        if (categories.isEmpty()) {
+            return HandlerResult(
+                response =
+                    HandlerResponse(
+                        outgoingMessages =
+                            listOf(
+                                OutgoingMessage(
+                                    text = BotText.NoCategories,
+                                    actions = listOf(BotAction.ShowMainMenu),
+                                ),
+                            ),
+                    ),
+                nextState = UserState.Idle,
+            )
+        }
+
+        return HandlerResult(
+            response =
+                HandlerResponse(
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text =
+                                    BotText.SelectCategory(
+                                        amount = expense.amount,
+                                        description = expense.description,
+                                    ),
+                                actions = listOf(BotAction.ShowCategorySelection(categories)),
+                            ),
+                        ),
+                ),
+            nextState = UserState.AwaitingExpenseCategoryEdit(currentState.expenseId),
+        )
+    }
+
+    private fun requestDateSelection(
+        input: UserInput,
+        currentState: UserState.AwaitingExpenseEditFieldSelection,
+    ): HandlerResult {
+        val expense =
+            expenseService.findExpenseForUser(
+                userId = input.userId,
+                expenseId = currentState.expenseId,
+            ) ?: return expenseEditUnavailableResult()
+
+        val category =
+            categoryService.findCategoryForUser(
+                categoryId = expense.categoryId,
+                userId = input.userId,
+            ) ?: return expenseEditUnavailableResult()
+
+        return HandlerResult(
+            response =
+                HandlerResponse(
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text =
+                                    BotText.SelectExpenseDate(
+                                        amount = expense.amount,
+                                        categoryName = category.name,
+                                        description = expense.description,
+                                    ),
+                                actions = listOf(BotAction.ShowExpenseDateSelection),
+                            ),
+                        ),
+                ),
+            nextState = UserState.AwaitingExpenseDateEditSelection(currentState.expenseId),
+        )
+    }
+
+    private fun repeatEditFieldSelection(
+        userId: Long,
+        expenseId: UUID,
+    ): HandlerResult {
+        expenseService.findExpenseForUser(userId = userId, expenseId = expenseId) ?: return expenseEditUnavailableResult()
+
+        return HandlerResult(
+            response =
+                HandlerResponse(
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.EditExpenseFieldSelection,
+                                actions = listOf(BotAction.ShowExpenseEditFieldSelection),
+                            ),
+                        ),
+                ),
+            nextState = UserState.AwaitingExpenseEditFieldSelection(expenseId),
+        )
+    }
+}
