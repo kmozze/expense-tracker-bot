@@ -7,7 +7,10 @@ import java.util.UUID
 interface IExpenseRepository {
     fun create(expense: Expense): Expense
 
-    fun update(expense: Expense): Expense
+    fun updateForUser(
+        expense: Expense,
+        userId: Long,
+    ): Expense?
 
     fun deleteByIdForUser(
         id: UUID,
