@@ -51,7 +51,6 @@ class IdleStateHandler(
             UserCommand.ViewExpenses,
             UserCommand.Categories,
             UserCommand.Statistics,
-            is UserCommand.RequestExpenseEdit,
             ->
                 HandlerResult(
                     response =
@@ -66,6 +65,9 @@ class IdleStateHandler(
                         ),
                     nextState = UserState.Idle,
                 )
+
+            is UserCommand.RequestExpenseEdit ->
+                requestExpenseEdit(input, command.expenseId)
 
             is UserCommand.RequestExpenseDeletion ->
                 requestExpenseDeletion(input, command.expenseId)
@@ -108,6 +110,48 @@ class IdleStateHandler(
                     nextState = UserState.Idle,
                 )
         }
+    }
+
+    private fun requestExpenseEdit(
+        input: UserInput,
+        expenseId: UUID,
+    ): HandlerResult {
+        val expense =
+            expenseService.findExpenseForUser(
+                userId = input.userId,
+                expenseId = expenseId,
+            ) ?: return expenseUnavailableResult(input)
+
+        val category =
+            categoryService.findCategoryForUser(
+                categoryId = expense.categoryId,
+                userId = input.userId,
+            ) ?: return expenseUnavailableResult(input)
+
+        return HandlerResult(
+            response =
+                HandlerResponse(
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text =
+                                    BotText.ExpenseEditable(
+                                        amount = expense.amount,
+                                        categoryName = category.name,
+                                        expenseDate = expense.expenseDate,
+                                        description = expense.description,
+                                    ),
+                                actions = listOf(BotAction.ClearInlineKeyboard),
+                                delivery = input.callbackMessageDelivery(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.EditExpenseFieldSelection,
+                                actions = listOf(BotAction.ShowExpenseEditFieldSelection),
+                            ),
+                        ),
+                ),
+            nextState = UserState.AwaitingExpenseEditFieldSelection(expense.id),
+        )
     }
 
     private fun requestExpenseDeletion(

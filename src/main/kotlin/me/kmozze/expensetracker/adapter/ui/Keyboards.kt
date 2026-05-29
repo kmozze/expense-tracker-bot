@@ -100,6 +100,27 @@ object Keyboards {
                 ),
             ).build()
 
+    fun expenseEditFieldSelection(): ReplyKeyboardMarkup {
+        val rows =
+            listOf(
+                KeyboardRow(
+                    listOf(
+                        KeyboardButton(Buttons.EDIT_EXPENSE_AMOUNT),
+                        KeyboardButton(Buttons.EDIT_EXPENSE_CATEGORY),
+                    ),
+                ),
+                KeyboardRow(
+                    listOf(
+                        KeyboardButton(Buttons.EDIT_EXPENSE_DATE),
+                        KeyboardButton(Buttons.EDIT_EXPENSE_DESCRIPTION),
+                    ),
+                ),
+                cancelReplyRow(),
+            )
+
+        return dialogKeyboard(rows)
+    }
+
     private fun cancelReplyRow(): KeyboardRow = KeyboardRow(KeyboardButton(Buttons.CANCEL))
 
     private fun dialogKeyboard(rows: List<KeyboardRow>): ReplyKeyboardMarkup =

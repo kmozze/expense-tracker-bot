@@ -26,6 +26,8 @@ class KeyboardApplier {
                     sendMessage.replyMarkup = Keyboards.expenseCardActions(action.expenseId)
                 is BotAction.ShowExpenseDeletionConfirmation ->
                     sendMessage.replyMarkup = Keyboards.expenseDeletionConfirmation(action.expenseId)
+                is BotAction.ShowExpenseEditFieldSelection ->
+                    sendMessage.replyMarkup = Keyboards.expenseEditFieldSelection()
                 is BotAction.ClearInlineKeyboard ->
                     Unit
                 is BotAction.RemoveReplyKeyboard ->
@@ -52,6 +54,8 @@ class KeyboardApplier {
                     editMessage.replyMarkup = Keyboards.expenseCardActions(action.expenseId)
                 is BotAction.ShowExpenseDeletionConfirmation ->
                     editMessage.replyMarkup = Keyboards.expenseDeletionConfirmation(action.expenseId)
+                is BotAction.ShowExpenseEditFieldSelection ->
+                    Unit
                 is BotAction.ClearInlineKeyboard,
                 is BotAction.RemoveReplyKeyboard,
                 ->

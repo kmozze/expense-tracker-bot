@@ -81,6 +81,23 @@ class MessageFormatter {
                     description = message.description,
                 ) + "\n\nТочно хотите удалить расход?"
 
+            is BotText.ExpenseEditable ->
+                formatExpenseCard(
+                    amount = message.amount,
+                    categoryName = message.categoryName,
+                    expenseDate = message.expenseDate,
+                    description = message.description,
+                ) + "\n\nЭта карточка открыта для редактирования ниже."
+
+            is BotText.EditExpenseFieldSelection ->
+                "Что изменить?"
+
+            is BotText.EnterExpenseAmount ->
+                "Введите новую сумму"
+
+            is BotText.EnterExpenseDescription ->
+                "Введите новое описание"
+
             is BotText.ExpenseDeleted ->
                 "Расход удален"
 
@@ -109,6 +126,7 @@ class MessageFormatter {
             BusinessErrorCode.CATEGORY_NOT_FOUND -> "Категория не найдена"
             BusinessErrorCode.INVALID_CATEGORY_SELECTION -> "Не получилось выбрать категорию"
             BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION -> "Не получилось выбрать дату"
+            BusinessErrorCode.INVALID_EXPENSE_AMOUNT -> "Введите только число"
             BusinessErrorCode.EXPENSE_DATE_INVALID_FORMAT -> "Введите дату в формате ДД.ММ.ГГГГ"
             SystemErrorCode.DATABASE_ERROR -> "Ошибка базы данных. Попробуйте позже."
             SystemErrorCode.INTERNAL_ERROR -> "Непредвиденная системная ошибка."

@@ -13,4 +13,8 @@ object Buttons {
     const val DELETE_EXPENSE = "${Icons.DELETE} Удалить"
     const val CONFIRM_DELETE_EXPENSE = "${Icons.DELETE} Да, удалить"
     const val CANCEL_DELETE_EXPENSE = "${Icons.CANCEL} Нет"
+    const val EDIT_EXPENSE_AMOUNT = "${Icons.EDIT} Сумма"
+    const val EDIT_EXPENSE_CATEGORY = "${Icons.CATEGORY} Категория"
+    const val EDIT_EXPENSE_DATE = "${Icons.CALENDAR} Дата"
+    const val EDIT_EXPENSE_DESCRIPTION = "${Icons.EDIT} Описание"
 }
