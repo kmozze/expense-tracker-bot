@@ -74,7 +74,7 @@ class AwaitingExpenseAmountEditHandlerTest {
 
     @Test
     fun `invalid amount keeps amount prompt with error text`() {
-        every { expenseService.parseExpenseAmount("abc") } throws BusinessErrorCode.INVALID_EXPENSE_AMOUNT.exception()
+        every { expenseService.parseExpenseAmount("abc") } throws BusinessErrorCode.INVALID_AMOUNT.exception()
 
         val result = handle(UserCommand.PlainText("abc"))
 
@@ -82,7 +82,7 @@ class AwaitingExpenseAmountEditHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .text,
-        ).isEqualTo(BotText.Error(BusinessErrorCode.INVALID_EXPENSE_AMOUNT))
+        ).isEqualTo(BotText.Error(BusinessErrorCode.INVALID_AMOUNT))
         assertThat(
             result.response.outgoingMessages
                 .single()

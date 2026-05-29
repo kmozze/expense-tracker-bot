@@ -203,7 +203,7 @@ class ExpenseServiceTest {
                 service.parseExpenseAmount("abc")
             }
 
-        assertEquals(BusinessErrorCode.INVALID_EXPENSE_AMOUNT, exception.errorCode)
+        assertEquals(BusinessErrorCode.INVALID_AMOUNT, exception.errorCode)
     }
 
     @Test
