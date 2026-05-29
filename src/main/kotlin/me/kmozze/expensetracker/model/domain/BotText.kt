@@ -53,6 +53,19 @@ sealed class BotText {
         val description: String?,
     ) : BotText()
 
+    data class ExpenseEditable(
+        val amount: Money,
+        val categoryName: String,
+        val expenseDate: LocalDate,
+        val description: String?,
+    ) : BotText()
+
+    data object EditExpenseFieldSelection : BotText()
+
+    data object EnterExpenseAmount : BotText()
+
+    data object EnterExpenseDescription : BotText()
+
     data object ExpenseDeleted : BotText()
 
     data object ExpenseUnavailable : BotText()

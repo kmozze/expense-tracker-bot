@@ -22,6 +22,8 @@ sealed class BotAction {
         val expenseId: UUID,
     ) : BotAction()
 
+    data object ShowExpenseEditFieldSelection : BotAction()
+
     data object ClearInlineKeyboard : BotAction()
 
     data object RemoveReplyKeyboard : BotAction()
