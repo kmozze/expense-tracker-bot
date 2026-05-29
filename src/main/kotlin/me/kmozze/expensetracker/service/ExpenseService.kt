@@ -39,7 +39,7 @@ class ExpenseService(
             try {
                 BigDecimal(text.trim().replace(',', '.').trim())
             } catch (e: NumberFormatException) {
-                throw BusinessErrorCode.INVALID_EXPENSE_AMOUNT.exception()
+                throw BusinessErrorCode.INVALID_AMOUNT.exception()
             }
 
         val money = Money.of(amount)

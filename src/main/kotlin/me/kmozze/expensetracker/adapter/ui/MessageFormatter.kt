@@ -126,7 +126,6 @@ class MessageFormatter {
             BusinessErrorCode.CATEGORY_NOT_FOUND -> "Категория не найдена"
             BusinessErrorCode.INVALID_CATEGORY_SELECTION -> "Не получилось выбрать категорию"
             BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION -> "Не получилось выбрать дату"
-            BusinessErrorCode.INVALID_EXPENSE_AMOUNT -> "Введите только число"
             BusinessErrorCode.EXPENSE_DATE_INVALID_FORMAT -> "Введите дату в формате ДД.ММ.ГГГГ"
             SystemErrorCode.DATABASE_ERROR -> "Ошибка базы данных. Попробуйте позже."
             SystemErrorCode.INTERNAL_ERROR -> "Непредвиденная системная ошибка."
