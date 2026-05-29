@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  checks: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -49,13 +48,58 @@ jobs:
       - name: Run tests
         run: ./gradlew test
 
-      - name: Publish JUnit report
+      - name: Add test summary
         if: always()
-        uses: dorny/test-reporter@v1
-        with:
-          name: Gradle Tests
-          path: build/test-results/test/*.xml
-          reporter: java-junit
+        run: |
+          if [ ! -d build/test-results/test ] || ! ls build/test-results/test/*.xml >/dev/null 2>&1; then
+            echo "## Результаты тестов" >> "$GITHUB_STEP_SUMMARY"
+            echo "Ни один junit-отчёт не найден." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          total=0
+          failed=0
+          errors=0
+          skipped=0
+
+          for report in build/test-results/test/*.xml; do
+            total=$(( total + $(grep -o '<testcase ' "$report" | wc -l) ))
+            failed=$(( failed + $(grep -c '<failure' "$report") ))
+            errors=$(( errors + $(grep -c '<error' "$report") ))
+            skipped=$(( skipped + $(grep -c '<skipped' "$report") ))
+          done
+
+          failed_total=$(( failed + errors ))
+          passed=$(( total - failed_total - skipped ))
+
+          {
+            echo "## Результаты тестов"
+            echo "- Всего: **$total**"
+            echo "- Пройдено: **$passed**"
+            echo "- Провалено: **$failed_total**"
+            echo "- Пропущено: **$skipped**"
+            if [ "$failed_total" -gt 0 ]; then
+              echo ""
+              echo "### Провалившиеся тесты"
+              for report in build/test-results/test/*.xml; do
+                awk '
+                  /<testcase / { 
+                    if (match($0, /name="([^"]+)"/, a)) {
+                      name = a[1]
+                    }
+                    if (match($0, /classname="([^"]+)"/, b)) {
+                      classname = b[1]
+                    }
+                  }
+                  /<failure/ || /<error/ { 
+                    if (name != "" && classname != "") {
+                      print "- `" classname "#" name "`"
+                    }
+                  }
+                ' "$report"
+              done | sort -u
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload test reports
         if: always()
