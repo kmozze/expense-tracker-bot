@@ -169,6 +169,79 @@ class IdleStateHandlerTest {
     }
 
     @Test
+    fun `request expense edit opens field selection`() {
+        every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
+        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
+
+        val result =
+            handler.handle(
+                input = makeInput(UserCommand.RequestExpenseEdit(EXPENSE_ID), callbackMessageId = MESSAGE_ID),
+                currentState = UserState.Idle,
+            )
+
+        assertThat(
+            result.response.outgoingMessages[0]
+                .text,
+        ).isEqualTo(
+            BotText.ExpenseEditable(
+                amount = EXPENSE_AMOUNT,
+                categoryName = CATEGORY.name,
+                expenseDate = EXPENSE_DATE,
+                description = EXPENSE_DESCRIPTION,
+            ),
+        )
+        assertThat(
+            result.response.outgoingMessages[0]
+                .actions,
+        ).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(
+            result.response.outgoingMessages[0]
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(MESSAGE_ID))
+        assertThat(
+            result.response.outgoingMessages[1]
+                .text,
+        ).isEqualTo(BotText.EditExpenseFieldSelection)
+        assertThat(
+            result.response.outgoingMessages[1]
+                .actions,
+        ).containsExactly(BotAction.ShowExpenseEditFieldSelection)
+        assertThat(result.nextState)
+            .isEqualTo(UserState.AwaitingExpenseEditFieldSelection(expenseId = EXPENSE_ID))
+        verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
+        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
+    }
+
+    @Test
+    fun `request expense edit returns unavailable when expense is missing`() {
+        every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns null
+
+        val result =
+            handler.handle(
+                input = makeInput(UserCommand.RequestExpenseEdit(EXPENSE_ID), callbackMessageId = MESSAGE_ID),
+                currentState = UserState.Idle,
+            )
+
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .text,
+        ).isEqualTo(BotText.ExpenseUnavailable)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .actions,
+        ).containsExactly(BotAction.ClearInlineKeyboard)
+        assertThat(
+            result.response.outgoingMessages
+                .single()
+                .delivery,
+        ).isEqualTo(ResponseDelivery.EditMessage(MESSAGE_ID))
+        assertThat(result.nextState).isEqualTo(UserState.Idle)
+        verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
+    }
+
+    @Test
     fun `cancel expense deletion restores card actions`() {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
@@ -335,7 +408,6 @@ class IdleStateHandlerTest {
                 UserCommand.ViewExpenses,
                 UserCommand.Categories,
                 UserCommand.Statistics,
-                UserCommand.RequestExpenseEdit(EXPENSE_ID),
             )
 
         @JvmStatic

@@ -220,6 +220,31 @@ class RoutingHandlerTest {
         assertThat(awaitingManualDateHandler.calls).isEmpty()
     }
 
+    @Test
+    fun `card action callback during amount edit returns callback answer without routing`() {
+        val userId = 48L
+        val awaitingAmountEditHandler = RecordingStateHandler(UserState.AwaitingExpenseAmountEdit::class)
+        val expenseId = UUID.fromString("c3a0e10f-cf0d-4f95-8a12-123456789abc")
+        val currentState = UserState.AwaitingExpenseAmountEdit(expenseId = expenseId)
+        val router = routerWith(awaitingAmountEditHandler)
+
+        userSessionService.setState(userId, currentState)
+        val result =
+            router.process(
+                makeUserInput(
+                    userId = userId,
+                    chatId = 1L,
+                    callbackData = CallbackData.deleteExpense(UUID.randomUUID()),
+                ),
+            )
+
+        assertThat(result.response.outgoingMessages).isEmpty()
+        assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(result.response.callbackAnswer?.showAlert).isTrue()
+        assertThat(userSessionService.getState(userId)).isEqualTo(currentState)
+        assertThat(awaitingAmountEditHandler.calls).isEmpty()
+    }
+
     private fun routerWith(vararg stateHandlers: StateHandler): DialogueRouter =
         DialogueRouter(
             userSessionService = userSessionService,
