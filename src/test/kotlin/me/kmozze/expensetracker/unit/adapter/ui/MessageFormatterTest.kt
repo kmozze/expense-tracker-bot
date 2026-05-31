@@ -175,10 +175,8 @@ class MessageFormatterTest {
     }
 
     @Test
-    fun `amount error texts distinguish invalid text from non-positive amount`() {
-        assertThat(formatter.format(BotText.Error(BusinessErrorCode.INVALID_EXPENSE_AMOUNT)))
-            .isEqualTo("❌ Введите только число")
+    fun `amount error text covers invalid text and non-positive amount`() {
         assertThat(formatter.format(BotText.Error(BusinessErrorCode.INVALID_AMOUNT)))
-            .isEqualTo("❌ Сумма должна быть больше нуля")
+            .isEqualTo("❌ Сумма должна быть числом больше нуля")
     }
 }

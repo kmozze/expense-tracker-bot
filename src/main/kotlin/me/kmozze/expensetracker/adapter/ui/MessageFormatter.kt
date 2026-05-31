@@ -122,11 +122,10 @@ class MessageFormatter {
     private fun formatError(errorCode: ErrorCode): String =
         when (errorCode) {
             BusinessErrorCode.EXPENSE_INVALID_FORMAT -> "Неверный формат. Используйте: '500', 'Еда 500' или '500 Еда'"
-            BusinessErrorCode.INVALID_AMOUNT -> "Сумма должна быть больше нуля"
+            BusinessErrorCode.INVALID_AMOUNT -> "Сумма должна быть числом больше нуля"
             BusinessErrorCode.CATEGORY_NOT_FOUND -> "Категория не найдена"
             BusinessErrorCode.INVALID_CATEGORY_SELECTION -> "Не получилось выбрать категорию"
             BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION -> "Не получилось выбрать дату"
-            BusinessErrorCode.INVALID_EXPENSE_AMOUNT -> "Введите только число"
             BusinessErrorCode.EXPENSE_DATE_INVALID_FORMAT -> "Введите дату в формате ДД.ММ.ГГГГ"
             SystemErrorCode.DATABASE_ERROR -> "Ошибка базы данных. Попробуйте позже."
             SystemErrorCode.INTERNAL_ERROR -> "Непредвиденная системная ошибка."
