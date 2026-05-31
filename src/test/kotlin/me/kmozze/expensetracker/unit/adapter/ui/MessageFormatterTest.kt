@@ -1,6 +1,7 @@
 package me.kmozze.expensetracker.unit.adapter.ui
 
 import me.kmozze.expensetracker.adapter.ui.MessageFormatter
+import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.Money
 import org.assertj.core.api.Assertions.assertThat
@@ -171,5 +172,13 @@ class MessageFormatterTest {
         assertThat(formatter.format(BotText.EditExpenseFieldSelection)).isEqualTo("Что изменить?")
         assertThat(formatter.format(BotText.EnterExpenseAmount)).isEqualTo("Введите новую сумму")
         assertThat(formatter.format(BotText.EnterExpenseDescription)).isEqualTo("Введите новое описание")
+    }
+
+    @Test
+    fun `amount error texts distinguish invalid text from non-positive amount`() {
+        assertThat(formatter.format(BotText.Error(BusinessErrorCode.INVALID_EXPENSE_AMOUNT)))
+            .isEqualTo("❌ Введите только число")
+        assertThat(formatter.format(BotText.Error(BusinessErrorCode.INVALID_AMOUNT)))
+            .isEqualTo("❌ Сумма должна быть больше нуля")
     }
 }
