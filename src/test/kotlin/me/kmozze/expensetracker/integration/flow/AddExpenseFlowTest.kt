@@ -20,6 +20,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
@@ -29,6 +30,9 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
     @Autowired
     private lateinit var expenseRepository: IExpenseRepository
+
+    @Autowired
+    private lateinit var clock: Clock
 
     @Test
     fun `add expense flow saves expense after today date selection`() {
@@ -77,9 +81,9 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
             )
         assertThat(findExpenses(userId)).isEmpty()
 
-        val expenseDateBeforeSave = LocalDate.now()
+        val expenseDateBeforeSave = LocalDate.now(clock)
         val savedExpenseResult = selectTodayDate(userId, chatId)
-        val expenseDateAfterSave = LocalDate.now()
+        val expenseDateAfterSave = LocalDate.now(clock)
         val savedMessage = savedExpenseResult.savedExpenseMessage()
 
         assertThat(savedMessage.amount).isEqualTo(EXPENSE_AMOUNT)
