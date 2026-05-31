@@ -81,6 +81,23 @@ class MessageFormatter {
                     description = message.description,
                 ) + "\n\nТочно хотите удалить расход?"
 
+            is BotText.ExpenseEditable ->
+                formatExpenseCard(
+                    amount = message.amount,
+                    categoryName = message.categoryName,
+                    expenseDate = message.expenseDate,
+                    description = message.description,
+                ) + "\n\nЭта карточка открыта для редактирования ниже."
+
+            is BotText.EditExpenseFieldSelection ->
+                "Что изменить?"
+
+            is BotText.EnterExpenseAmount ->
+                "Введите новую сумму"
+
+            is BotText.EnterExpenseDescription ->
+                "Введите новое описание"
+
             is BotText.ExpenseDeleted ->
                 "Расход удален"
 
@@ -105,7 +122,7 @@ class MessageFormatter {
     private fun formatError(errorCode: ErrorCode): String =
         when (errorCode) {
             BusinessErrorCode.EXPENSE_INVALID_FORMAT -> "Неверный формат. Используйте: '500', 'Еда 500' или '500 Еда'"
-            BusinessErrorCode.INVALID_AMOUNT -> "Сумма должна быть больше нуля"
+            BusinessErrorCode.INVALID_AMOUNT -> "Сумма должна быть числом больше нуля"
             BusinessErrorCode.CATEGORY_NOT_FOUND -> "Категория не найдена"
             BusinessErrorCode.INVALID_CATEGORY_SELECTION -> "Не получилось выбрать категорию"
             BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION -> "Не получилось выбрать дату"

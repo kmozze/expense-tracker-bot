@@ -47,17 +47,20 @@ class JooqExpenseRepository(
             .fetchSingle()
             .toDomain()
 
-    override fun update(expense: Expense): Expense =
+    override fun updateForUser(
+        expense: Expense,
+        userId: Long,
+    ): Expense? =
         dsl
             .update(EXPENSE)
             .set(EXPENSE.AMOUNT, expense.amount.value)
             .set(EXPENSE.CATEGORY_ID, expense.categoryId)
             .set(EXPENSE.EXPENSE_DATE, expense.expenseDate)
             .set(EXPENSE.DESCRIPTION, expense.description)
-            .where(EXPENSE.ID.eq(expense.id))
+            .where(EXPENSE.ID.eq(expense.id).and(EXPENSE.USER_ID.eq(userId)))
             .returning()
-            .fetchSingle()
-            .toDomain()
+            .fetchOne()
+            ?.toDomain()
 
     override fun deleteByIdForUser(
         id: UUID,

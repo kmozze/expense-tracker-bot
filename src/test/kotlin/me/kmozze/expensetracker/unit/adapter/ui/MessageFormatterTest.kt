@@ -1,6 +1,7 @@
 package me.kmozze.expensetracker.unit.adapter.ui
 
 import me.kmozze.expensetracker.adapter.ui.MessageFormatter
+import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.Money
 import org.assertj.core.api.Assertions.assertThat
@@ -141,5 +142,41 @@ class MessageFormatterTest {
                     "📂 Категория: Транспорт\n\n" +
                     "Введите дату траты в формате ДД.ММ.ГГГГ.",
             )
+    }
+
+    @Test
+    fun `editable expense message adds edit hint`() {
+        val text =
+            formatter.format(
+                BotText.ExpenseEditable(
+                    amount = Money.of(BigDecimal("500.00")),
+                    categoryName = "Транспорт",
+                    expenseDate = LocalDate.parse("2026-05-24"),
+                    description = "такси",
+                ),
+            )
+
+        assertThat(text)
+            .isEqualTo(
+                "✅ Сохранено!\n" +
+                    "💰 Сумма: 500.00 ₽\n" +
+                    "📂 Категория: Транспорт\n" +
+                    "📅 Дата: 24.05.2026\n" +
+                    "📝 такси\n\n" +
+                    "Эта карточка открыта для редактирования ниже.",
+            )
+    }
+
+    @Test
+    fun `edit amount and description prompts`() {
+        assertThat(formatter.format(BotText.EditExpenseFieldSelection)).isEqualTo("Что изменить?")
+        assertThat(formatter.format(BotText.EnterExpenseAmount)).isEqualTo("Введите новую сумму")
+        assertThat(formatter.format(BotText.EnterExpenseDescription)).isEqualTo("Введите новое описание")
+    }
+
+    @Test
+    fun `amount error text covers invalid text and non-positive amount`() {
+        assertThat(formatter.format(BotText.Error(BusinessErrorCode.INVALID_AMOUNT)))
+            .isEqualTo("❌ Сумма должна быть числом больше нуля")
     }
 }

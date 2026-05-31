@@ -6,6 +6,8 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import me.kmozze.expensetracker.exception.BusinessErrorCode
+import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.SystemException
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
@@ -107,6 +109,111 @@ class ExpenseServiceTest {
         assertEquals(cause, exception.cause)
         verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
         confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `update expense amount for user updates existing expense`() {
+        val userId = 123L
+        val expenseId = UUID.randomUUID()
+        val categoryId = UUID.randomUUID()
+        val expenseDate = LocalDate.parse("2026-05-24")
+        val original =
+            Expense(
+                id = expenseId,
+                categoryId = categoryId,
+                amount = EXPENSE_AMOUNT,
+                userId = userId,
+                expenseDate = expenseDate,
+            )
+        val expectedAmount = Money.of(BigDecimal("650.00"))
+        val updatedExpense =
+            original.copy(
+                amount = expectedAmount,
+            )
+        every { expenseRepository.findByIdForUser(expenseId, userId) } returns original
+        every { expenseRepository.updateForUser(updatedExpense, userId) } returns updatedExpense
+
+        val result = service.updateExpenseAmountForUser(userId = userId, expenseId = expenseId, amount = expectedAmount)
+
+        assertEquals(updatedExpense, result)
+        verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
+        verify(exactly = 1) { expenseRepository.updateForUser(updatedExpense, userId) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `update expense returns null when expense missing`() {
+        val userId = 123L
+        val expenseId = UUID.randomUUID()
+        every { expenseRepository.findByIdForUser(expenseId, userId) } returns null
+
+        val result = service.updateExpenseAmountForUser(userId = userId, expenseId = expenseId, amount = Money.of(BigDecimal("650.00")))
+
+        assertEquals(null, result)
+        verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
+        verify(exactly = 0) { expenseRepository.updateForUser(any(), any()) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `update expense wraps DataAccessException into SystemException`() {
+        val userId = 123L
+        val expenseId = UUID.randomUUID()
+        val categoryId = UUID.randomUUID()
+        val expenseDate = LocalDate.parse("2026-05-24")
+        val original =
+            Expense(
+                id = expenseId,
+                categoryId = categoryId,
+                amount = EXPENSE_AMOUNT,
+                userId = userId,
+                expenseDate = expenseDate,
+            )
+        val cause = DataAccessException("DB update failed")
+        every { expenseRepository.findByIdForUser(expenseId, userId) } returns original
+        every { expenseRepository.updateForUser(any(), userId) } throws cause
+
+        val exception =
+            assertThrows<SystemException> {
+                service.updateExpenseAmountForUser(
+                    userId = userId,
+                    expenseId = expenseId,
+                    amount = Money.of(BigDecimal("650.00")),
+                )
+            }
+
+        assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
+        assertEquals(cause, exception.cause)
+        verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
+        verify(exactly = 1) { expenseRepository.updateForUser(any(), userId) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `parse expense amount trims spaces`() {
+        val amount = service.parseExpenseAmount(" 650.50 ")
+
+        assertEquals(Money.of(BigDecimal("650.50")), amount)
+    }
+
+    @Test
+    fun `parse expense amount rejects invalid text`() {
+        val exception =
+            assertThrows<BusinessException> {
+                service.parseExpenseAmount("abc")
+            }
+
+        assertEquals(BusinessErrorCode.INVALID_AMOUNT, exception.errorCode)
+    }
+
+    @Test
+    fun `parse expense amount rejects non-positive values`() {
+        val exception =
+            assertThrows<BusinessException> {
+                service.parseExpenseAmount("0")
+            }
+
+        assertEquals(BusinessErrorCode.INVALID_AMOUNT, exception.errorCode)
     }
 
     @Test

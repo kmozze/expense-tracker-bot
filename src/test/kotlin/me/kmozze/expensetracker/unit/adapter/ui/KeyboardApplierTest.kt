@@ -44,6 +44,17 @@ class KeyboardApplierTest {
     }
 
     @Test
+    fun `send message uses reply keyboard for edit field selection`() {
+        val sendMessage = SendMessage("123", "text")
+
+        keyboardApplier.apply(sendMessage, listOf(BotAction.ShowExpenseEditFieldSelection))
+
+        val keyboard = sendMessage.replyMarkup as ReplyKeyboardMarkup
+        assertThat(keyboard.keyboard).hasSize(3)
+        assertThat(keyboard.keyboard[0]).hasSize(2)
+    }
+
+    @Test
     fun `send message uses inline keyboard for expense card actions`() {
         val sendMessage = SendMessage("123", "text")
 
