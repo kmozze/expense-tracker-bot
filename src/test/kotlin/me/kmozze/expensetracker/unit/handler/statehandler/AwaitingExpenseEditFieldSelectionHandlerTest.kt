@@ -5,10 +5,10 @@ import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import io.mockk.verify
-import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseEditFieldSelectionHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseEditField
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -42,7 +42,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
 
     @Test
     fun `amount selection asks for amount text`() {
-        val result = handle(UserCommand.PlainText(Buttons.EDIT_EXPENSE_AMOUNT))
+        val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Amount))
 
         assertThat(
             result.response.outgoingMessages
@@ -65,7 +65,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
 
     @Test
     fun `description selection asks for description text`() {
-        val result = handle(UserCommand.PlainText(Buttons.EDIT_EXPENSE_DESCRIPTION))
+        val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Description))
 
         assertThat(
             result.response.outgoingMessages
@@ -91,7 +91,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         every { categoryService.getCategories(USER_ID) } returns listOf(CATEGORY)
 
-        val result = handle(UserCommand.PlainText(Buttons.EDIT_EXPENSE_CATEGORY))
+        val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Category))
 
         assertThat(
             result.response.outgoingMessages
@@ -115,7 +115,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
 
-        val result = handle(UserCommand.PlainText(Buttons.EDIT_EXPENSE_DATE))
+        val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Date))
 
         assertThat(
             result.response.outgoingMessages

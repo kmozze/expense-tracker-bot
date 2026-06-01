@@ -1,9 +1,9 @@
 package me.kmozze.expensetracker.handler.statehandler
 
-import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
@@ -42,7 +42,8 @@ class AwaitingExpenseDateEditSelectionHandler(
                     expenseId = currentState.expenseId,
                 )
 
-            is UserCommand.PlainText -> handleExpenseDateSelection(input, currentState, command.value)
+            is UserCommand.SelectExpenseDate -> handleExpenseDateSelection(input, currentState, command.choice)
+            is UserCommand.PlainText -> expenseDateSelectionError(currentState)
             else -> repeatDateSelection(input, currentState)
         }
     }
@@ -50,39 +51,35 @@ class AwaitingExpenseDateEditSelectionHandler(
     private fun handleExpenseDateSelection(
         input: UserInput,
         currentState: UserState.AwaitingExpenseDateEditSelection,
-        dateText: String,
+        choice: ExpenseDateChoice,
     ): HandlerResult =
-        when (dateText) {
-            Buttons.TODAY ->
+        when (choice) {
+            ExpenseDateChoice.Today,
+            ExpenseDateChoice.Yesterday,
+            ->
                 saveExpenseWithDate(
                     input = input,
                     currentState = currentState,
-                    expenseDate = LocalDate.now(clock),
+                    expenseDate = requireNotNull(choice.toDate(clock)),
                 )
 
-            Buttons.YESTERDAY ->
-                saveExpenseWithDate(
-                    input = input,
-                    currentState = currentState,
-                    expenseDate = LocalDate.now(clock).minusDays(1),
-                )
-
-            Buttons.ENTER_DATE_MANUALLY -> requestManualDateInput(input, currentState)
-            else ->
-                HandlerResult(
-                    response =
-                        HandlerResponse(
-                            outgoingMessages =
-                                listOf(
-                                    OutgoingMessage(
-                                        text = BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION),
-                                        actions = listOf(BotAction.ShowExpenseDateSelection),
-                                    ),
-                                ),
-                        ),
-                    nextState = currentState,
-                )
+            ExpenseDateChoice.ManualInput -> requestManualDateInput(input, currentState)
         }
+
+    private fun expenseDateSelectionError(currentState: UserState.AwaitingExpenseDateEditSelection): HandlerResult =
+        HandlerResult(
+            response =
+                HandlerResponse(
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION),
+                                actions = listOf(BotAction.ShowExpenseDateSelection),
+                            ),
+                        ),
+                ),
+            nextState = currentState,
+        )
 
     private fun saveExpenseWithDate(
         input: UserInput,

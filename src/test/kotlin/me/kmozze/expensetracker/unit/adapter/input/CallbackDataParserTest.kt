@@ -114,8 +114,6 @@ class CallbackDataParserTest {
                 null,
                 "",
                 "unknown",
-                "select_category:$EXPENSE_ID",
-                "select_expense_date:today",
                 "cancel:extra",
             )
     }

@@ -45,6 +45,8 @@ class AwaitingExpenseManualDateInputHandler(
             is UserCommand.RequestExpenseDeletion,
             is UserCommand.ConfirmExpenseDeletion,
             is UserCommand.CancelExpenseDeletion,
+            is UserCommand.SelectExpenseDate,
+            is UserCommand.SelectExpenseEditField,
             UserCommand.InvalidExpenseAction,
             -> repeatManualDateInput(currentState)
         }
