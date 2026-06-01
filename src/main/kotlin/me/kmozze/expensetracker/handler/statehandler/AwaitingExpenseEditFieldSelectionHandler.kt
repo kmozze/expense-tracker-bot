@@ -1,8 +1,8 @@
 package me.kmozze.expensetracker.handler.statehandler
 
-import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseEditField
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
@@ -39,7 +39,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
                     expenseId = currentState.expenseId,
                 )
 
-            is UserCommand.PlainText -> selectEditField(input, currentState, command.value)
+            is UserCommand.SelectExpenseEditField -> selectEditField(input, currentState, command.field)
             else -> repeatEditFieldSelection(input.userId, currentState.expenseId)
         }
     }
@@ -47,10 +47,10 @@ class AwaitingExpenseEditFieldSelectionHandler(
     private fun selectEditField(
         input: UserInput,
         currentState: UserState.AwaitingExpenseEditFieldSelection,
-        selectedField: String,
+        selectedField: ExpenseEditField,
     ): HandlerResult =
         when (selectedField) {
-            Buttons.EDIT_EXPENSE_AMOUNT ->
+            ExpenseEditField.Amount ->
                 HandlerResult(
                     response =
                         HandlerResponse(
@@ -65,11 +65,11 @@ class AwaitingExpenseEditFieldSelectionHandler(
                     nextState = UserState.AwaitingExpenseAmountEdit(currentState.expenseId),
                 )
 
-            Buttons.EDIT_EXPENSE_CATEGORY -> showCategorySelectionForEdit(input, currentState)
+            ExpenseEditField.Category -> showCategorySelectionForEdit(input, currentState)
 
-            Buttons.EDIT_EXPENSE_DATE -> requestDateSelection(input, currentState)
+            ExpenseEditField.Date -> requestDateSelection(input, currentState)
 
-            Buttons.EDIT_EXPENSE_DESCRIPTION ->
+            ExpenseEditField.Description ->
                 HandlerResult(
                     response =
                         HandlerResponse(
@@ -83,8 +83,6 @@ class AwaitingExpenseEditFieldSelectionHandler(
                         ),
                     nextState = UserState.AwaitingExpenseDescriptionEdit(currentState.expenseId),
                 )
-
-            else -> repeatEditFieldSelection(input.userId, currentState.expenseId)
         }
 
     private fun showCategorySelectionForEdit(

@@ -5,11 +5,11 @@ import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import io.mockk.verify
-import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseDateSelectionHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -47,7 +47,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
         val completeDraft = EXPENSE_DRAFT_WITH_CATEGORY.copy(expenseDate = TODAY)
         every { expenseService.saveExpense(USER_ID, completeDraft) } returns expense(expenseDate = TODAY)
 
-        val result = handle(UserCommand.PlainText(Buttons.TODAY))
+        val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Today))
 
         assertThat(result.response.outgoingMessages).hasSize(2)
         assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
@@ -72,7 +72,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
         val completeDraft = EXPENSE_DRAFT_WITH_CATEGORY.copy(expenseDate = YESTERDAY)
         every { expenseService.saveExpense(USER_ID, completeDraft) } returns expense(expenseDate = YESTERDAY)
 
-        val result = handle(UserCommand.PlainText(Buttons.YESTERDAY))
+        val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday))
 
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
@@ -90,7 +90,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
     @Test
     fun `manual selection asks user to enter date`() {
-        val result = handle(UserCommand.PlainText(Buttons.ENTER_DATE_MANUALLY))
+        val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput))
 
         assertThat(
             result.response.outgoingMessages

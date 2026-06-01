@@ -33,6 +33,14 @@ sealed class UserCommand {
         val expenseId: UUID,
     ) : UserCommand()
 
+    data class SelectExpenseDate(
+        val choice: ExpenseDateChoice,
+    ) : UserCommand()
+
+    data class SelectExpenseEditField(
+        val field: ExpenseEditField,
+    ) : UserCommand()
+
     data object InvalidExpenseAction : UserCommand()
 
     data class PlainText(

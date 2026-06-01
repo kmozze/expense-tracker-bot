@@ -5,11 +5,11 @@ import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import io.mockk.verify
-import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseDateEditSelectionHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -51,7 +51,7 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE.copy(expenseDate = TODAY)
         every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
 
-        val result = handle(UserCommand.PlainText(Buttons.TODAY))
+        val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Today))
 
         assertThat(result.response.outgoingMessages).hasSize(2)
         assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
@@ -77,7 +77,7 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE.copy(expenseDate = yesterday)
         every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
 
-        val result = handle(UserCommand.PlainText(Buttons.YESTERDAY))
+        val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday))
 
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
@@ -100,7 +100,7 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
 
-        val result = handle(UserCommand.PlainText(Buttons.ENTER_DATE_MANUALLY))
+        val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput))
 
         val outgoingMessages = result.response.outgoingMessages
         assertThat(outgoingMessages.single().text).isEqualTo(

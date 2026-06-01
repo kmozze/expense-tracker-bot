@@ -3,6 +3,8 @@ package me.kmozze.expensetracker.unit.adapter.input
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.adapter.ui.Buttons
+import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
+import me.kmozze.expensetracker.model.domain.ExpenseEditField
 import me.kmozze.expensetracker.model.domain.UserCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -62,7 +64,6 @@ class UserCommandParserTest {
 
     private companion object {
         val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
-        const val OLD_SELECT_CATEGORY_CALLBACK: String = "select_category:00000000-0000-0000-0000-000000000001"
 
         @JvmStatic
         fun textCommands(): Stream<Arguments> =
@@ -72,8 +73,13 @@ class UserCommandParserTest {
                 Arguments.arguments("/menu", UserCommand.Menu),
                 Arguments.arguments("/MENU", UserCommand.Menu),
                 Arguments.arguments(Buttons.CANCEL, UserCommand.Cancel),
-                Arguments.arguments(Buttons.TODAY, UserCommand.PlainText(Buttons.TODAY)),
-                Arguments.arguments(OLD_SELECT_CATEGORY_CALLBACK, UserCommand.PlainText(OLD_SELECT_CATEGORY_CALLBACK)),
+                Arguments.arguments(Buttons.TODAY, UserCommand.SelectExpenseDate(ExpenseDateChoice.Today)),
+                Arguments.arguments(Buttons.YESTERDAY, UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday)),
+                Arguments.arguments(Buttons.ENTER_DATE_MANUALLY, UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput)),
+                Arguments.arguments(Buttons.EDIT_EXPENSE_AMOUNT, UserCommand.SelectExpenseEditField(ExpenseEditField.Amount)),
+                Arguments.arguments(Buttons.EDIT_EXPENSE_CATEGORY, UserCommand.SelectExpenseEditField(ExpenseEditField.Category)),
+                Arguments.arguments(Buttons.EDIT_EXPENSE_DATE, UserCommand.SelectExpenseEditField(ExpenseEditField.Date)),
+                Arguments.arguments(Buttons.EDIT_EXPENSE_DESCRIPTION, UserCommand.SelectExpenseEditField(ExpenseEditField.Description)),
             )
     }
 }
