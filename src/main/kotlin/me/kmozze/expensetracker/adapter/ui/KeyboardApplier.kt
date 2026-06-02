@@ -17,7 +17,7 @@ class KeyboardApplier {
                 is BotAction.ShowMainMenu ->
                     sendMessage.replyMarkup = Keyboards.mainMenu()
                 is BotAction.ShowCategorySelection ->
-                    sendMessage.replyMarkup = Keyboards.categorySelection(action.categories)
+                    sendMessage.replyMarkup = Keyboards.categorySelection(action.categoryNames)
                 is BotAction.ShowExpenseDateSelection ->
                     sendMessage.replyMarkup = Keyboards.expenseDateSelection()
                 is BotAction.ShowCancel ->

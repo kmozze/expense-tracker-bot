@@ -57,7 +57,7 @@ class AwaitingExpenseInputHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(categories))
+        ).containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
         assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_DRAFT))
         verify(exactly = 1) { expenseService.parseExpense(EXPENSE_TEXT) }
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }

@@ -124,7 +124,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
                                         amount = expense.amount,
                                         description = expense.description,
                                     ),
-                                actions = listOf(BotAction.ShowCategorySelection(categories)),
+                                actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                             ),
                         ),
                 ),

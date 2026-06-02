@@ -86,7 +86,7 @@ class AwaitingCategorySelectionHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(categories))
+        ).containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)
@@ -126,7 +126,7 @@ class AwaitingCategorySelectionHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(categories))
+        ).containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)

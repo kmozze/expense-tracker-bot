@@ -11,6 +11,7 @@ import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
+import me.kmozze.expensetracker.repository.ICategoryRepository
 import me.kmozze.expensetracker.repository.IExpenseRepository
 import me.kmozze.expensetracker.support.processUserInput
 import org.assertj.core.api.Assertions.assertThat
@@ -27,6 +28,9 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
 
     @Autowired
     private lateinit var expenseRepository: IExpenseRepository
+
+    @Autowired
+    private lateinit var categoryRepository: ICategoryRepository
 
     @Test
     fun `edit expense from card updates amount category date and description`() {
@@ -103,7 +107,10 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 text = Buttons.EDIT_EXPENSE_CATEGORY,
             )
         val categorySelection = categorySelectionPrompt.categorySelectionAction()
-        val newCategory = categorySelection.categories.first { it.id != initialCategory.id }
+        val newCategory =
+            categoryRepository
+                .findAllByUserId(userId)
+                .single { it.name == categorySelection.categoryNames.first { categoryName -> categoryName != initialCategory.name } }
         val categoryUpdated =
             dialogueRouter.processUserInput(
                 userId = userId,
@@ -322,9 +329,15 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             )
         val action = result.categorySelectionAction()
 
-        assertThat(action.categories).isNotEmpty()
+        assertThat(action.categoryNames).isNotEmpty()
+        val storedCategories = categoryRepository.findAllByUserId(userId)
+        assertThat(action.categoryNames).containsExactlyElementsOf(storedCategories.map { it.name })
+        val categoriesByName = storedCategories.associateBy { it.name }
+        val categories =
+            action.categoryNames
+                .map { categoriesByName.getValue(it) }
 
-        return CategorySelection(result, action.categories)
+        return CategorySelection(result, categories)
     }
 
     private fun selectCategoryForDateSelection(

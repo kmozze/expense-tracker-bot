@@ -90,7 +90,7 @@ class AwaitingExpenseCategoryEditHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(categories))
+        ).containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_CATEGORY_EDIT)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(expenseService, categoryService)

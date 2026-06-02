@@ -111,7 +111,7 @@ class AwaitingExpenseCategoryEditHandler(
                                         amount = expense.amount,
                                         description = expense.description,
                                     ),
-                                actions = listOf(BotAction.ShowCategorySelection(categories)),
+                                actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                             ),
                         ),
                 ),
@@ -145,7 +145,7 @@ class AwaitingExpenseCategoryEditHandler(
                             listOf(
                                 OutgoingMessage(
                                     text = BotText.Error(BusinessErrorCode.CATEGORY_NOT_FOUND),
-                                    actions = listOf(BotAction.ShowCategorySelection(categories)),
+                                    actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                                 ),
                             ),
                     ),

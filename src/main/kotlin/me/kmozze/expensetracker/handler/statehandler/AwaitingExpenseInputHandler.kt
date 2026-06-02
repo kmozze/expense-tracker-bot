@@ -75,7 +75,7 @@ class AwaitingExpenseInputHandler(
                                         amount = expenseDraft.amount,
                                         description = expenseDraft.description,
                                     ),
-                                actions = listOf(BotAction.ShowCategorySelection(categories)),
+                                actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                             ),
                         ),
                 ),

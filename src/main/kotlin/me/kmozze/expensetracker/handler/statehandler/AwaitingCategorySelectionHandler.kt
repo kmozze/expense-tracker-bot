@@ -126,7 +126,7 @@ class AwaitingCategorySelectionHandler(
                                         amount = currentState.expenseDraft.amount,
                                         description = currentState.expenseDraft.description,
                                     ),
-                                actions = listOf(BotAction.ShowCategorySelection(categories)),
+                                actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                             ),
                         ),
                 ),
@@ -146,7 +146,7 @@ class AwaitingCategorySelectionHandler(
                         listOf(
                             OutgoingMessage(
                                 text = BotText.Error(errorCode),
-                                actions = listOf(BotAction.ShowCategorySelection(categories)),
+                                actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                             ),
                         ),
                 ),
