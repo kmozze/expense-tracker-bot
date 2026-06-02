@@ -14,6 +14,7 @@ import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
+import me.kmozze.expensetracker.repository.ICategoryRepository
 import me.kmozze.expensetracker.repository.IExpenseRepository
 import me.kmozze.expensetracker.support.processUserInput
 import org.assertj.core.api.Assertions.assertThat
@@ -30,6 +31,9 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
     @Autowired
     private lateinit var expenseRepository: IExpenseRepository
+
+    @Autowired
+    private lateinit var categoryRepository: ICategoryRepository
 
     @Autowired
     private lateinit var clock: Clock
@@ -443,11 +447,15 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
             )
         val action = result.categorySelectionAction()
 
-        assertThat(action.categories).isNotEmpty()
+        assertThat(action.categoryNames).isNotEmpty()
+        val category =
+            categoryRepository
+                .findAllByUserId(userId)
+                .single { it.name == action.categoryNames.first() }
 
         return CategorySelection(
             result = result,
-            category = action.categories.first(),
+            category = category,
         )
     }
 

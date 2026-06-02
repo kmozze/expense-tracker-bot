@@ -1,7 +1,6 @@
 package me.kmozze.expensetracker.adapter.ui
 
 import me.kmozze.expensetracker.adapter.callback.CallbackData
-import me.kmozze.expensetracker.model.entity.Category
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
@@ -26,12 +25,12 @@ object Keyboards {
             .build()
     }
 
-    fun categorySelection(categories: List<Category>): ReplyKeyboardMarkup {
+    fun categorySelection(categoryNames: List<String>): ReplyKeyboardMarkup {
         val rows =
-            categories
+            categoryNames
                 .chunked(2)
-                .map { categoriesChunk ->
-                    KeyboardRow(categoriesChunk.map { KeyboardButton(it.name) })
+                .map { categoryNamesChunk ->
+                    KeyboardRow(categoryNamesChunk.map { KeyboardButton(it) })
                 } +
                 listOf(cancelReplyRow())
 

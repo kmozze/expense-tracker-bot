@@ -102,7 +102,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
             result.response.outgoingMessages
                 .single()
                 .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(listOf(CATEGORY)))
+        ).containsExactly(BotAction.ShowCategorySelection(listOf(CATEGORY.name)))
         assertThat(result.nextState)
             .isEqualTo(UserState.AwaitingExpenseCategoryEdit(expenseId = EXPENSE_ID))
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
