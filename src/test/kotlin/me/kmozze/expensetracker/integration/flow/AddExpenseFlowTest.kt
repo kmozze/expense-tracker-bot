@@ -448,10 +448,13 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         val action = result.categorySelectionAction()
 
         assertThat(action.categoryNames).isNotEmpty()
+        val categories = categoryRepository.findAllByUserId(userId)
+        assertThat(action.categoryNames).containsExactlyElementsOf(categories.map { it.name })
+        val categoriesByName = categories.associateBy { it.name }
         val category =
-            categoryRepository
-                .findAllByUserId(userId)
-                .single { it.name == action.categoryNames.first() }
+            action.categoryNames
+                .map { categoriesByName.getValue(it) }
+                .first()
 
         return CategorySelection(
             result = result,

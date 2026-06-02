@@ -330,10 +330,12 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
         val action = result.categorySelectionAction()
 
         assertThat(action.categoryNames).isNotEmpty()
+        val storedCategories = categoryRepository.findAllByUserId(userId)
+        assertThat(action.categoryNames).containsExactlyElementsOf(storedCategories.map { it.name })
+        val categoriesByName = storedCategories.associateBy { it.name }
         val categories =
-            categoryRepository
-                .findAllByUserId(userId)
-                .filter { it.name in action.categoryNames }
+            action.categoryNames
+                .map { categoriesByName.getValue(it) }
 
         return CategorySelection(result, categories)
     }

@@ -47,11 +47,11 @@ class KeyboardApplierTest {
     fun `send message uses reply keyboard for category names`() {
         val sendMessage = SendMessage("123", "text")
 
-        keyboardApplier.apply(sendMessage, listOf(BotAction.ShowCategorySelection(listOf("Еда", "Транспорт", "Жилье"))))
+        keyboardApplier.apply(sendMessage, listOf(BotAction.ShowCategorySelection(listOf("Еда", "Транспорт", "Жильё"))))
 
         val keyboard = sendMessage.replyMarkup as ReplyKeyboardMarkup
         assertThat(keyboard.keyboard[0].map { it.text }).containsExactly("Еда", "Транспорт")
-        assertThat(keyboard.keyboard[1].map { it.text }).containsExactly("Жилье")
+        assertThat(keyboard.keyboard[1].map { it.text }).containsExactly("Жильё")
     }
 
     @Test
