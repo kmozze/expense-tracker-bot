@@ -68,7 +68,7 @@ class AwaitingExpenseCategoryEditHandler(
             userId = input.userId,
             expenseId = updatedExpense.id,
             nextState = UserState.Idle,
-            prefixText = BotText.Done,
+            prefixText = BotText.ExpenseSaved,
         )
     }
 
@@ -100,17 +100,23 @@ class AwaitingExpenseCategoryEditHandler(
                 expenseId = currentState.expenseId,
             ) ?: return expenseEditUnavailableResult()
 
+        val category =
+            categoryService.findCategoryForUser(
+                categoryId = expense.categoryId,
+                userId = input.userId,
+            ) ?: return expenseEditUnavailableResult()
+
         return HandlerResult(
             response =
                 HandlerResponse(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text =
-                                    BotText.SelectCategory(
-                                        amount = expense.amount,
-                                        description = expense.description,
-                                    ),
+                                text = expense.toExpenseView(category),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.SelectCategory,
                                 actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                             ),
                         ),

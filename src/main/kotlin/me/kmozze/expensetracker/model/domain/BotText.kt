@@ -22,43 +22,20 @@ sealed class BotText {
 
     data object AddExpenseInstructions : BotText()
 
-    data class SelectCategory(
-        val amount: Money,
+    data class ExpenseView(
+        val amount: Money?,
+        val categoryName: String?,
+        val expenseDate: LocalDate?,
         val description: String?,
     ) : BotText()
 
-    data class SelectExpenseDate(
-        val amount: Money,
-        val categoryName: String,
-        val description: String?,
-    ) : BotText()
+    data object SelectCategory : BotText()
 
-    data class EnterExpenseDateManually(
-        val amount: Money,
-        val categoryName: String,
-        val description: String?,
-    ) : BotText()
+    data object SelectExpenseDate : BotText()
 
-    data class ExpenseSaved(
-        val amount: Money,
-        val categoryName: String,
-        val expenseDate: LocalDate,
-        val description: String?,
-    ) : BotText()
+    data object EnterExpenseDateManually : BotText()
 
-    data class ExpenseDeletionConfirmation(
-        val amount: Money,
-        val categoryName: String,
-        val expenseDate: LocalDate,
-        val description: String?,
-    ) : BotText()
-
-    data class ExpenseEditable(
-        val amount: Money,
-        val categoryName: String,
-        val expenseDate: LocalDate,
-        val description: String?,
-    ) : BotText()
+    data object ExpenseSaved : BotText()
 
     data object EditExpenseFieldSelection : BotText()
 

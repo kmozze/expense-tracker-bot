@@ -68,7 +68,7 @@ class AwaitingExpenseDescriptionEditHandler(
             userId = input.userId,
             expenseId = updatedExpense.id,
             nextState = UserState.Idle,
-            prefixText = BotText.Done,
+            prefixText = BotText.ExpenseSaved,
         )
     }
 

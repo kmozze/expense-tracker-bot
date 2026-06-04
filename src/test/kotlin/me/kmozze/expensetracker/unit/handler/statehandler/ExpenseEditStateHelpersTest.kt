@@ -47,7 +47,7 @@ class ExpenseEditStateHelpersTest {
         assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE.amount,
                     categoryName = CATEGORY.name,
                     expenseDate = EXPENSE.expenseDate,

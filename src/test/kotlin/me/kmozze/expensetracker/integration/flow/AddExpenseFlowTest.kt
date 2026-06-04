@@ -57,9 +57,16 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
         assertThat(
             categorySelection.result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
+                .map { it.text },
+        ).containsExactly(
+            BotText.ExpenseView(
+                amount = EXPENSE_AMOUNT,
+                categoryName = null,
+                expenseDate = null,
+                description = EXPENSE_DESCRIPTION,
+            ),
+            BotText.SelectCategory,
+        )
         assertThat(categorySelection.result.nextState)
             .isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITH_DESCRIPTION))
 
@@ -67,14 +74,15 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
         assertThat(
             dateSelectionResult.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.SelectExpenseDate(
+                .map { it.text },
+        ).containsExactly(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT,
                 categoryName = category.name,
+                expenseDate = null,
                 description = EXPENSE_DESCRIPTION,
             ),
+            BotText.SelectExpenseDate,
         )
         assertThat(dateSelectionResult.nextState)
             .isEqualTo(
@@ -95,7 +103,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(savedMessage.expenseDate).isBetween(expenseDateBeforeSave, expenseDateAfterSave)
         assertThat(savedMessage.description).isEqualTo(EXPENSE_DESCRIPTION)
         val doneMessage = savedExpenseResult.response.outgoingMessages.first()
-        assertThat(doneMessage.text).isEqualTo(BotText.Done)
+        assertThat(doneMessage.text).isEqualTo(BotText.ExpenseSaved)
         assertThat(doneMessage.actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(savedExpenseResult.nextState).isEqualTo(UserState.Idle)
 
@@ -122,9 +130,16 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
         assertThat(
             categorySelection.result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.SelectCategory(EXPENSE_AMOUNT, null))
+                .map { it.text },
+        ).containsExactly(
+            BotText.ExpenseView(
+                amount = EXPENSE_AMOUNT,
+                categoryName = null,
+                expenseDate = null,
+                description = null,
+            ),
+            BotText.SelectCategory,
+        )
         assertThat(categorySelection.result.nextState)
             .isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_WITHOUT_DESCRIPTION))
 
@@ -138,18 +153,19 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
             )
         assertThat(
             manualDateInputResult.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.EnterExpenseDateManually(
+                .map { it.text },
+        ).containsExactly(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT,
                 categoryName = category.name,
+                expenseDate = null,
                 description = null,
             ),
+            BotText.EnterExpenseDateManually,
         )
         assertThat(
             manualDateInputResult.response.outgoingMessages
-                .single()
+                .last()
                 .actions,
         ).containsExactly(BotAction.ShowCancel)
         assertThat(manualDateInputResult.nextState)
@@ -257,7 +273,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
                 .single()
                 .text,
         ).isEqualTo(
-            BotText.ExpenseDeletionConfirmation(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT,
                 categoryName = category.name,
                 expenseDate = expense.expenseDate,
@@ -289,7 +305,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
                 .single()
                 .text,
         ).isEqualTo(
-            BotText.ExpenseSaved(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT,
                 categoryName = category.name,
                 expenseDate = expense.expenseDate,
@@ -486,7 +502,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
         assertThat(
             result.response.outgoingMessages
-                .single()
+                .last()
                 .actions,
         ).containsExactly(BotAction.ShowExpenseDateSelection)
         assertThat(result.nextState)
@@ -519,13 +535,13 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
 
     private fun HandlerResult.categorySelectionAction(): BotAction.ShowCategorySelection =
         response.outgoingMessages
-            .single()
+            .last()
             .actions
             .single() as BotAction.ShowCategorySelection
 
-    private fun HandlerResult.savedExpenseMessage(): BotText.ExpenseSaved {
+    private fun HandlerResult.savedExpenseMessage(): BotText.ExpenseView {
         assertThat(response.outgoingMessages).hasSize(2)
-        return response.outgoingMessages[1].text as BotText.ExpenseSaved
+        return (response.outgoingMessages[1].text as BotText.ExpenseView)
     }
 
     private fun HandlerResult.expenseCardAction(): BotAction.ShowExpenseCardActions =

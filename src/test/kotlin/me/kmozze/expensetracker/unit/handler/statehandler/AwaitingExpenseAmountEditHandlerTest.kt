@@ -52,11 +52,11 @@ class AwaitingExpenseAmountEditHandlerTest {
         val result = handle(UserCommand.PlainText("650"))
 
         assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
         assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = updatedAmount,
                     categoryName = CATEGORY.name,
                     expenseDate = EXPENSE_DATE,
@@ -105,7 +105,7 @@ class AwaitingExpenseAmountEditHandlerTest {
         assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY.name,
                     expenseDate = EXPENSE_DATE,

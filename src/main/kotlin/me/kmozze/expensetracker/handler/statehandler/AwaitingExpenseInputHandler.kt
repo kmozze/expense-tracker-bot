@@ -70,11 +70,12 @@ class AwaitingExpenseInputHandler(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
+                                text = expenseDraft.toExpenseView(),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
                                 text =
-                                    BotText.SelectCategory(
-                                        amount = expenseDraft.amount,
-                                        description = expenseDraft.description,
-                                    ),
+                                    BotText.SelectCategory,
                                 actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                             ),
                         ),

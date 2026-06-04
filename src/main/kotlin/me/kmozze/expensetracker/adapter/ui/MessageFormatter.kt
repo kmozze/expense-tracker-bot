@@ -4,7 +4,6 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.ErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.Money
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -42,52 +41,20 @@ class MessageFormatter {
             is BotText.AddExpenseInstructions ->
                 "Введите сумму одним сообщением. Можно добавить описание.\nНапример: `500`, `500 такси` или `такси 500`."
 
-            is BotText.SelectCategory ->
-                buildString {
-                    append("💰 *${message.amount.format()} ₽*")
-                    appendDescription(message.description)
-                    append("\n\nКуда запишем?")
-                }
+            is BotText.ExpenseView ->
+                formatExpenseView(message)
 
             is BotText.SelectExpenseDate ->
-                buildString {
-                    append("💰 Сумма: ${message.amount.format()} ₽\n")
-                    append("📂 Категория: ${message.categoryName}")
-                    appendDescription(message.description)
-                    append("\n\nКогда была трата?")
-                }
+                "Когда была трата?"
+
+            is BotText.SelectCategory ->
+                "Куда запишем?"
 
             is BotText.EnterExpenseDateManually ->
-                buildString {
-                    append("💰 Сумма: ${message.amount.format()} ₽\n")
-                    append("📂 Категория: ${message.categoryName}")
-                    appendDescription(message.description)
-                    append("\n\nВведите дату траты в формате ДД.ММ.ГГГГ.")
-                }
+                "Введите дату траты в формате ДД.ММ.ГГГГ."
 
             is BotText.ExpenseSaved ->
-                formatExpenseCard(
-                    amount = message.amount,
-                    categoryName = message.categoryName,
-                    expenseDate = message.expenseDate,
-                    description = message.description,
-                )
-
-            is BotText.ExpenseDeletionConfirmation ->
-                formatExpenseCard(
-                    amount = message.amount,
-                    categoryName = message.categoryName,
-                    expenseDate = message.expenseDate,
-                    description = message.description,
-                ) + "\n\nТочно хотите удалить расход?"
-
-            is BotText.ExpenseEditable ->
-                formatExpenseCard(
-                    amount = message.amount,
-                    categoryName = message.categoryName,
-                    expenseDate = message.expenseDate,
-                    description = message.description,
-                ) + "\n\nЭта карточка открыта для редактирования ниже."
+                "✅ Сохранено!"
 
             is BotText.EditExpenseFieldSelection ->
                 "Что изменить?"
@@ -132,25 +99,27 @@ class MessageFormatter {
             else -> "Произошла неизвестная ошибка."
         }
 
-    private fun StringBuilder.appendDescription(description: String?) {
+    private fun MutableList<String>.addDescription(description: String?) {
         if (!description.isNullOrBlank()) {
-            append("\n📝 $description")
+            add("📝 $description")
         }
     }
 
-    private fun formatExpenseCard(
-        amount: Money,
-        categoryName: String,
-        expenseDate: LocalDate,
-        description: String?,
-    ): String =
-        buildString {
-            append("✅ Сохранено!\n")
-            append("💰 Сумма: ${amount.format()} ₽\n")
-            append("📂 Категория: $categoryName\n")
-            append("📅 Дата: ${expenseDate.formatForUser()}")
-            appendDescription(description)
+    private fun formatExpenseView(message: BotText.ExpenseView): String {
+        val lines =
+            mutableListOf<String>().apply {
+                message.amount?.let { add("💰 Сумма: ${it.format()} ₽") }
+                message.categoryName?.let { add("📂 Категория: $it") }
+                message.expenseDate?.let { add("📅 Дата: ${it.formatForUser()}") }
+                addDescription(message.description)
+            }
+
+        require(lines.isNotEmpty()) {
+            "Expense view must contain at least one visible field"
         }
+
+        return lines.joinToString("\n")
+    }
 
     private fun LocalDate.formatForUser(): String = format(USER_DATE_FORMATTER)
 

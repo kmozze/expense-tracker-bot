@@ -48,16 +48,20 @@ class AwaitingExpenseInputHandlerTest {
 
         val result = handle(UserCommand.PlainText(EXPENSE_TEXT))
 
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
+        assertThat(result.response.outgoingMessages).hasSize(2)
+        assertThat(result.response.outgoingMessages[0].text)
+            .isEqualTo(
+                BotText.ExpenseView(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = null,
+                    expenseDate = null,
+                    description = EXPENSE_DESCRIPTION,
+                ),
+            )
+        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
+        assertThat(result.response.outgoingMessages[1].actions)
+            .containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
         assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_DRAFT))
         verify(exactly = 1) { expenseService.parseExpense(EXPENSE_TEXT) }
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }

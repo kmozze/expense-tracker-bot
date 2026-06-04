@@ -51,11 +51,11 @@ class AwaitingExpenseDescriptionEditHandlerTest {
         val result = handle(UserCommand.PlainText(NEW_EXPENSE_DESCRIPTION))
 
         assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
         assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY.name,
                     expenseDate = EXPENSE_DATE,
@@ -83,7 +83,7 @@ class AwaitingExpenseDescriptionEditHandlerTest {
         assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY.name,
                     expenseDate = EXPENSE_DATE,

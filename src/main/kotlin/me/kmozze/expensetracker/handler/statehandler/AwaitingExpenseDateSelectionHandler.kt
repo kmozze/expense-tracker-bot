@@ -95,7 +95,11 @@ class AwaitingExpenseDateSelectionHandler(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text = currentState.toEnterExpenseDateManuallyMessage(),
+                                text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.EnterExpenseDateManually,
                                 actions = listOf(BotAction.ShowCancel),
                             ),
                         ),
@@ -114,7 +118,11 @@ class AwaitingExpenseDateSelectionHandler(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text = currentState.toSelectExpenseDateMessage(),
+                                text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.SelectExpenseDate,
                                 actions = listOf(BotAction.ShowExpenseDateSelection),
                             ),
                         ),
@@ -155,20 +163,6 @@ class AwaitingExpenseDateSelectionHandler(
             nextState = UserState.Idle,
         )
 
-    private fun UserState.AwaitingExpenseDateSelection.toSelectExpenseDateMessage(): BotText.SelectExpenseDate =
-        BotText.SelectExpenseDate(
-            amount = expenseDraft.amount,
-            categoryName = categoryName,
-            description = expenseDraft.description,
-        )
-
-    private fun UserState.AwaitingExpenseDateSelection.toEnterExpenseDateManuallyMessage(): BotText.EnterExpenseDateManually =
-        BotText.EnterExpenseDateManually(
-            amount = expenseDraft.amount,
-            categoryName = categoryName,
-            description = expenseDraft.description,
-        )
-
     private fun expenseSavedResult(
         expenseDraft: ExpenseDraft,
         expenseId: UUID,
@@ -181,17 +175,11 @@ class AwaitingExpenseDateSelectionHandler(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text = BotText.Done,
+                                text = BotText.ExpenseSaved,
                                 actions = listOf(BotAction.RemoveReplyKeyboard),
                             ),
                             OutgoingMessage(
-                                text =
-                                    BotText.ExpenseSaved(
-                                        amount = expenseDraft.amount,
-                                        categoryName = categoryName,
-                                        expenseDate = expenseDate,
-                                        description = expenseDraft.description,
-                                    ),
+                                text = expenseDraft.toExpenseView(categoryName = categoryName, expenseDate = expenseDate),
                                 actions = listOf(BotAction.ShowExpenseCardActions(expenseId)),
                             ),
                         ),

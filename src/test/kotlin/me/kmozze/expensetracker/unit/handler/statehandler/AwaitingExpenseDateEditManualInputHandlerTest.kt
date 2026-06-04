@@ -54,11 +54,11 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
         val result = handle(UserCommand.PlainText(MANUAL_DATE_TEXT))
 
         assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
         assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY.name,
                     expenseDate = MANUAL_DATE,
@@ -103,22 +103,19 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
 
         val result = handle(UserCommand.RequestExpenseDeletion(EXPENSE_ID))
 
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.EnterExpenseDateManually(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                description = EXPENSE_DESCRIPTION,
-            ),
-        )
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCancel)
+        assertThat(result.response.outgoingMessages).hasSize(2)
+        assertThat(result.response.outgoingMessages[0].text)
+            .isEqualTo(
+                BotText.ExpenseView(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = CATEGORY.name,
+                    expenseDate = EXPENSE_DATE,
+                    description = EXPENSE_DESCRIPTION,
+                ),
+            )
+        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.EnterExpenseDateManually)
+        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowCancel)
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_DATE_EDIT_MANUAL_INPUT)
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
@@ -137,7 +134,7 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
         assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY.name,
                     expenseDate = EXPENSE_DATE,

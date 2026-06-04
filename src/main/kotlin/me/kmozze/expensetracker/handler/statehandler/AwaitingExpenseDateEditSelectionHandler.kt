@@ -97,7 +97,7 @@ class AwaitingExpenseDateEditSelectionHandler(
             userId = input.userId,
             expenseId = updatedExpense.id,
             nextState = UserState.Idle,
-            prefixText = BotText.Done,
+            prefixText = BotText.ExpenseSaved,
         )
     }
 
@@ -123,12 +123,11 @@ class AwaitingExpenseDateEditSelectionHandler(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text =
-                                    BotText.EnterExpenseDateManually(
-                                        amount = expense.amount,
-                                        categoryName = category.name,
-                                        description = expense.description,
-                                    ),
+                                text = expense.toExpenseView(category),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.EnterExpenseDateManually,
                                 actions = listOf(BotAction.ShowCancel),
                             ),
                         ),
@@ -159,12 +158,11 @@ class AwaitingExpenseDateEditSelectionHandler(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text =
-                                    BotText.SelectExpenseDate(
-                                        amount = expense.amount,
-                                        categoryName = category.name,
-                                        description = expense.description,
-                                    ),
+                                text = expense.toExpenseView(category),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.SelectExpenseDate,
                                 actions = listOf(BotAction.ShowExpenseDateSelection),
                             ),
                         ),

@@ -50,11 +50,11 @@ class AwaitingExpenseDateSelectionHandlerTest {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Today))
 
         assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
         assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY_NAME,
                     expenseDate = TODAY,
@@ -76,7 +76,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY_NAME,
                     expenseDate = YESTERDAY,
@@ -92,22 +92,19 @@ class AwaitingExpenseDateSelectionHandlerTest {
     fun `manual selection asks user to enter date`() {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput))
 
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.EnterExpenseDateManually(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY_NAME,
-                description = EXPENSE_DESCRIPTION,
-            ),
-        )
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCancel)
+        assertThat(result.response.outgoingMessages).hasSize(2)
+        assertThat(result.response.outgoingMessages[0].text)
+            .isEqualTo(
+                BotText.ExpenseView(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = CATEGORY_NAME,
+                    expenseDate = null,
+                    description = EXPENSE_DESCRIPTION,
+                ),
+            )
+        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.EnterExpenseDateManually)
+        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowCancel)
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(

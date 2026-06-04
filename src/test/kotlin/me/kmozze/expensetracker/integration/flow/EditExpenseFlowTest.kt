@@ -44,7 +44,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             requestEdit(userId = userId, chatId = chatId, expenseId = createdExpense.first.id, callbackMessageId = CARD_MESSAGE_ID)
 
         assertThat(editStart.response.outgoingMessages[0].text).isEqualTo(
-            BotText.ExpenseEditable(
+            BotText.ExpenseView(
                 amount = createdExpense.first.amount,
                 categoryName = createdExpense.second.name,
                 expenseDate = createdExpense.first.expenseDate,
@@ -86,7 +86,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             amountUpdated.response.outgoingMessages
                 .first()
                 .text,
-        ).isEqualTo(BotText.Done)
+        ).isEqualTo(BotText.ExpenseSaved)
         assertThat(
             amountUpdated.response.outgoingMessages
                 .first()
@@ -132,18 +132,19 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             )
         assertThat(
             dateSelectionPrompt.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.SelectExpenseDate(
+                .map { it.text },
+        ).containsExactly(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT_UPDATED,
                 categoryName = newCategory.name,
+                expenseDate = createdExpense.first.expenseDate,
                 description = EXPENSE_DESCRIPTION_UPDATED,
             ),
+            BotText.SelectExpenseDate,
         )
         assertThat(
             dateSelectionPrompt.response.outgoingMessages
-                .single()
+                .last()
                 .actions,
         ).containsExactly(BotAction.ShowExpenseDateSelection)
         val manualDatePrompt =
@@ -154,14 +155,15 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             )
         assertThat(
             manualDatePrompt.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.EnterExpenseDateManually(
+                .map { it.text },
+        ).containsExactly(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT_UPDATED,
                 categoryName = newCategory.name,
+                expenseDate = createdExpense.first.expenseDate,
                 description = EXPENSE_DESCRIPTION_UPDATED,
             ),
+            BotText.EnterExpenseDateManually,
         )
         assertThat(manualDatePrompt.nextState).isEqualTo(
             UserState.AwaitingExpenseDateEditManualInput(
@@ -355,7 +357,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
 
         assertThat(
             result.response.outgoingMessages
-                .single()
+                .last()
                 .actions,
         ).containsExactly(BotAction.ShowExpenseDateSelection)
         assertThat(result.nextState)
@@ -401,13 +403,13 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
 
     private fun me.kmozze.expensetracker.model.domain.HandlerResult.categorySelectionAction(): BotAction.ShowCategorySelection =
         response.outgoingMessages
-            .single()
+            .last()
             .actions
             .single() as BotAction.ShowCategorySelection
 
-    private fun me.kmozze.expensetracker.model.domain.HandlerResult.savedExpenseMessage(): BotText.ExpenseSaved {
+    private fun me.kmozze.expensetracker.model.domain.HandlerResult.savedExpenseMessage(): BotText.ExpenseView {
         assertThat(response.outgoingMessages).hasSize(2)
-        return response.outgoingMessages[1].text as BotText.ExpenseSaved
+        return (response.outgoingMessages[1].text as BotText.ExpenseView)
     }
 
     private fun me.kmozze.expensetracker.model.domain.HandlerResult.expenseCardAction(): BotAction.ShowExpenseCardActions =

@@ -90,23 +90,21 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
     fun `category selection shows categories`() {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         every { categoryService.getCategories(USER_ID) } returns listOf(CATEGORY)
+        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
 
         val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Category))
 
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.SelectCategory(amount = EXPENSE_AMOUNT, description = EXPENSE.description))
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(listOf(CATEGORY.name)))
+        assertThat(result.response.outgoingMessages).hasSize(2)
+        assertThat(result.response.outgoingMessages[0].text)
+            .isEqualTo(EXPENSE_VIEW)
+        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
+        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowCategorySelection(listOf(CATEGORY.name)))
         assertThat(result.nextState)
             .isEqualTo(UserState.AwaitingExpenseCategoryEdit(expenseId = EXPENSE_ID))
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
+        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
         confirmVerified(expenseService, categoryService)
     }
 
@@ -117,22 +115,12 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Date))
 
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.SelectExpenseDate(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                description = EXPENSE.description,
-            ),
-        )
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.response.outgoingMessages).hasSize(2)
+        assertThat(result.response.outgoingMessages[0].text)
+            .isEqualTo(EXPENSE_VIEW)
+        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectExpenseDate)
+        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseDateSelection)
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateEditSelection(
@@ -177,12 +165,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
-                    amount = EXPENSE_AMOUNT,
-                    categoryName = CATEGORY.name,
-                    expenseDate = EXPENSE_DATE,
-                    description = EXPENSE.description,
-                ),
+                EXPENSE_VIEW,
             )
         assertThat(result.response.outgoingMessages[1].actions)
             .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
@@ -231,6 +214,13 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
                 userId = USER_ID,
                 expenseDate = EXPENSE_DATE,
                 description = "такси",
+            )
+        val EXPENSE_VIEW: BotText.ExpenseView =
+            BotText.ExpenseView(
+                amount = EXPENSE_AMOUNT,
+                categoryName = CATEGORY.name,
+                expenseDate = EXPENSE_DATE,
+                description = EXPENSE.description,
             )
         val AWAITING_EXPENSE_EDIT_FIELD_SELECTION: UserState.AwaitingExpenseEditFieldSelection =
             UserState.AwaitingExpenseEditFieldSelection(

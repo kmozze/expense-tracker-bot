@@ -135,12 +135,7 @@ class IdleStateHandler(
                         listOf(
                             OutgoingMessage(
                                 text =
-                                    BotText.ExpenseEditable(
-                                        amount = expense.amount,
-                                        categoryName = category.name,
-                                        expenseDate = expense.expenseDate,
-                                        description = expense.description,
-                                    ),
+                                    expense.toExpenseView(category),
                                 actions = listOf(BotAction.ClearInlineKeyboard),
                                 delivery = input.callbackMessageDelivery(),
                             ),
@@ -162,12 +157,7 @@ class IdleStateHandler(
             input = input,
             expenseId = expenseId,
             textFactory = { expense, category ->
-                BotText.ExpenseDeletionConfirmation(
-                    amount = expense.amount,
-                    categoryName = category.name,
-                    expenseDate = expense.expenseDate,
-                    description = expense.description,
-                )
+                expense.toExpenseView(category)
             },
             actionsFactory = { listOf(BotAction.ShowExpenseDeletionConfirmation(expenseId)) },
         )
@@ -180,12 +170,7 @@ class IdleStateHandler(
             input = input,
             expenseId = expenseId,
             textFactory = { expense, category ->
-                BotText.ExpenseSaved(
-                    amount = expense.amount,
-                    categoryName = category.name,
-                    expenseDate = expense.expenseDate,
-                    description = expense.description,
-                )
+                expense.toExpenseView(category)
             },
             actionsFactory = { listOf(BotAction.ShowExpenseCardActions(expenseId)) },
         )

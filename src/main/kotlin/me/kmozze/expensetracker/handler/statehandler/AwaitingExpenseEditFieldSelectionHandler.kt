@@ -113,17 +113,23 @@ class AwaitingExpenseEditFieldSelectionHandler(
             )
         }
 
+        val category =
+            categoryService.findCategoryForUser(
+                categoryId = expense.categoryId,
+                userId = input.userId,
+            ) ?: return expenseEditUnavailableResult()
+
         return HandlerResult(
             response =
                 HandlerResponse(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text =
-                                    BotText.SelectCategory(
-                                        amount = expense.amount,
-                                        description = expense.description,
-                                    ),
+                                text = expense.toExpenseView(category),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.SelectCategory,
                                 actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                             ),
                         ),
@@ -154,12 +160,11 @@ class AwaitingExpenseEditFieldSelectionHandler(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text =
-                                    BotText.SelectExpenseDate(
-                                        amount = expense.amount,
-                                        categoryName = category.name,
-                                        description = expense.description,
-                                    ),
+                                text = expense.toExpenseView(category),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.SelectExpenseDate,
                                 actions = listOf(BotAction.ShowExpenseDateSelection),
                             ),
                         ),

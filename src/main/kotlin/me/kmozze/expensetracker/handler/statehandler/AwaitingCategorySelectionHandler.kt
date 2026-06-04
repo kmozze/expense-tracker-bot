@@ -76,12 +76,11 @@ class AwaitingCategorySelectionHandler(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text =
-                                    BotText.SelectExpenseDate(
-                                        amount = expenseDraft.amount,
-                                        categoryName = category.name,
-                                        description = expenseDraft.description,
-                                    ),
+                                text = expenseDraft.toExpenseView(categoryName = category.name),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.SelectExpenseDate,
                                 actions = listOf(BotAction.ShowExpenseDateSelection),
                             ),
                         ),
@@ -121,11 +120,11 @@ class AwaitingCategorySelectionHandler(
                     outgoingMessages =
                         listOf(
                             OutgoingMessage(
-                                text =
-                                    BotText.SelectCategory(
-                                        amount = currentState.expenseDraft.amount,
-                                        description = currentState.expenseDraft.description,
-                                    ),
+                                text = currentState.expenseDraft.toExpenseView(),
+                                actions = emptyList(),
+                            ),
+                            OutgoingMessage(
+                                text = BotText.SelectCategory,
                                 actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                             ),
                         ),

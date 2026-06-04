@@ -54,9 +54,9 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Today))
 
         assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
         assertThat(result.response.outgoingMessages[1].text).isEqualTo(
-            BotText.ExpenseSaved(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT,
                 categoryName = CATEGORY.name,
                 expenseDate = TODAY,
@@ -81,7 +81,7 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
 
         assertThat(result.response.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY.name,
                     expenseDate = yesterday,
@@ -103,14 +103,18 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput))
 
         val outgoingMessages = result.response.outgoingMessages
-        assertThat(outgoingMessages.single().text).isEqualTo(
-            BotText.EnterExpenseDateManually(
+        assertThat(outgoingMessages).hasSize(2)
+        assertThat(outgoingMessages[0].text).isEqualTo(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT,
                 categoryName = CATEGORY.name,
+                expenseDate = TODAY,
                 description = EXPENSE.description,
             ),
         )
-        assertThat(outgoingMessages.single().actions).containsExactly(BotAction.ShowCancel)
+        assertThat(outgoingMessages[0].actions).isEmpty()
+        assertThat(outgoingMessages[1].text).isEqualTo(BotText.EnterExpenseDateManually)
+        assertThat(outgoingMessages[1].actions).containsExactly(BotAction.ShowCancel)
         assertThat(result.nextState).isEqualTo(UserState.AwaitingExpenseDateEditManualInput(expenseId = EXPENSE_ID))
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }

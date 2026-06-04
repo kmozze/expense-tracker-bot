@@ -146,12 +146,7 @@ class IdleStateHandlerTest {
                 .single()
                 .text,
         ).isEqualTo(
-            BotText.ExpenseDeletionConfirmation(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                expenseDate = EXPENSE_DATE,
-                description = EXPENSE_DESCRIPTION,
-            ),
+            EXPENSE_VIEW,
         )
         assertThat(
             result.response.outgoingMessages
@@ -183,12 +178,7 @@ class IdleStateHandlerTest {
             result.response.outgoingMessages[0]
                 .text,
         ).isEqualTo(
-            BotText.ExpenseEditable(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                expenseDate = EXPENSE_DATE,
-                description = EXPENSE_DESCRIPTION,
-            ),
+            EXPENSE_VIEW,
         )
         assertThat(
             result.response.outgoingMessages[0]
@@ -257,12 +247,7 @@ class IdleStateHandlerTest {
                 .single()
                 .text,
         ).isEqualTo(
-            BotText.ExpenseSaved(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                expenseDate = EXPENSE_DATE,
-                description = EXPENSE_DESCRIPTION,
-            ),
+            EXPENSE_VIEW,
         )
         assertThat(
             result.response.outgoingMessages
@@ -398,6 +383,13 @@ class IdleStateHandlerTest {
                 categoryId = CATEGORY_ID,
                 amount = EXPENSE_AMOUNT,
                 userId = USER_ID,
+                expenseDate = EXPENSE_DATE,
+                description = EXPENSE_DESCRIPTION,
+            )
+        val EXPENSE_VIEW: BotText.ExpenseView =
+            BotText.ExpenseView(
+                amount = EXPENSE_AMOUNT,
+                categoryName = CATEGORY.name,
                 expenseDate = EXPENSE_DATE,
                 description = EXPENSE_DESCRIPTION,
             )

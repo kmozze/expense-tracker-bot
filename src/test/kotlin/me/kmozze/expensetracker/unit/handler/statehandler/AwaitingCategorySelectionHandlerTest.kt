@@ -43,22 +43,19 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.PlainText(CATEGORY_NAME))
 
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.SelectExpenseDate(
-                amount = EXPENSE_AMOUNT,
-                categoryName = category.name,
-                description = EXPENSE_DESCRIPTION,
-            ),
-        )
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.response.outgoingMessages).hasSize(2)
+        assertThat(result.response.outgoingMessages[0].text)
+            .isEqualTo(
+                BotText.ExpenseView(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = category.name,
+                    expenseDate = null,
+                    description = EXPENSE_DESCRIPTION,
+                ),
+            )
+        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectExpenseDate)
+        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseDateSelection)
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
@@ -117,16 +114,20 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.AddExpense)
 
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.SelectCategory(EXPENSE_AMOUNT, EXPENSE_DESCRIPTION))
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
+        assertThat(result.response.outgoingMessages).hasSize(2)
+        assertThat(result.response.outgoingMessages[0].text)
+            .isEqualTo(
+                BotText.ExpenseView(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = null,
+                    expenseDate = null,
+                    description = EXPENSE_DESCRIPTION,
+                ),
+            )
+        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
+        assertThat(result.response.outgoingMessages[1].actions)
+            .containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(categoryService)

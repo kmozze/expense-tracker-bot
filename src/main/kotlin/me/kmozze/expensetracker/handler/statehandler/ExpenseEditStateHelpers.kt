@@ -2,12 +2,16 @@ package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserState
+import me.kmozze.expensetracker.model.entity.Category
+import me.kmozze.expensetracker.model.entity.Expense
 import me.kmozze.expensetracker.service.CategoryService
 import me.kmozze.expensetracker.service.ExpenseService
+import java.time.LocalDate
 import java.util.UUID
 
 internal fun buildUpdatedExpenseResult(
@@ -34,13 +38,7 @@ internal fun buildUpdatedExpenseResult(
 
             add(
                 OutgoingMessage(
-                    text =
-                        BotText.ExpenseSaved(
-                            amount = expense.amount,
-                            categoryName = category.name,
-                            expenseDate = expense.expenseDate,
-                            description = expense.description,
-                        ),
+                    text = expense.toExpenseView(category),
                     actions = listOf(BotAction.ShowExpenseCardActions(expense.id)),
                 ),
             )
@@ -68,6 +66,25 @@ internal fun cancelExpenseEdit(
         expenseId = expenseId,
         nextState = UserState.Idle,
         prefixText = BotText.Done,
+    )
+
+internal fun Expense.toExpenseView(category: Category): BotText.ExpenseView =
+    BotText.ExpenseView(
+        amount = amount,
+        categoryName = category.name,
+        expenseDate = expenseDate,
+        description = description,
+    )
+
+internal fun ExpenseDraft.toExpenseView(
+    categoryName: String? = null,
+    expenseDate: LocalDate? = this.expenseDate,
+): BotText.ExpenseView =
+    BotText.ExpenseView(
+        amount = amount,
+        categoryName = categoryName,
+        expenseDate = expenseDate,
+        description = description,
     )
 
 internal fun expenseEditUnavailableResult(): HandlerResult =
