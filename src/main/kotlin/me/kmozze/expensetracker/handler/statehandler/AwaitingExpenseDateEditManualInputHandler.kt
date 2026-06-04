@@ -4,7 +4,6 @@ import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -24,7 +23,7 @@ class AwaitingExpenseDateEditManualInputHandler(
     override fun handle(
         input: UserInput,
         currentState: UserState,
-    ): HandlerResult {
+    ): HandlerResponse {
         require(currentState is UserState.AwaitingExpenseDateEditManualInput) {
             "AwaitingExpenseDateEditManualInputHandler requires AwaitingExpenseDateEditManualInput state"
         }
@@ -47,21 +46,18 @@ class AwaitingExpenseDateEditManualInputHandler(
         input: UserInput,
         currentState: UserState.AwaitingExpenseDateEditManualInput,
         dateText: String,
-    ): HandlerResult {
+    ): HandlerResponse {
         val expenseDate =
             try {
                 expenseService.parseExpenseDate(dateText)
             } catch (e: BusinessException) {
-                return HandlerResult(
-                    response =
-                        HandlerResponse(
-                            outgoingMessages =
-                                listOf(
-                                    OutgoingMessage(
-                                        text = BotText.Error(e.errorCode),
-                                        actions = listOf(BotAction.ShowCancel),
-                                    ),
-                                ),
+                return HandlerResponse(
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.Error(e.errorCode),
+                                actions = listOf(BotAction.ShowCancel),
+                            ),
                         ),
                     nextState = currentState,
                 )
@@ -85,7 +81,7 @@ class AwaitingExpenseDateEditManualInputHandler(
     private fun repeatManualDateInput(
         input: UserInput,
         currentState: UserState.AwaitingExpenseDateEditManualInput,
-    ): HandlerResult {
+    ): HandlerResponse {
         val expense =
             expenseService.findExpenseForUser(
                 userId = input.userId,
@@ -98,20 +94,17 @@ class AwaitingExpenseDateEditManualInputHandler(
                 userId = input.userId,
             ) ?: return expenseEditUnavailableResult()
 
-        return HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = expense.toExpenseView(category),
-                                actions = emptyList(),
-                            ),
-                            OutgoingMessage(
-                                text = BotText.EnterExpenseDateManually,
-                                actions = listOf(BotAction.ShowCancel),
-                            ),
-                        ),
+        return HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = expense.toExpenseView(category),
+                        actions = emptyList(),
+                    ),
+                    OutgoingMessage(
+                        text = BotText.EnterExpenseDateManually,
+                        actions = listOf(BotAction.ShowCancel),
+                    ),
                 ),
             nextState = currentState,
         )

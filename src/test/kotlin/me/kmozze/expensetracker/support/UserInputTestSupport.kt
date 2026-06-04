@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.support
 
 import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.handler.DialogueRouter
-import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 
@@ -30,7 +30,7 @@ fun DialogueRouter.processUserInput(
     callbackData: String? = null,
     callbackMessageId: Int? = null,
     command: UserCommand = UserCommandParser.parse(text = text, callbackData = callbackData),
-): HandlerResult =
+): HandlerResponse =
     process(
         makeUserInput(
             userId = userId,

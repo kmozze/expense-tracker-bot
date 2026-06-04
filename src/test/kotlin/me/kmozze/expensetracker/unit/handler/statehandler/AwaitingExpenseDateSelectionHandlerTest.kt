@@ -49,10 +49,10 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Today))
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
-        assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.response.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
+        assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
+        assertThat(result.outgoingMessages[1].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -61,7 +61,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.saveExpense(USER_ID, completeDraft) }
         confirmVerified(expenseService)
@@ -74,7 +74,7 @@ class AwaitingExpenseDateSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday))
 
-        assertThat(result.response.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages[1].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -92,8 +92,8 @@ class AwaitingExpenseDateSelectionHandlerTest {
     fun `manual selection asks user to enter date`() {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput))
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -102,9 +102,9 @@ class AwaitingExpenseDateSelectionHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
-        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.EnterExpenseDateManually)
-        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowCancel)
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.EnterExpenseDateManually)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowCancel)
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(
@@ -120,12 +120,12 @@ class AwaitingExpenseDateSelectionHandlerTest {
         val result = handle(UserCommand.PlainText("завтра"))
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION))
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowExpenseDateSelection)
@@ -138,12 +138,12 @@ class AwaitingExpenseDateSelectionHandlerTest {
         val result = handle(UserCommand.Cancel)
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.ExpenseCanceled)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.RemoveReplyKeyboard)

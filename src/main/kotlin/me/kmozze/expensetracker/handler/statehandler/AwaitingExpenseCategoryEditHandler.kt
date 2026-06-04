@@ -4,7 +4,6 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -25,7 +24,7 @@ class AwaitingExpenseCategoryEditHandler(
     override fun handle(
         input: UserInput,
         currentState: UserState,
-    ): HandlerResult {
+    ): HandlerResponse {
         require(currentState is UserState.AwaitingExpenseCategoryEdit) {
             "AwaitingExpenseCategoryEditHandler requires AwaitingExpenseCategoryEdit state"
         }
@@ -48,7 +47,7 @@ class AwaitingExpenseCategoryEditHandler(
         input: UserInput,
         currentState: UserState.AwaitingExpenseCategoryEdit,
         categoryName: String,
-    ): HandlerResult {
+    ): HandlerResponse {
         val categories = categoryService.getCategories(input.userId)
         val category =
             categories.firstOrNull { it.name == categoryName }
@@ -75,20 +74,17 @@ class AwaitingExpenseCategoryEditHandler(
     private fun repeatCategorySelection(
         input: UserInput,
         currentState: UserState.AwaitingExpenseCategoryEdit,
-    ): HandlerResult {
+    ): HandlerResponse {
         val categories = categoryService.getCategories(input.userId)
 
         if (categories.isEmpty()) {
-            return HandlerResult(
-                response =
-                    HandlerResponse(
-                        outgoingMessages =
-                            listOf(
-                                OutgoingMessage(
-                                    text = BotText.NoCategories,
-                                    actions = listOf(BotAction.ShowMainMenu),
-                                ),
-                            ),
+            return HandlerResponse(
+                outgoingMessages =
+                    listOf(
+                        OutgoingMessage(
+                            text = BotText.NoCategories,
+                            actions = listOf(BotAction.ShowMainMenu),
+                        ),
                     ),
                 nextState = UserState.Idle,
             )
@@ -106,20 +102,17 @@ class AwaitingExpenseCategoryEditHandler(
                 userId = input.userId,
             ) ?: return expenseEditUnavailableResult()
 
-        return HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = expense.toExpenseView(category),
-                                actions = emptyList(),
-                            ),
-                            OutgoingMessage(
-                                text = BotText.SelectCategory,
-                                actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
-                            ),
-                        ),
+        return HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = expense.toExpenseView(category),
+                        actions = emptyList(),
+                    ),
+                    OutgoingMessage(
+                        text = BotText.SelectCategory,
+                        actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
+                    ),
                 ),
             nextState = currentState,
         )
@@ -128,32 +121,26 @@ class AwaitingExpenseCategoryEditHandler(
     private fun categorySelectionError(
         currentState: UserState.AwaitingExpenseCategoryEdit,
         categories: List<Category>,
-    ): HandlerResult =
+    ): HandlerResponse =
         if (categories.isEmpty()) {
-            HandlerResult(
-                response =
-                    HandlerResponse(
-                        outgoingMessages =
-                            listOf(
-                                OutgoingMessage(
-                                    text = BotText.NoCategories,
-                                    actions = listOf(BotAction.ShowMainMenu),
-                                ),
-                            ),
+            HandlerResponse(
+                outgoingMessages =
+                    listOf(
+                        OutgoingMessage(
+                            text = BotText.NoCategories,
+                            actions = listOf(BotAction.ShowMainMenu),
+                        ),
                     ),
                 nextState = UserState.Idle,
             )
         } else {
-            HandlerResult(
-                response =
-                    HandlerResponse(
-                        outgoingMessages =
-                            listOf(
-                                OutgoingMessage(
-                                    text = BotText.Error(BusinessErrorCode.CATEGORY_NOT_FOUND),
-                                    actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
-                                ),
-                            ),
+            HandlerResponse(
+                outgoingMessages =
+                    listOf(
+                        OutgoingMessage(
+                            text = BotText.Error(BusinessErrorCode.CATEGORY_NOT_FOUND),
+                            actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
+                        ),
                     ),
                 nextState = currentState,
             )

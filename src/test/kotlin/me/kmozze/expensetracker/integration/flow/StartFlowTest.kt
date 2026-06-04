@@ -26,7 +26,7 @@ class StartFlowTest : AbstractFlowIntegrationTest() {
 
         val result = dialogueRouter.processUserInput(userId = userId, chatId = 12345L, text = "/start")
 
-        assertThat(result.response.outgoingMessages)
+        assertThat(result.outgoingMessages)
             .containsExactly(
                 OutgoingMessage(
                     text = BotText.WelcomeFirstTime,
@@ -57,7 +57,7 @@ class StartFlowTest : AbstractFlowIntegrationTest() {
 
         val result = dialogueRouter.processUserInput(userId = userId, chatId = 54321L, text = "/start")
 
-        assertThat(result.response.outgoingMessages)
+        assertThat(result.outgoingMessages)
             .containsExactly(
                 OutgoingMessage(
                     text = BotText.WelcomeBack,

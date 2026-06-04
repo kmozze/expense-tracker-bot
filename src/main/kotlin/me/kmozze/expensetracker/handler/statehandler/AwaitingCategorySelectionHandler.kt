@@ -4,7 +4,6 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -23,7 +22,7 @@ class AwaitingCategorySelectionHandler(
     override fun handle(
         input: UserInput,
         currentState: UserState,
-    ): HandlerResult {
+    ): HandlerResponse {
         require(currentState is UserState.AwaitingCategorySelection) {
             "AwaitingCategorySelectionHandler requires AwaitingCategorySelection state"
         }
@@ -58,7 +57,7 @@ class AwaitingCategorySelectionHandler(
         input: UserInput,
         currentState: UserState.AwaitingCategorySelection,
         categoryName: String,
-    ): HandlerResult {
+    ): HandlerResponse {
         val categories = categoryService.getCategories(input.userId)
         val category =
             categories.firstOrNull { it.name == categoryName }
@@ -70,20 +69,17 @@ class AwaitingCategorySelectionHandler(
 
         val expenseDraft = currentState.expenseDraft.copy(categoryId = category.id)
 
-        return HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = expenseDraft.toExpenseView(categoryName = category.name),
-                                actions = emptyList(),
-                            ),
-                            OutgoingMessage(
-                                text = BotText.SelectExpenseDate,
-                                actions = listOf(BotAction.ShowExpenseDateSelection),
-                            ),
-                        ),
+        return HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = expenseDraft.toExpenseView(categoryName = category.name),
+                        actions = emptyList(),
+                    ),
+                    OutgoingMessage(
+                        text = BotText.SelectExpenseDate,
+                        actions = listOf(BotAction.ShowExpenseDateSelection),
+                    ),
                 ),
             nextState =
                 UserState.AwaitingExpenseDateSelection(
@@ -93,17 +89,14 @@ class AwaitingCategorySelectionHandler(
         )
     }
 
-    private fun cancelExpenseCreation(): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.ExpenseCanceled,
-                                actions = listOf(BotAction.RemoveReplyKeyboard),
-                            ),
-                        ),
+    private fun cancelExpenseCreation(): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = BotText.ExpenseCanceled,
+                        actions = listOf(BotAction.RemoveReplyKeyboard),
+                    ),
                 ),
             nextState = UserState.Idle,
         )
@@ -111,23 +104,20 @@ class AwaitingCategorySelectionHandler(
     private fun repeatCategorySelection(
         input: UserInput,
         currentState: UserState.AwaitingCategorySelection,
-    ): HandlerResult {
+    ): HandlerResponse {
         val categories = categoryService.getCategories(input.userId)
 
-        return HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = currentState.expenseDraft.toExpenseView(),
-                                actions = emptyList(),
-                            ),
-                            OutgoingMessage(
-                                text = BotText.SelectCategory,
-                                actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
-                            ),
-                        ),
+        return HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = currentState.expenseDraft.toExpenseView(),
+                        actions = emptyList(),
+                    ),
+                    OutgoingMessage(
+                        text = BotText.SelectCategory,
+                        actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
+                    ),
                 ),
             nextState = currentState,
         )
@@ -137,17 +127,14 @@ class AwaitingCategorySelectionHandler(
         currentState: UserState.AwaitingCategorySelection,
         categories: List<Category>,
         errorCode: BusinessErrorCode,
-    ): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.Error(errorCode),
-                                actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
-                            ),
-                        ),
+    ): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = BotText.Error(errorCode),
+                        actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
+                    ),
                 ),
             nextState = currentState,
         )

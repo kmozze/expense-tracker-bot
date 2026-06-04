@@ -12,7 +12,6 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -98,7 +97,7 @@ class RoutingHandlerTest {
                 ),
             )
 
-        assertThat(result.response.outgoingMessages)
+        assertThat(result.outgoingMessages)
             .containsExactly(
                 OutgoingMessage(
                     text = BotText.MainMenuInfo,
@@ -127,7 +126,7 @@ class RoutingHandlerTest {
                 ),
             )
 
-        assertThat(result.response.outgoingMessages)
+        assertThat(result.outgoingMessages)
             .containsExactly(
                 OutgoingMessage(
                     text = BotText.MainMenuInfo,
@@ -162,9 +161,9 @@ class RoutingHandlerTest {
                 ),
             )
 
-        assertThat(result.response.outgoingMessages).isEmpty()
-        assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
-        assertThat(result.response.callbackAnswer?.showAlert).isTrue()
+        assertThat(result.outgoingMessages).isEmpty()
+        assertThat(result.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(result.callbackAnswer?.showAlert).isTrue()
         assertThat(userSessionService.getState(userId)).isEqualTo(awaitingCategoryState)
         assertThat(awaitingCategoryHandler.calls).isEmpty()
     }
@@ -185,9 +184,9 @@ class RoutingHandlerTest {
                 ),
             )
 
-        assertThat(result.response.outgoingMessages).isEmpty()
-        assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
-        assertThat(result.response.callbackAnswer?.showAlert).isTrue()
+        assertThat(result.outgoingMessages).isEmpty()
+        assertThat(result.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(result.callbackAnswer?.showAlert).isTrue()
         assertThat(userSessionService.getState(userId)).isEqualTo(UserState.AwaitingExpenseInput)
         assertThat(awaitingInputHandler.calls).isEmpty()
     }
@@ -213,9 +212,9 @@ class RoutingHandlerTest {
                 ),
             )
 
-        assertThat(result.response.outgoingMessages).isEmpty()
-        assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
-        assertThat(result.response.callbackAnswer?.showAlert).isTrue()
+        assertThat(result.outgoingMessages).isEmpty()
+        assertThat(result.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(result.callbackAnswer?.showAlert).isTrue()
         assertThat(userSessionService.getState(userId)).isEqualTo(currentState)
         assertThat(awaitingManualDateHandler.calls).isEmpty()
     }
@@ -238,9 +237,9 @@ class RoutingHandlerTest {
                 ),
             )
 
-        assertThat(result.response.outgoingMessages).isEmpty()
-        assertThat(result.response.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
-        assertThat(result.response.callbackAnswer?.showAlert).isTrue()
+        assertThat(result.outgoingMessages).isEmpty()
+        assertThat(result.callbackAnswer?.text).isEqualTo(BotText.FinishCurrentDialog)
+        assertThat(result.callbackAnswer?.showAlert).isTrue()
         assertThat(userSessionService.getState(userId)).isEqualTo(currentState)
         assertThat(awaitingAmountEditHandler.calls).isEmpty()
     }
@@ -263,19 +262,16 @@ class RoutingHandlerTest {
         override fun handle(
             input: UserInput,
             currentState: UserState,
-        ): HandlerResult {
+        ): HandlerResponse {
             calls += Call(input, currentState)
 
-            return HandlerResult(
-                response =
-                    HandlerResponse(
-                        outgoingMessages =
-                            listOf(
-                                OutgoingMessage(
-                                    text = BotText.FeatureInProgress,
-                                    actions = emptyList(),
-                                ),
-                            ),
+            return HandlerResponse(
+                outgoingMessages =
+                    listOf(
+                        OutgoingMessage(
+                            text = BotText.FeatureInProgress,
+                            actions = emptyList(),
+                        ),
                     ),
             )
         }

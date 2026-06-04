@@ -4,7 +4,6 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
@@ -21,7 +20,7 @@ internal fun buildUpdatedExpenseResult(
     expenseId: UUID,
     nextState: UserState,
     prefixText: BotText?,
-): HandlerResult {
+): HandlerResponse {
     val expense = expenseService.findExpenseForUser(userId = userId, expenseId = expenseId) ?: return expenseEditUnavailableResult()
 
     val category =
@@ -44,11 +43,8 @@ internal fun buildUpdatedExpenseResult(
             )
         }
 
-    return HandlerResult(
-        response =
-            HandlerResponse(
-                outgoingMessages = outgoingMessages,
-            ),
+    return HandlerResponse(
+        outgoingMessages = outgoingMessages,
         nextState = nextState,
     )
 }
@@ -58,7 +54,7 @@ internal fun cancelExpenseEdit(
     categoryService: CategoryService,
     userId: Long,
     expenseId: UUID,
-): HandlerResult =
+): HandlerResponse =
     buildUpdatedExpenseResult(
         expenseService = expenseService,
         categoryService = categoryService,
@@ -87,21 +83,18 @@ internal fun ExpenseDraft.toExpenseView(
         description = description,
     )
 
-internal fun expenseEditUnavailableResult(): HandlerResult =
-    HandlerResult(
-        response =
-            HandlerResponse(
-                outgoingMessages =
-                    listOf(
-                        OutgoingMessage(
-                            text = BotText.ExpenseUnavailable,
-                            actions =
-                                listOf(
-                                    BotAction.ClearInlineKeyboard,
-                                    BotAction.RemoveReplyKeyboard,
-                                ),
+internal fun expenseEditUnavailableResult(): HandlerResponse =
+    HandlerResponse(
+        outgoingMessages =
+            listOf(
+                OutgoingMessage(
+                    text = BotText.ExpenseUnavailable,
+                    actions =
+                        listOf(
+                            BotAction.ClearInlineKeyboard,
+                            BotAction.RemoveReplyKeyboard,
                         ),
-                    ),
+                ),
             ),
         nextState = UserState.Idle,
     )

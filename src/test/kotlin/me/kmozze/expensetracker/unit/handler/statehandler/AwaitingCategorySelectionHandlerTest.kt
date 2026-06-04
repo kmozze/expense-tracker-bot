@@ -43,8 +43,8 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.PlainText(CATEGORY_NAME))
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -53,9 +53,9 @@ class AwaitingCategorySelectionHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
-        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectExpenseDate)
-        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.SelectExpenseDate)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseDateSelection)
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
@@ -75,12 +75,12 @@ class AwaitingCategorySelectionHandlerTest {
         val result = handle(UserCommand.PlainText("Такси"))
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
@@ -94,12 +94,12 @@ class AwaitingCategorySelectionHandlerTest {
         val result = handle(UserCommand.Cancel)
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.ExpenseCanceled)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.RemoveReplyKeyboard)
@@ -114,8 +114,8 @@ class AwaitingCategorySelectionHandlerTest {
 
         val result = handle(UserCommand.AddExpense)
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -124,9 +124,9 @@ class AwaitingCategorySelectionHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
-        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
-        assertThat(result.response.outgoingMessages[1].actions)
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
+        assertThat(result.outgoingMessages[1].actions)
             .containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
         assertThat(result.nextState).isEqualTo(AWAITING_CATEGORY_SELECTION)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }

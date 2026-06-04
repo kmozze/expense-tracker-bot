@@ -48,8 +48,8 @@ class AwaitingExpenseInputHandlerTest {
 
         val result = handle(UserCommand.PlainText(EXPENSE_TEXT))
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -58,9 +58,9 @@ class AwaitingExpenseInputHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
-        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
-        assertThat(result.response.outgoingMessages[1].actions)
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
+        assertThat(result.outgoingMessages[1].actions)
             .containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
         assertThat(result.nextState).isEqualTo(UserState.AwaitingCategorySelection(EXPENSE_DRAFT))
         verify(exactly = 1) { expenseService.parseExpense(EXPENSE_TEXT) }
@@ -75,12 +75,12 @@ class AwaitingExpenseInputHandlerTest {
         val result = handle(UserCommand.PlainText(EXPENSE_TEXT))
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.Error(BusinessErrorCode.EXPENSE_INVALID_FORMAT))
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).isEmpty()
@@ -97,12 +97,12 @@ class AwaitingExpenseInputHandlerTest {
         val result = handle(UserCommand.PlainText(EXPENSE_TEXT))
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.NoCategories)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowMainMenu)
@@ -117,12 +117,12 @@ class AwaitingExpenseInputHandlerTest {
         val result = handle(UserCommand.AddExpense)
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.AddExpenseInstructions)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).isEmpty()
@@ -135,12 +135,12 @@ class AwaitingExpenseInputHandlerTest {
         val result = handle(UserCommand.ViewExpenses)
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.FeatureInProgress)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).isEmpty()
@@ -153,12 +153,12 @@ class AwaitingExpenseInputHandlerTest {
         val result = handle(UserCommand.Unsupported)
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.AddExpenseInstructions)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).isEmpty()

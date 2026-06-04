@@ -45,12 +45,12 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Amount))
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.EnterExpenseAmount)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowCancel)
@@ -68,12 +68,12 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Description))
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.EnterExpenseDescription)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowCancel)
@@ -94,12 +94,12 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Category))
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text)
             .isEqualTo(EXPENSE_VIEW)
-        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
-        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
-        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowCategorySelection(listOf(CATEGORY.name)))
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowCategorySelection(listOf(CATEGORY.name)))
         assertThat(result.nextState)
             .isEqualTo(UserState.AwaitingExpenseCategoryEdit(expenseId = EXPENSE_ID))
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
@@ -115,12 +115,12 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseEditField(ExpenseEditField.Date))
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text)
             .isEqualTo(EXPENSE_VIEW)
-        assertThat(result.response.outgoingMessages[0].actions).isEmpty()
-        assertThat(result.response.outgoingMessages[1].text).isEqualTo(BotText.SelectExpenseDate)
-        assertThat(result.response.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.SelectExpenseDate)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseDateSelection)
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateEditSelection(
@@ -139,12 +139,12 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         val result = handle(UserCommand.PlainText("Неверно"))
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.EditExpenseFieldSelection)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowExpenseEditFieldSelection)
@@ -160,14 +160,14 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
 
         val result = handle(UserCommand.Cancel)
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
-        assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.response.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
+        assertThat(result.outgoingMessages[1].text)
             .isEqualTo(
                 EXPENSE_VIEW,
             )
-        assertThat(result.response.outgoingMessages[1].actions)
+        assertThat(result.outgoingMessages[1].actions)
             .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }

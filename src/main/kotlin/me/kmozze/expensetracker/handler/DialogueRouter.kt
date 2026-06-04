@@ -4,7 +4,6 @@ import me.kmozze.expensetracker.handler.statehandler.StateHandler
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.CallbackAnswer
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -24,7 +23,7 @@ class DialogueRouter(
     private val handlersByState: Map<KClass<out UserState>, StateHandler> =
         stateHandlers.associateBy { it.supportedStateClass }
 
-    fun process(input: UserInput): HandlerResult {
+    fun process(input: UserInput): HandlerResponse {
         return try {
             if (input.command == UserCommand.Start) {
                 userSessionService.clear(input.userId)
@@ -64,12 +63,9 @@ class DialogueRouter(
         input.callbackData != null &&
             currentState !is UserState.Idle
 
-    private fun callbackBlockedResult(): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages = emptyList(),
-                    callbackAnswer = CallbackAnswer(text = BotText.FinishCurrentDialog, showAlert = true),
-                ),
+    private fun callbackBlockedResult(): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages = emptyList(),
+            callbackAnswer = CallbackAnswer(text = BotText.FinishCurrentDialog, showAlert = true),
         )
 }

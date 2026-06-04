@@ -5,7 +5,6 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -28,7 +27,7 @@ class AwaitingExpenseDateEditSelectionHandler(
     override fun handle(
         input: UserInput,
         currentState: UserState,
-    ): HandlerResult {
+    ): HandlerResponse {
         require(currentState is UserState.AwaitingExpenseDateEditSelection) {
             "AwaitingExpenseDateEditSelectionHandler requires AwaitingExpenseDateEditSelection state"
         }
@@ -52,7 +51,7 @@ class AwaitingExpenseDateEditSelectionHandler(
         input: UserInput,
         currentState: UserState.AwaitingExpenseDateEditSelection,
         choice: ExpenseDateChoice,
-    ): HandlerResult =
+    ): HandlerResponse =
         when (choice) {
             ExpenseDateChoice.Today,
             ExpenseDateChoice.Yesterday,
@@ -66,17 +65,14 @@ class AwaitingExpenseDateEditSelectionHandler(
             ExpenseDateChoice.ManualInput -> requestManualDateInput(input, currentState)
         }
 
-    private fun expenseDateSelectionError(currentState: UserState.AwaitingExpenseDateEditSelection): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION),
-                                actions = listOf(BotAction.ShowExpenseDateSelection),
-                            ),
-                        ),
+    private fun expenseDateSelectionError(currentState: UserState.AwaitingExpenseDateEditSelection): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION),
+                        actions = listOf(BotAction.ShowExpenseDateSelection),
+                    ),
                 ),
             nextState = currentState,
         )
@@ -85,7 +81,7 @@ class AwaitingExpenseDateEditSelectionHandler(
         input: UserInput,
         currentState: UserState.AwaitingExpenseDateEditSelection,
         expenseDate: LocalDate,
-    ): HandlerResult {
+    ): HandlerResponse {
         val updatedExpense = expenseService.updateExpenseDateForUser(input.userId, currentState.expenseId, expenseDate)
         if (updatedExpense == null) {
             return expenseEditUnavailableResult()
@@ -104,7 +100,7 @@ class AwaitingExpenseDateEditSelectionHandler(
     private fun requestManualDateInput(
         input: UserInput,
         currentState: UserState.AwaitingExpenseDateEditSelection,
-    ): HandlerResult {
+    ): HandlerResponse {
         val expense =
             expenseService.findExpenseForUser(
                 userId = input.userId,
@@ -117,20 +113,17 @@ class AwaitingExpenseDateEditSelectionHandler(
                 userId = input.userId,
             ) ?: return expenseEditUnavailableResult()
 
-        return HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = expense.toExpenseView(category),
-                                actions = emptyList(),
-                            ),
-                            OutgoingMessage(
-                                text = BotText.EnterExpenseDateManually,
-                                actions = listOf(BotAction.ShowCancel),
-                            ),
-                        ),
+        return HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = expense.toExpenseView(category),
+                        actions = emptyList(),
+                    ),
+                    OutgoingMessage(
+                        text = BotText.EnterExpenseDateManually,
+                        actions = listOf(BotAction.ShowCancel),
+                    ),
                 ),
             nextState = UserState.AwaitingExpenseDateEditManualInput(currentState.expenseId),
         )
@@ -139,7 +132,7 @@ class AwaitingExpenseDateEditSelectionHandler(
     private fun repeatDateSelection(
         input: UserInput,
         currentState: UserState.AwaitingExpenseDateEditSelection,
-    ): HandlerResult {
+    ): HandlerResponse {
         val expense =
             expenseService.findExpenseForUser(
                 userId = input.userId,
@@ -152,20 +145,17 @@ class AwaitingExpenseDateEditSelectionHandler(
                 userId = input.userId,
             ) ?: return expenseEditUnavailableResult()
 
-        return HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = expense.toExpenseView(category),
-                                actions = emptyList(),
-                            ),
-                            OutgoingMessage(
-                                text = BotText.SelectExpenseDate,
-                                actions = listOf(BotAction.ShowExpenseDateSelection),
-                            ),
-                        ),
+        return HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = expense.toExpenseView(category),
+                        actions = emptyList(),
+                    ),
+                    OutgoingMessage(
+                        text = BotText.SelectExpenseDate,
+                        actions = listOf(BotAction.ShowExpenseDateSelection),
+                    ),
                 ),
             nextState = currentState,
         )

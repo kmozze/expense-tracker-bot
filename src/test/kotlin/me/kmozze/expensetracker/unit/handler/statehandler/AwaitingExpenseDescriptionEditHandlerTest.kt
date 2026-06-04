@@ -8,7 +8,7 @@ import io.mockk.verify
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseDescriptionEditHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -50,10 +50,10 @@ class AwaitingExpenseDescriptionEditHandlerTest {
 
         val result = handle(UserCommand.PlainText(NEW_EXPENSE_DESCRIPTION))
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
-        assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.response.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
+        assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
+        assertThat(result.outgoingMessages[1].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -62,7 +62,7 @@ class AwaitingExpenseDescriptionEditHandlerTest {
                     description = NEW_EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.outgoingMessages[1].actions)
+        assertThat(result.outgoingMessages[1].actions)
             .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.updateExpenseDescriptionForUser(USER_ID, EXPENSE_ID, NEW_EXPENSE_DESCRIPTION) }
@@ -78,10 +78,10 @@ class AwaitingExpenseDescriptionEditHandlerTest {
 
         val result = handle(UserCommand.Cancel)
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
-        assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.response.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
+        assertThat(result.outgoingMessages[1].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -90,7 +90,7 @@ class AwaitingExpenseDescriptionEditHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.outgoingMessages[1].actions)
+        assertThat(result.outgoingMessages[1].actions)
             .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
@@ -103,12 +103,12 @@ class AwaitingExpenseDescriptionEditHandlerTest {
         val result = handle(UserCommand.Categories)
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.EnterExpenseDescription)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowCancel)
@@ -121,12 +121,12 @@ class AwaitingExpenseDescriptionEditHandlerTest {
         val result = handle(UserCommand.PlainText("   "))
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.EnterExpenseDescription)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowCancel)
@@ -135,7 +135,7 @@ class AwaitingExpenseDescriptionEditHandlerTest {
         confirmVerified(expenseService, categoryService)
     }
 
-    private fun handle(command: UserCommand): HandlerResult =
+    private fun handle(command: UserCommand): HandlerResponse =
         handler.handle(
             input =
                 makeUserInput(

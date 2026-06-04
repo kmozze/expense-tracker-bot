@@ -6,7 +6,6 @@ import me.kmozze.expensetracker.adapter.ui.MessageFormatter
 import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.model.domain.CallbackAnswer
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -47,9 +46,9 @@ class TelegramAdapter(
                     return
                 }
 
-        val outcome: HandlerResult = dialogueRouter.process(userInput)
-        callbackQuery?.let { acknowledgeCallback(it, outcome.response.callbackAnswer) }
-        sendResponse(userInput, outcome.response)
+        val outcome: HandlerResponse = dialogueRouter.process(userInput)
+        callbackQuery?.let { acknowledgeCallback(it, outcome.callbackAnswer) }
+        sendResponse(userInput, outcome)
     }
 
     private fun extractUserInput(update: Update): UserInput? {
