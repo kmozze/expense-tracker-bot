@@ -1,9 +1,10 @@
 package me.kmozze.expensetracker.handler.statehandler
 
+import me.kmozze.expensetracker.handler.handlerResponse
+import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -72,13 +73,11 @@ class AwaitingExpenseDescriptionEditHandler(
     }
 
     private fun repeatDescriptionInput(currentState: UserState.AwaitingExpenseDescriptionEdit): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.EnterExpenseDescription,
-                        actions = listOf(BotAction.ShowCancel),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.EnterExpenseDescription,
+                    actions = listOf(BotAction.ShowCancel),
                 ),
             nextState = currentState,
         )

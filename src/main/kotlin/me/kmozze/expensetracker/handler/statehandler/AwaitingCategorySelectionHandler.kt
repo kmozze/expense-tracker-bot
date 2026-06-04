@@ -1,10 +1,11 @@
 package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
+import me.kmozze.expensetracker.handler.handlerResponse
+import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -69,14 +70,14 @@ class AwaitingCategorySelectionHandler(
 
         val expenseDraft = currentState.expenseDraft.copy(categoryId = category.id)
 
-        return HandlerResponse(
-            outgoingMessages =
+        return handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = expenseDraft.toExpenseView(categoryName = category.name),
                         actions = emptyList(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.SelectExpenseDate,
                         actions = listOf(BotAction.ShowExpenseDateSelection),
                     ),
@@ -90,13 +91,11 @@ class AwaitingCategorySelectionHandler(
     }
 
     private fun cancelExpenseCreation(): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.ExpenseCanceled,
-                        actions = listOf(BotAction.RemoveReplyKeyboard),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.ExpenseCanceled,
+                    actions = listOf(BotAction.RemoveReplyKeyboard),
                 ),
             nextState = UserState.Idle,
         )
@@ -107,14 +106,14 @@ class AwaitingCategorySelectionHandler(
     ): HandlerResponse {
         val categories = categoryService.getCategories(input.userId)
 
-        return HandlerResponse(
-            outgoingMessages =
+        return handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = currentState.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.SelectCategory,
                         actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                     ),
@@ -128,13 +127,11 @@ class AwaitingCategorySelectionHandler(
         categories: List<Category>,
         errorCode: BusinessErrorCode,
     ): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.Error(errorCode),
-                        actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.Error(errorCode),
+                    actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                 ),
             nextState = currentState,
         )

@@ -1,5 +1,7 @@
 package me.kmozze.expensetracker.handler.statehandler
 
+import me.kmozze.expensetracker.handler.handlerResponse
+import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
@@ -32,19 +34,19 @@ internal fun buildUpdatedExpenseResult(
     val outgoingMessages =
         mutableListOf<OutgoingMessage>().apply {
             if (prefixText != null) {
-                add(OutgoingMessage(text = prefixText, actions = listOf(BotAction.RemoveReplyKeyboard)))
+                add(outgoingMessage(text = prefixText, actions = listOf(BotAction.RemoveReplyKeyboard)))
             }
 
             add(
-                OutgoingMessage(
+                outgoingMessage(
                     text = expense.toExpenseView(category),
                     actions = listOf(BotAction.ShowExpenseCardActions(expense.id)),
                 ),
             )
         }
 
-    return HandlerResponse(
-        outgoingMessages = outgoingMessages,
+    return handlerResponse(
+        messages = outgoingMessages,
         nextState = nextState,
     )
 }
@@ -84,17 +86,15 @@ internal fun ExpenseDraft.toExpenseView(
     )
 
 internal fun expenseEditUnavailableResult(): HandlerResponse =
-    HandlerResponse(
-        outgoingMessages =
-            listOf(
-                OutgoingMessage(
-                    text = BotText.ExpenseUnavailable,
-                    actions =
-                        listOf(
-                            BotAction.ClearInlineKeyboard,
-                            BotAction.RemoveReplyKeyboard,
-                        ),
-                ),
+    handlerResponse(
+        message =
+            outgoingMessage(
+                text = BotText.ExpenseUnavailable,
+                actions =
+                    listOf(
+                        BotAction.ClearInlineKeyboard,
+                        BotAction.RemoveReplyKeyboard,
+                    ),
             ),
         nextState = UserState.Idle,
     )

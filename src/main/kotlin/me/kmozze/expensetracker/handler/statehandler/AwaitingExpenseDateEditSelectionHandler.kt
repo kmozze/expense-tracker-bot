@@ -1,11 +1,12 @@
 package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
+import me.kmozze.expensetracker.handler.handlerResponse
+import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -66,13 +67,11 @@ class AwaitingExpenseDateEditSelectionHandler(
         }
 
     private fun expenseDateSelectionError(currentState: UserState.AwaitingExpenseDateEditSelection): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION),
-                        actions = listOf(BotAction.ShowExpenseDateSelection),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION),
+                    actions = listOf(BotAction.ShowExpenseDateSelection),
                 ),
             nextState = currentState,
         )
@@ -113,14 +112,14 @@ class AwaitingExpenseDateEditSelectionHandler(
                 userId = input.userId,
             ) ?: return expenseEditUnavailableResult()
 
-        return HandlerResponse(
-            outgoingMessages =
+        return handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = expense.toExpenseView(category),
                         actions = emptyList(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.EnterExpenseDateManually,
                         actions = listOf(BotAction.ShowCancel),
                     ),
@@ -145,14 +144,14 @@ class AwaitingExpenseDateEditSelectionHandler(
                 userId = input.userId,
             ) ?: return expenseEditUnavailableResult()
 
-        return HandlerResponse(
-            outgoingMessages =
+        return handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = expense.toExpenseView(category),
                         actions = emptyList(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.SelectExpenseDate,
                         actions = listOf(BotAction.ShowExpenseDateSelection),
                     ),

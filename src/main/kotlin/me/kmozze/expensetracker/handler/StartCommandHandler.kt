@@ -3,7 +3,6 @@ package me.kmozze.expensetracker.handler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.service.CategoryService
@@ -24,14 +23,14 @@ class StartCommandHandler(
 
         val welcomeText = if (isFirstTime) BotText.WelcomeFirstTime else BotText.WelcomeBack
 
-        return HandlerResponse(
-            outgoingMessages =
+        return handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = welcomeText,
                         actions = listOf(BotAction.RemoveReplyKeyboard),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.MainMenu,
                         actions = listOf(BotAction.ShowMainMenu),
                     ),

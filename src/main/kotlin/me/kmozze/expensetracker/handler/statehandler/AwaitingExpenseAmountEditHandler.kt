@@ -1,10 +1,11 @@
 package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessException
+import me.kmozze.expensetracker.handler.handlerResponse
+import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -51,13 +52,11 @@ class AwaitingExpenseAmountEditHandler(
             try {
                 expenseService.parseExpenseAmount(amountText)
             } catch (e: BusinessException) {
-                return HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.Error(e.errorCode),
-                                actions = listOf(BotAction.ShowCancel),
-                            ),
+                return handlerResponse(
+                    message =
+                        outgoingMessage(
+                            text = BotText.Error(e.errorCode),
+                            actions = listOf(BotAction.ShowCancel),
                         ),
                     nextState = UserState.AwaitingExpenseAmountEdit(currentState.expenseId),
                 )
@@ -79,13 +78,11 @@ class AwaitingExpenseAmountEditHandler(
     }
 
     private fun repeatAmountInput(currentState: UserState.AwaitingExpenseAmountEdit): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.EnterExpenseAmount,
-                        actions = listOf(BotAction.ShowCancel),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.EnterExpenseAmount,
+                    actions = listOf(BotAction.ShowCancel),
                 ),
             nextState = currentState,
         )
