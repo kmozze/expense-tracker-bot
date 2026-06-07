@@ -10,6 +10,7 @@ import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseDateEditManualInputHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -43,20 +44,14 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
     }
 
     @Test
-    fun `manual date updates expense and returns idle`() {
+    fun `manual date updates draft and returns to field selection`() {
+        val updatedDraft = EXPENSE_DRAFT.copy(expenseDate = MANUAL_DATE)
         every { expenseService.parseExpenseDate(MANUAL_DATE_TEXT) } returns MANUAL_DATE
-        every { expenseService.updateExpenseDateForUser(USER_ID, EXPENSE_ID, MANUAL_DATE) } returns
-            EXPENSE.copy(expenseDate = MANUAL_DATE)
-        every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns
-            EXPENSE.copy(expenseDate = MANUAL_DATE)
-        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
 
         val result = handle(UserCommand.PlainText(MANUAL_DATE_TEXT))
 
         assertThat(result.outgoingMessages).hasSize(2)
-        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
-        assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages[0].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -65,13 +60,18 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.outgoingMessages[1].actions)
-            .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.EditExpenseFieldSelection)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseEditFieldSelection)
+        assertThat(result.nextState)
+            .isEqualTo(
+                UserState.AwaitingExpenseEditFieldSelection(
+                    expenseId = EXPENSE_ID,
+                    expenseDraft = updatedDraft,
+                    categoryName = CATEGORY.name,
+                ),
+            )
         verify(exactly = 1) { expenseService.parseExpenseDate(MANUAL_DATE_TEXT) }
-        verify(exactly = 1) { expenseService.updateExpenseDateForUser(USER_ID, EXPENSE_ID, MANUAL_DATE) }
-        verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
-        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
         confirmVerified(expenseService, categoryService)
     }
 
@@ -81,49 +81,29 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
 
         val result = handle(UserCommand.PlainText("31.02.2026"))
 
-        assertThat(
-            result.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.Error(BusinessErrorCode.EXPENSE_DATE_INVALID_FORMAT))
-        assertThat(
-            result.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCancel)
+        assertThat(result.outgoingMessages.single().text)
+            .isEqualTo(BotText.Error(BusinessErrorCode.EXPENSE_DATE_INVALID_FORMAT))
+        assertThat(result.outgoingMessages.single().actions).containsExactly(BotAction.ShowCancel)
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_DATE_EDIT_MANUAL_INPUT)
         verify(exactly = 1) { expenseService.parseExpenseDate("31.02.2026") }
         confirmVerified(expenseService, categoryService)
     }
 
     @Test
-    fun `non-text command repeats manual date input`() {
-        every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
-        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
-
+    fun `non-text command repeats manual date input with draft card`() {
         val result = handle(UserCommand.RequestExpenseDeletion(EXPENSE_ID))
 
         assertThat(result.outgoingMessages).hasSize(2)
-        assertThat(result.outgoingMessages[0].text)
-            .isEqualTo(
-                BotText.ExpenseView(
-                    amount = EXPENSE_AMOUNT,
-                    categoryName = CATEGORY.name,
-                    expenseDate = EXPENSE_DATE,
-                    description = EXPENSE_DESCRIPTION,
-                ),
-            )
+        assertThat(result.outgoingMessages[0].text).isEqualTo(EXPENSE_VIEW)
         assertThat(result.outgoingMessages[0].actions).isEmpty()
         assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.EnterExpenseDateManually)
         assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowCancel)
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_DATE_EDIT_MANUAL_INPUT)
-        verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
-        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
         confirmVerified(expenseService, categoryService)
     }
 
     @Test
-    fun `cancel returns card with actions`() {
+    fun `cancel returns saved card with actions`() {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
 
@@ -132,17 +112,8 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
         assertThat(result.outgoingMessages).hasSize(2)
         assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.Done)
         assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.outgoingMessages[1].text)
-            .isEqualTo(
-                BotText.ExpenseView(
-                    amount = EXPENSE_AMOUNT,
-                    categoryName = CATEGORY.name,
-                    expenseDate = EXPENSE_DATE,
-                    description = EXPENSE_DESCRIPTION,
-                ),
-            )
-        assertThat(result.outgoingMessages[1].actions)
-            .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
+        assertThat(result.outgoingMessages[1].text).isEqualTo(EXPENSE_VIEW)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
@@ -183,6 +154,13 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
                 name = "Транспорт",
                 userId = USER_ID,
             )
+        val EXPENSE_DRAFT =
+            ExpenseDraft(
+                amount = EXPENSE_AMOUNT,
+                description = EXPENSE_DESCRIPTION,
+                categoryId = CATEGORY_ID,
+                expenseDate = EXPENSE_DATE,
+            )
         val EXPENSE =
             Expense(
                 id = EXPENSE_ID,
@@ -192,9 +170,18 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
                 expenseDate = EXPENSE_DATE,
                 description = EXPENSE_DESCRIPTION,
             )
+        val EXPENSE_VIEW =
+            BotText.ExpenseView(
+                amount = EXPENSE_AMOUNT,
+                categoryName = CATEGORY.name,
+                expenseDate = EXPENSE_DATE,
+                description = EXPENSE_DESCRIPTION,
+            )
         val AWAITING_EXPENSE_DATE_EDIT_MANUAL_INPUT =
             UserState.AwaitingExpenseDateEditManualInput(
                 expenseId = EXPENSE_ID,
+                expenseDraft = EXPENSE_DRAFT,
+                categoryName = CATEGORY.name,
             )
     }
 }

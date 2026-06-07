@@ -9,6 +9,7 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseCategoryEditHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -42,20 +43,14 @@ class AwaitingExpenseCategoryEditHandlerTest {
     }
 
     @Test
-    fun `existing category updates expense and updates card`() {
-        val updatedExpense = EXPENSE.copy(categoryId = UPDATED_CATEGORY_ID)
+    fun `existing category updates draft and returns to field selection`() {
         every { categoryService.getCategories(USER_ID) } returns listOf(EXISTING_CATEGORY, UPDATED_CATEGORY)
-        every { expenseService.updateExpenseCategoryForUser(USER_ID, EXPENSE_ID, UPDATED_CATEGORY_ID) } returns updatedExpense
-        every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns updatedExpense
-        every { categoryService.findCategoryForUser(UPDATED_CATEGORY_ID, USER_ID) } returns UPDATED_CATEGORY
 
         val result = handle(UserCommand.PlainText(UPDATED_CATEGORY.name))
 
+        val updatedDraft = EXPENSE_DRAFT.copy(categoryId = UPDATED_CATEGORY_ID)
         assertThat(result.outgoingMessages).hasSize(2)
-        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
-        assertThat(result.outgoingMessages[0].actions)
-            .containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages[0].text)
             .isEqualTo(
                 BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
@@ -64,13 +59,18 @@ class AwaitingExpenseCategoryEditHandlerTest {
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.outgoingMessages[1].actions)
-            .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.EditExpenseFieldSelection)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseEditFieldSelection)
+        assertThat(result.nextState)
+            .isEqualTo(
+                UserState.AwaitingExpenseEditFieldSelection(
+                    expenseId = EXPENSE_ID,
+                    expenseDraft = updatedDraft,
+                    categoryName = UPDATED_CATEGORY.name,
+                ),
+            )
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
-        verify(exactly = 1) { expenseService.updateExpenseCategoryForUser(USER_ID, EXPENSE_ID, UPDATED_CATEGORY_ID) }
-        verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
-        verify(exactly = 1) { categoryService.findCategoryForUser(UPDATED_CATEGORY_ID, USER_ID) }
         confirmVerified(expenseService, categoryService)
     }
 
@@ -81,16 +81,10 @@ class AwaitingExpenseCategoryEditHandlerTest {
 
         val result = handle(UserCommand.PlainText("Нет такой"))
 
-        assertThat(
-            result.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
-        assertThat(
-            result.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
+        assertThat(result.outgoingMessages.single().text)
+            .isEqualTo(BotText.Error(BusinessErrorCode.CATEGORY_NOT_FOUND))
+        assertThat(result.outgoingMessages.single().actions)
+            .containsExactly(BotAction.ShowCategorySelection(categories.map { it.name }))
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_CATEGORY_EDIT)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(expenseService, categoryService)
@@ -102,49 +96,32 @@ class AwaitingExpenseCategoryEditHandlerTest {
 
         val result = handle(UserCommand.PlainText("Нет такой"))
 
-        assertThat(
-            result.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.NoCategories)
-        assertThat(
-            result.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowMainMenu)
+        assertThat(result.outgoingMessages.single().text).isEqualTo(BotText.NoCategories)
+        assertThat(result.outgoingMessages.single().actions).containsExactly(BotAction.ShowMainMenu)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
         confirmVerified(expenseService, categoryService)
     }
 
     @Test
-    fun `unavailable expense keeps card unavailable message`() {
-        every { expenseService.updateExpenseCategoryForUser(USER_ID, EXPENSE_ID, UPDATED_CATEGORY_ID) } returns null
+    fun `non-text command repeats category selection with draft card`() {
         every { categoryService.getCategories(USER_ID) } returns listOf(EXISTING_CATEGORY, UPDATED_CATEGORY)
 
-        val result = handle(UserCommand.PlainText(UPDATED_CATEGORY.name))
+        val result = handle(UserCommand.RequestExpenseDeletion(EXPENSE_ID))
 
-        assertThat(
-            result.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.ExpenseUnavailable)
-        assertThat(
-            result.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(
-            BotAction.ClearInlineKeyboard,
-            BotAction.RemoveReplyKeyboard,
-        )
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(EXPENSE_VIEW)
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.SelectCategory)
+        assertThat(result.outgoingMessages[1].actions)
+            .containsExactly(BotAction.ShowCategorySelection(listOf(EXISTING_CATEGORY.name, UPDATED_CATEGORY.name)))
+        assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_CATEGORY_EDIT)
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
-        verify(exactly = 1) { expenseService.updateExpenseCategoryForUser(USER_ID, EXPENSE_ID, UPDATED_CATEGORY_ID) }
         confirmVerified(expenseService, categoryService)
     }
 
     @Test
-    fun `cancel returns card with actions`() {
+    fun `cancel returns saved card with actions`() {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         every { categoryService.findCategoryForUser(EXISTING_CATEGORY_ID, USER_ID) } returns EXISTING_CATEGORY
 
@@ -152,19 +129,9 @@ class AwaitingExpenseCategoryEditHandlerTest {
 
         assertThat(result.outgoingMessages).hasSize(2)
         assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.Done)
-        assertThat(result.outgoingMessages[0].actions)
-            .containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.outgoingMessages[1].text)
-            .isEqualTo(
-                BotText.ExpenseView(
-                    amount = EXPENSE_AMOUNT,
-                    categoryName = EXISTING_CATEGORY.name,
-                    expenseDate = EXPENSE_DATE,
-                    description = EXPENSE_DESCRIPTION,
-                ),
-            )
-        assertThat(result.outgoingMessages[1].actions)
-            .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
+        assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
+        assertThat(result.outgoingMessages[1].text).isEqualTo(EXPENSE_VIEW)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.findCategoryForUser(EXISTING_CATEGORY_ID, USER_ID) }
@@ -210,6 +177,13 @@ class AwaitingExpenseCategoryEditHandlerTest {
                 name = "Еда",
                 userId = USER_ID,
             )
+        val EXPENSE_DRAFT =
+            ExpenseDraft(
+                amount = EXPENSE_AMOUNT,
+                description = EXPENSE_DESCRIPTION,
+                categoryId = EXISTING_CATEGORY_ID,
+                expenseDate = EXPENSE_DATE,
+            )
         val EXPENSE =
             Expense(
                 id = EXPENSE_ID,
@@ -219,9 +193,18 @@ class AwaitingExpenseCategoryEditHandlerTest {
                 expenseDate = EXPENSE_DATE,
                 description = EXPENSE_DESCRIPTION,
             )
+        val EXPENSE_VIEW =
+            BotText.ExpenseView(
+                amount = EXPENSE_AMOUNT,
+                categoryName = EXISTING_CATEGORY.name,
+                expenseDate = EXPENSE_DATE,
+                description = EXPENSE_DESCRIPTION,
+            )
         val AWAITING_EXPENSE_CATEGORY_EDIT =
             UserState.AwaitingExpenseCategoryEdit(
                 expenseId = EXPENSE_ID,
+                expenseDraft = EXPENSE_DRAFT,
+                categoryName = EXISTING_CATEGORY.name,
             )
     }
 }

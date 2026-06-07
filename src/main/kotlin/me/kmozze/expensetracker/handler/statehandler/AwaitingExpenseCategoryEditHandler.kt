@@ -39,6 +39,15 @@ class AwaitingExpenseCategoryEditHandler(
                     expenseId = currentState.expenseId,
                 )
 
+            UserCommand.FinishExpenseEdit ->
+                finishExpenseEdit(
+                    expenseService = expenseService,
+                    categoryService = categoryService,
+                    userId = input.userId,
+                    expenseId = currentState.expenseId,
+                    expenseDraft = currentState.expenseDraft,
+                )
+
             is UserCommand.PlainText -> selectCategory(input, currentState, command.value)
             else -> repeatCategorySelection(input, currentState)
         }
@@ -57,18 +66,10 @@ class AwaitingExpenseCategoryEditHandler(
                     categories = categories,
                 )
 
-        val updatedExpense = expenseService.updateExpenseCategoryForUser(input.userId, currentState.expenseId, category.id)
-        if (updatedExpense == null) {
-            return expenseEditUnavailableResult()
-        }
-
-        return buildUpdatedExpenseResult(
-            expenseService = expenseService,
-            categoryService = categoryService,
-            userId = input.userId,
-            expenseId = updatedExpense.id,
-            nextState = UserState.Idle,
-            prefixText = BotText.ExpenseSaved,
+        return buildDraftExpenseEditFieldSelectionResult(
+            expenseId = currentState.expenseId,
+            expenseDraft = currentState.expenseDraft.copy(categoryId = category.id),
+            categoryName = category.name,
         )
     }
 
@@ -89,23 +90,11 @@ class AwaitingExpenseCategoryEditHandler(
             )
         }
 
-        val expense =
-            expenseService.findExpenseForUser(
-                userId = input.userId,
-                expenseId = currentState.expenseId,
-            ) ?: return expenseEditUnavailableResult()
-
-        val category =
-            categoryService.findCategoryForUser(
-                categoryId = expense.categoryId,
-                userId = input.userId,
-            ) ?: return expenseEditUnavailableResult()
-
         return handlerResponse(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = expense.toExpenseView(category),
+                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
                         actions = emptyList(),
                     ),
                     outgoingMessage(

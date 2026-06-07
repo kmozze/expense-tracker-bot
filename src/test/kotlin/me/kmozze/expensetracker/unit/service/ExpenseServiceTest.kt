@@ -12,7 +12,9 @@ import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.SystemException
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
+import me.kmozze.expensetracker.repository.ICategoryRepository
 import me.kmozze.expensetracker.repository.IExpenseRepository
 import me.kmozze.expensetracker.service.ExpenseService
 import me.kmozze.expensetracker.service.parser.InputExpenseDateParsingService
@@ -34,6 +36,7 @@ class ExpenseServiceTest {
     private val expenseTextParser: InputExpenseParsingService = mockk()
     private val expenseDateParser: InputExpenseDateParsingService = mockk()
     private val expenseRepository: IExpenseRepository = mockk()
+    private val categoryRepository: ICategoryRepository = mockk()
     private lateinit var service: ExpenseService
 
     @BeforeEach
@@ -43,6 +46,7 @@ class ExpenseServiceTest {
                 expenseTextParser = expenseTextParser,
                 expenseDateParser = expenseDateParser,
                 expenseRepository = expenseRepository,
+                categoryRepository = categoryRepository,
             )
     }
 
@@ -112,81 +116,151 @@ class ExpenseServiceTest {
     }
 
     @Test
-    fun `update expense amount for user updates existing expense`() {
+    fun `update expense from draft updates all editable fields`() {
         val userId = 123L
         val expenseId = UUID.randomUUID()
-        val categoryId = UUID.randomUUID()
-        val expenseDate = LocalDate.parse("2026-05-24")
+        val originalCategoryId = UUID.randomUUID()
+        val updatedCategoryId = UUID.randomUUID()
         val original =
             Expense(
                 id = expenseId,
-                categoryId = categoryId,
+                categoryId = originalCategoryId,
                 amount = EXPENSE_AMOUNT,
                 userId = userId,
-                expenseDate = expenseDate,
+                expenseDate = LocalDate.parse("2026-05-24"),
+                description = "такси",
             )
-        val expectedAmount = Money.of(BigDecimal("650.00"))
-        val updatedExpense =
+        val draft =
+            ExpenseDraft(
+                amount = Money.of(BigDecimal("650.00")),
+                description = "автобус",
+                categoryId = updatedCategoryId,
+                expenseDate = LocalDate.parse("2026-05-20"),
+            )
+        val updated =
             original.copy(
-                amount = expectedAmount,
+                amount = draft.amount,
+                categoryId = updatedCategoryId,
+                expenseDate = draft.requireExpenseDate(),
+                description = "автобус",
             )
         every { expenseRepository.findByIdForUser(expenseId, userId) } returns original
-        every { expenseRepository.updateForUser(updatedExpense, userId) } returns updatedExpense
+        every { categoryRepository.findByIdForUser(updatedCategoryId, userId) } returns
+            Category(updatedCategoryId, "Транспорт", userId)
+        every { expenseRepository.updateForUser(updated, userId) } returns updated
 
-        val result = service.updateExpenseAmountForUser(userId = userId, expenseId = expenseId, amount = expectedAmount)
+        val result =
+            service.updateExpenseFromDraftForUser(
+                userId = userId,
+                expenseId = expenseId,
+                expenseDraft = draft,
+            )
 
-        assertEquals(updatedExpense, result)
+        assertEquals(updated, result)
         verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
-        verify(exactly = 1) { expenseRepository.updateForUser(updatedExpense, userId) }
-        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+        verify(exactly = 1) { categoryRepository.findByIdForUser(updatedCategoryId, userId) }
+        verify(exactly = 1) { expenseRepository.updateForUser(updated, userId) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository, categoryRepository)
     }
 
     @Test
-    fun `update expense returns null when expense missing`() {
+    fun `update expense from draft returns null when expense missing`() {
         val userId = 123L
         val expenseId = UUID.randomUUID()
+        val categoryId = UUID.randomUUID()
+        val draft = completeDraft(categoryId)
         every { expenseRepository.findByIdForUser(expenseId, userId) } returns null
 
-        val result = service.updateExpenseAmountForUser(userId = userId, expenseId = expenseId, amount = Money.of(BigDecimal("650.00")))
+        val result = service.updateExpenseFromDraftForUser(userId, expenseId, draft)
 
-        assertEquals(null, result)
+        assertNull(result)
         verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
+        verify(exactly = 0) { categoryRepository.findByIdForUser(any(), any()) }
         verify(exactly = 0) { expenseRepository.updateForUser(any(), any()) }
-        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository, categoryRepository)
     }
 
     @Test
-    fun `update expense wraps DataAccessException into SystemException`() {
+    fun `update expense from draft returns null when category does not belong to user`() {
         val userId = 123L
         val expenseId = UUID.randomUUID()
         val categoryId = UUID.randomUUID()
-        val expenseDate = LocalDate.parse("2026-05-24")
+        val original =
+            Expense(
+                id = expenseId,
+                categoryId = UUID.randomUUID(),
+                amount = EXPENSE_AMOUNT,
+                userId = userId,
+                expenseDate = LocalDate.parse("2026-05-24"),
+            )
+        val draft = completeDraft(categoryId)
+        every { expenseRepository.findByIdForUser(expenseId, userId) } returns original
+        every { categoryRepository.findByIdForUser(categoryId, userId) } returns null
+
+        val result = service.updateExpenseFromDraftForUser(userId, expenseId, draft)
+
+        assertNull(result)
+        verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
+        verify(exactly = 1) { categoryRepository.findByIdForUser(categoryId, userId) }
+        verify(exactly = 0) { expenseRepository.updateForUser(any(), any()) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository, categoryRepository)
+    }
+
+    @Test
+    fun `update expense from draft normalizes blank description`() {
+        val userId = 123L
+        val expenseId = UUID.randomUUID()
+        val categoryId = UUID.randomUUID()
         val original =
             Expense(
                 id = expenseId,
                 categoryId = categoryId,
                 amount = EXPENSE_AMOUNT,
                 userId = userId,
-                expenseDate = expenseDate,
+                expenseDate = LocalDate.parse("2026-05-24"),
+                description = "такси",
             )
-        val cause = DataAccessException("DB update failed")
+        val draft = completeDraft(categoryId).copy(description = "   ")
+        val updated =
+            original.copy(
+                amount = draft.amount,
+                expenseDate = draft.requireExpenseDate(),
+                description = null,
+            )
         every { expenseRepository.findByIdForUser(expenseId, userId) } returns original
-        every { expenseRepository.updateForUser(any(), userId) } throws cause
+        every { categoryRepository.findByIdForUser(categoryId, userId) } returns Category(categoryId, "Транспорт", userId)
+        every { expenseRepository.updateForUser(updated, userId) } returns updated
+
+        val result = service.updateExpenseFromDraftForUser(userId, expenseId, draft)
+
+        assertEquals(updated, result)
+        verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
+        verify(exactly = 1) { categoryRepository.findByIdForUser(categoryId, userId) }
+        verify(exactly = 1) { expenseRepository.updateForUser(updated, userId) }
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository, categoryRepository)
+    }
+
+    @Test
+    fun `update expense from draft wraps DataAccessException into SystemException`() {
+        val userId = 123L
+        val expenseId = UUID.randomUUID()
+        val categoryId = UUID.randomUUID()
+        val cause = DataAccessException("DB update failed")
+        every { expenseRepository.findByIdForUser(expenseId, userId) } throws cause
 
         val exception =
             assertThrows<SystemException> {
-                service.updateExpenseAmountForUser(
+                service.updateExpenseFromDraftForUser(
                     userId = userId,
                     expenseId = expenseId,
-                    amount = Money.of(BigDecimal("650.00")),
+                    expenseDraft = completeDraft(categoryId),
                 )
             }
 
         assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
         assertEquals(cause, exception.cause)
         verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
-        verify(exactly = 1) { expenseRepository.updateForUser(any(), userId) }
-        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+        confirmVerified(expenseTextParser, expenseDateParser, expenseRepository, categoryRepository)
     }
 
     @Test
@@ -352,6 +426,14 @@ class ExpenseServiceTest {
 
         confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
     }
+
+    private fun completeDraft(categoryId: UUID): ExpenseDraft =
+        ExpenseDraft(
+            amount = EXPENSE_AMOUNT,
+            description = "такси",
+            categoryId = categoryId,
+            expenseDate = LocalDate.parse("2026-05-24"),
+        )
 
     private companion object {
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))

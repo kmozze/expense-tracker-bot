@@ -15,6 +15,7 @@ object UserCommandParser {
             text?.equals("/start", ignoreCase = true) == true -> UserCommand.Start
             text?.equals("/menu", ignoreCase = true) == true -> UserCommand.Menu
             text == Buttons.CANCEL -> UserCommand.Cancel
+            text == Buttons.FINISH_EXPENSE_EDIT -> UserCommand.FinishExpenseEdit
             text == Buttons.TODAY -> UserCommand.SelectExpenseDate(ExpenseDateChoice.Today)
             text == Buttons.YESTERDAY -> UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday)
             text == Buttons.ENTER_DATE_MANUALLY -> UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput)

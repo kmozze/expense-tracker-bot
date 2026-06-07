@@ -73,6 +73,7 @@ class UserCommandParserTest {
                 Arguments.arguments("/menu", UserCommand.Menu),
                 Arguments.arguments("/MENU", UserCommand.Menu),
                 Arguments.arguments(Buttons.CANCEL, UserCommand.Cancel),
+                Arguments.arguments(Buttons.FINISH_EXPENSE_EDIT, UserCommand.FinishExpenseEdit),
                 Arguments.arguments(Buttons.TODAY, UserCommand.SelectExpenseDate(ExpenseDateChoice.Today)),
                 Arguments.arguments(Buttons.YESTERDAY, UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday)),
                 Arguments.arguments(Buttons.ENTER_DATE_MANUALLY, UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput)),

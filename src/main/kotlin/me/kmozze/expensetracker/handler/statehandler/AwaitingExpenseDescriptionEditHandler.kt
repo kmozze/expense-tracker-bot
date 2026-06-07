@@ -37,13 +37,21 @@ class AwaitingExpenseDescriptionEditHandler(
                     expenseId = currentState.expenseId,
                 )
 
-            is UserCommand.PlainText -> saveDescription(input, currentState, command.value)
+            UserCommand.FinishExpenseEdit ->
+                finishExpenseEdit(
+                    expenseService = expenseService,
+                    categoryService = categoryService,
+                    userId = input.userId,
+                    expenseId = currentState.expenseId,
+                    expenseDraft = currentState.expenseDraft,
+                )
+
+            is UserCommand.PlainText -> saveDescription(currentState, command.value)
             else -> repeatDescriptionInput(currentState)
         }
     }
 
     private fun saveDescription(
-        input: UserInput,
         currentState: UserState.AwaitingExpenseDescriptionEdit,
         descriptionText: String,
     ): HandlerResponse {
@@ -52,23 +60,10 @@ class AwaitingExpenseDescriptionEditHandler(
             return repeatDescriptionInput(currentState)
         }
 
-        val updatedExpense =
-            expenseService.updateExpenseDescriptionForUser(
-                userId = input.userId,
-                expenseId = currentState.expenseId,
-                description = normalizedDescription,
-            )
-        if (updatedExpense == null) {
-            return expenseEditUnavailableResult()
-        }
-
-        return buildUpdatedExpenseResult(
-            expenseService = expenseService,
-            categoryService = categoryService,
-            userId = input.userId,
-            expenseId = updatedExpense.id,
-            nextState = UserState.Idle,
-            prefixText = BotText.ExpenseSaved,
+        return buildDraftExpenseEditFieldSelectionResult(
+            expenseId = currentState.expenseId,
+            expenseDraft = currentState.expenseDraft.copy(description = normalizedDescription),
+            categoryName = currentState.categoryName,
         )
     }
 

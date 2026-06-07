@@ -23,25 +23,37 @@ sealed class UserState {
 
     data class AwaitingExpenseEditFieldSelection(
         val expenseId: UUID,
+        val expenseDraft: ExpenseDraft,
+        val categoryName: String,
     ) : UserState()
 
     data class AwaitingExpenseAmountEdit(
         val expenseId: UUID,
+        val expenseDraft: ExpenseDraft,
+        val categoryName: String,
     ) : UserState()
 
     data class AwaitingExpenseCategoryEdit(
         val expenseId: UUID,
+        val expenseDraft: ExpenseDraft,
+        val categoryName: String,
     ) : UserState()
 
     data class AwaitingExpenseDateEditSelection(
         val expenseId: UUID,
+        val expenseDraft: ExpenseDraft,
+        val categoryName: String,
     ) : UserState()
 
     data class AwaitingExpenseDateEditManualInput(
         val expenseId: UUID,
+        val expenseDraft: ExpenseDraft,
+        val categoryName: String,
     ) : UserState()
 
     data class AwaitingExpenseDescriptionEdit(
         val expenseId: UUID,
+        val expenseDraft: ExpenseDraft,
+        val categoryName: String,
     ) : UserState()
 }

@@ -66,6 +66,67 @@ internal fun cancelExpenseEdit(
         prefixText = BotText.Done,
     )
 
+internal fun buildDraftExpenseEditFieldSelectionResult(
+    expenseId: UUID,
+    expenseDraft: ExpenseDraft,
+    categoryName: String,
+): HandlerResponse =
+    handlerResponse(
+        messages =
+            listOf(
+                outgoingMessage(
+                    text = expenseDraft.toExpenseView(categoryName = categoryName),
+                    actions = emptyList(),
+                ),
+                outgoingMessage(
+                    text = BotText.EditExpenseFieldSelection,
+                    actions = listOf(BotAction.ShowExpenseEditFieldSelection),
+                ),
+            ),
+        nextState =
+            UserState.AwaitingExpenseEditFieldSelection(
+                expenseId = expenseId,
+                expenseDraft = expenseDraft,
+                categoryName = categoryName,
+            ),
+    )
+
+internal fun finishExpenseEdit(
+    expenseService: ExpenseService,
+    categoryService: CategoryService,
+    userId: Long,
+    expenseId: UUID,
+    expenseDraft: ExpenseDraft,
+): HandlerResponse {
+    val updatedExpense =
+        expenseService.updateExpenseFromDraftForUser(
+            userId = userId,
+            expenseId = expenseId,
+            expenseDraft = expenseDraft,
+        ) ?: return expenseEditUnavailableResult()
+
+    val category =
+        categoryService.findCategoryForUser(
+            categoryId = updatedExpense.categoryId,
+            userId = userId,
+        ) ?: return expenseEditUnavailableResult()
+
+    return handlerResponse(
+        messages =
+            listOf(
+                outgoingMessage(
+                    text = BotText.ExpenseSaved,
+                    actions = listOf(BotAction.RemoveReplyKeyboard),
+                ),
+                outgoingMessage(
+                    text = updatedExpense.toExpenseView(category),
+                    actions = listOf(BotAction.ShowExpenseCardActions(updatedExpense.id)),
+                ),
+            ),
+        nextState = UserState.Idle,
+    )
+}
+
 internal fun Expense.toExpenseView(category: Category): BotText.ExpenseView =
     BotText.ExpenseView(
         amount = amount,

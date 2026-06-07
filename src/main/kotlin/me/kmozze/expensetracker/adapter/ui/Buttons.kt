@@ -9,6 +9,7 @@ object Buttons {
     const val YESTERDAY = "${Icons.CALENDAR} Вчера"
     const val ENTER_DATE_MANUALLY = "${Icons.EDIT} Ввести дату вручную"
     const val CANCEL = "${Icons.CANCEL} Отмена"
+    const val FINISH_EXPENSE_EDIT = "${Icons.SUCCESS} Готово"
     const val EDIT_EXPENSE = "${Icons.EDIT} Изменить"
     const val DELETE_EXPENSE = "${Icons.DELETE} Удалить"
     const val CONFIRM_DELETE_EXPENSE = "${Icons.DELETE} Да, удалить"

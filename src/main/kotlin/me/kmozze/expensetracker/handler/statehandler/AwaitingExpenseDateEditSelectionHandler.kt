@@ -42,14 +42,22 @@ class AwaitingExpenseDateEditSelectionHandler(
                     expenseId = currentState.expenseId,
                 )
 
-            is UserCommand.SelectExpenseDate -> handleExpenseDateSelection(input, currentState, command.choice)
+            UserCommand.FinishExpenseEdit ->
+                finishExpenseEdit(
+                    expenseService = expenseService,
+                    categoryService = categoryService,
+                    userId = input.userId,
+                    expenseId = currentState.expenseId,
+                    expenseDraft = currentState.expenseDraft,
+                )
+
+            is UserCommand.SelectExpenseDate -> handleExpenseDateSelection(currentState, command.choice)
             is UserCommand.PlainText -> expenseDateSelectionError(currentState)
-            else -> repeatDateSelection(input, currentState)
+            else -> repeatDateSelection(currentState)
         }
     }
 
     private fun handleExpenseDateSelection(
-        input: UserInput,
         currentState: UserState.AwaitingExpenseDateEditSelection,
         choice: ExpenseDateChoice,
     ): HandlerResponse =
@@ -57,13 +65,12 @@ class AwaitingExpenseDateEditSelectionHandler(
             ExpenseDateChoice.Today,
             ExpenseDateChoice.Yesterday,
             ->
-                saveExpenseWithDate(
-                    input = input,
+                updateDraftWithDate(
                     currentState = currentState,
                     expenseDate = requireNotNull(choice.toDate(clock)),
                 )
 
-            ExpenseDateChoice.ManualInput -> requestManualDateInput(input, currentState)
+            ExpenseDateChoice.ManualInput -> requestManualDateInput(currentState)
         }
 
     private fun expenseDateSelectionError(currentState: UserState.AwaitingExpenseDateEditSelection): HandlerResponse =
@@ -76,47 +83,22 @@ class AwaitingExpenseDateEditSelectionHandler(
             nextState = currentState,
         )
 
-    private fun saveExpenseWithDate(
-        input: UserInput,
+    private fun updateDraftWithDate(
         currentState: UserState.AwaitingExpenseDateEditSelection,
         expenseDate: LocalDate,
-    ): HandlerResponse {
-        val updatedExpense = expenseService.updateExpenseDateForUser(input.userId, currentState.expenseId, expenseDate)
-        if (updatedExpense == null) {
-            return expenseEditUnavailableResult()
-        }
-
-        return buildUpdatedExpenseResult(
-            expenseService = expenseService,
-            categoryService = categoryService,
-            userId = input.userId,
-            expenseId = updatedExpense.id,
-            nextState = UserState.Idle,
-            prefixText = BotText.ExpenseSaved,
+    ): HandlerResponse =
+        buildDraftExpenseEditFieldSelectionResult(
+            expenseId = currentState.expenseId,
+            expenseDraft = currentState.expenseDraft.copy(expenseDate = expenseDate),
+            categoryName = currentState.categoryName,
         )
-    }
 
-    private fun requestManualDateInput(
-        input: UserInput,
-        currentState: UserState.AwaitingExpenseDateEditSelection,
-    ): HandlerResponse {
-        val expense =
-            expenseService.findExpenseForUser(
-                userId = input.userId,
-                expenseId = currentState.expenseId,
-            ) ?: return expenseEditUnavailableResult()
-
-        val category =
-            categoryService.findCategoryForUser(
-                categoryId = expense.categoryId,
-                userId = input.userId,
-            ) ?: return expenseEditUnavailableResult()
-
-        return handlerResponse(
+    private fun requestManualDateInput(currentState: UserState.AwaitingExpenseDateEditSelection): HandlerResponse =
+        handlerResponse(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = expense.toExpenseView(category),
+                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -124,31 +106,20 @@ class AwaitingExpenseDateEditSelectionHandler(
                         actions = listOf(BotAction.ShowCancel),
                     ),
                 ),
-            nextState = UserState.AwaitingExpenseDateEditManualInput(currentState.expenseId),
+            nextState =
+                UserState.AwaitingExpenseDateEditManualInput(
+                    expenseId = currentState.expenseId,
+                    expenseDraft = currentState.expenseDraft,
+                    categoryName = currentState.categoryName,
+                ),
         )
-    }
 
-    private fun repeatDateSelection(
-        input: UserInput,
-        currentState: UserState.AwaitingExpenseDateEditSelection,
-    ): HandlerResponse {
-        val expense =
-            expenseService.findExpenseForUser(
-                userId = input.userId,
-                expenseId = currentState.expenseId,
-            ) ?: return expenseEditUnavailableResult()
-
-        val category =
-            categoryService.findCategoryForUser(
-                categoryId = expense.categoryId,
-                userId = input.userId,
-            ) ?: return expenseEditUnavailableResult()
-
-        return handlerResponse(
+    private fun repeatDateSelection(currentState: UserState.AwaitingExpenseDateEditSelection): HandlerResponse =
+        handlerResponse(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = expense.toExpenseView(category),
+                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -158,5 +129,4 @@ class AwaitingExpenseDateEditSelectionHandler(
                 ),
             nextState = currentState,
         )
-    }
 }

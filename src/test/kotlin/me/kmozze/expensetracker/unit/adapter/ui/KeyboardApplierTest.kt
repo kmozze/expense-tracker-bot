@@ -1,5 +1,6 @@
 package me.kmozze.expensetracker.unit.adapter.ui
 
+import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.adapter.ui.KeyboardApplier
 import me.kmozze.expensetracker.model.domain.BotAction
 import org.assertj.core.api.Assertions.assertThat
@@ -63,6 +64,7 @@ class KeyboardApplierTest {
         val keyboard = sendMessage.replyMarkup as ReplyKeyboardMarkup
         assertThat(keyboard.keyboard).hasSize(3)
         assertThat(keyboard.keyboard[0]).hasSize(2)
+        assertThat(keyboard.keyboard[2].map { it.text }).containsExactly(Buttons.FINISH_EXPENSE_EDIT, Buttons.CANCEL)
     }
 
     @Test

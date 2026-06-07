@@ -114,7 +114,12 @@ object Keyboards {
                         KeyboardButton(Buttons.EDIT_EXPENSE_DESCRIPTION),
                     ),
                 ),
-                cancelReplyRow(),
+                KeyboardRow(
+                    listOf(
+                        KeyboardButton(Buttons.FINISH_EXPENSE_EDIT),
+                        KeyboardButton(Buttons.CANCEL),
+                    ),
+                ),
             )
 
         return dialogKeyboard(rows)

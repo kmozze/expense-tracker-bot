@@ -17,6 +17,8 @@ sealed class UserCommand {
 
     data object Cancel : UserCommand()
 
+    data object FinishExpenseEdit : UserCommand()
+
     data class RequestExpenseEdit(
         val expenseId: UUID,
     ) : UserCommand()
