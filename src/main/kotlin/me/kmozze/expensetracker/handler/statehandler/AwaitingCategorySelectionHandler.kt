@@ -5,6 +5,7 @@ import me.kmozze.expensetracker.handler.handlerResponse
 import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -69,13 +70,16 @@ class AwaitingCategorySelectionHandler(
                     errorCode = BusinessErrorCode.CATEGORY_NOT_FOUND,
                 )
 
-        val expenseDraft = currentState.expenseDraft.copy(categoryId = category.id)
+        val expenseDraft =
+            currentState.expenseDraft.copy(
+                category = ExpenseDraftCategory(categoryId = category.id, name = category.name),
+            )
 
         return handlerResponse(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = expenseDraft.toExpenseView(categoryName = category.name),
+                        text = expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -86,7 +90,6 @@ class AwaitingCategorySelectionHandler(
             nextState =
                 UserState.AwaitingExpenseDateSelection(
                     expenseDraft = expenseDraft,
-                    categoryName = category.name,
                 ),
         )
     }

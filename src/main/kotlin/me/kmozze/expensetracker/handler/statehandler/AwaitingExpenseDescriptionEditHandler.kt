@@ -34,7 +34,7 @@ class AwaitingExpenseDescriptionEditHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
+                    expenseId = currentState.editSession.expenseId,
                 )
 
             UserCommand.FinishExpenseEdit ->
@@ -42,8 +42,7 @@ class AwaitingExpenseDescriptionEditHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
-                    expenseDraft = currentState.expenseDraft,
+                    editSession = currentState.editSession,
                 )
 
             is UserCommand.PlainText -> saveDescription(currentState, command.value)
@@ -61,9 +60,10 @@ class AwaitingExpenseDescriptionEditHandler(
         }
 
         return buildDraftExpenseEditFieldSelectionResult(
-            expenseId = currentState.expenseId,
-            expenseDraft = currentState.expenseDraft.copy(description = normalizedDescription),
-            categoryName = currentState.categoryName,
+            editSession =
+                currentState.editSession.withExpenseDraft(
+                    currentState.editSession.expenseDraft.copy(description = normalizedDescription),
+                ),
         )
     }
 

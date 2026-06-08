@@ -9,7 +9,9 @@ import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseEditFieldSel
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
 import me.kmozze.expensetracker.model.domain.ExpenseEditField
+import me.kmozze.expensetracker.model.domain.ExpenseEditSession
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -50,9 +52,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseAmountEdit(
-                    expenseId = EXPENSE_ID,
-                    expenseDraft = EXPENSE_DRAFT,
-                    categoryName = CATEGORY.name,
+                    editSession = EDIT_SESSION,
                 ),
             )
         confirmVerified(expenseService, categoryService)
@@ -67,9 +67,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDescriptionEdit(
-                    expenseId = EXPENSE_ID,
-                    expenseDraft = EXPENSE_DRAFT,
-                    categoryName = CATEGORY.name,
+                    editSession = EDIT_SESSION,
                 ),
             )
         confirmVerified(expenseService, categoryService)
@@ -89,9 +87,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseCategoryEdit(
-                    expenseId = EXPENSE_ID,
-                    expenseDraft = EXPENSE_DRAFT,
-                    categoryName = CATEGORY.name,
+                    editSession = EDIT_SESSION,
                 ),
             )
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
@@ -110,9 +106,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateEditSelection(
-                    expenseId = EXPENSE_ID,
-                    expenseDraft = EXPENSE_DRAFT,
-                    categoryName = CATEGORY.name,
+                    editSession = EDIT_SESSION,
                 ),
             )
         confirmVerified(expenseService, categoryService)
@@ -201,8 +195,13 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = "такси",
-                categoryId = CATEGORY_ID,
+                category = ExpenseDraftCategory(categoryId = CATEGORY_ID, name = CATEGORY.name),
                 expenseDate = EXPENSE_DATE,
+            )
+        val EDIT_SESSION: ExpenseEditSession =
+            ExpenseEditSession(
+                expenseId = EXPENSE_ID,
+                expenseDraft = EXPENSE_DRAFT,
             )
         val EXPENSE: Expense =
             Expense(
@@ -222,9 +221,7 @@ class AwaitingExpenseEditFieldSelectionHandlerTest {
             )
         val AWAITING_EXPENSE_EDIT_FIELD_SELECTION: UserState.AwaitingExpenseEditFieldSelection =
             UserState.AwaitingExpenseEditFieldSelection(
-                expenseId = EXPENSE_ID,
-                expenseDraft = EXPENSE_DRAFT,
-                categoryName = CATEGORY.name,
+                editSession = EDIT_SESSION,
             )
     }
 }

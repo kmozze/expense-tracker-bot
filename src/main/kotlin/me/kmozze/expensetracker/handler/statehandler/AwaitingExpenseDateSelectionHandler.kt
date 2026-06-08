@@ -84,8 +84,6 @@ class AwaitingExpenseDateSelectionHandler(
         return expenseSavedResult(
             expenseDraft = expenseDraft,
             expenseId = expense.id,
-            categoryName = currentState.categoryName,
-            expenseDate = expense.expenseDate,
         )
     }
 
@@ -94,7 +92,7 @@ class AwaitingExpenseDateSelectionHandler(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        text = currentState.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -105,7 +103,6 @@ class AwaitingExpenseDateSelectionHandler(
             nextState =
                 UserState.AwaitingExpenseManualDateInput(
                     expenseDraft = currentState.expenseDraft,
-                    categoryName = currentState.categoryName,
                 ),
         )
 
@@ -114,7 +111,7 @@ class AwaitingExpenseDateSelectionHandler(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        text = currentState.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -151,8 +148,6 @@ class AwaitingExpenseDateSelectionHandler(
     private fun expenseSavedResult(
         expenseDraft: ExpenseDraft,
         expenseId: UUID,
-        categoryName: String,
-        expenseDate: LocalDate,
     ): HandlerResponse =
         handlerResponse(
             messages =
@@ -162,7 +157,7 @@ class AwaitingExpenseDateSelectionHandler(
                         actions = listOf(BotAction.RemoveReplyKeyboard),
                     ),
                     outgoingMessage(
-                        text = expenseDraft.toExpenseView(categoryName = categoryName, expenseDate = expenseDate),
+                        text = expenseDraft.toExpenseView(),
                         actions = listOf(BotAction.ShowExpenseCardActions(expenseId)),
                     ),
                 ),

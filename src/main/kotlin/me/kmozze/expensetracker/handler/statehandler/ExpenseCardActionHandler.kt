@@ -4,7 +4,7 @@ import me.kmozze.expensetracker.handler.handlerResponse
 import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseEditSession
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -37,12 +37,11 @@ class ExpenseCardActionHandler(
                 userId = input.userId,
             ) ?: return expenseUnavailableResult(input)
 
-        val expenseDraft =
-            ExpenseDraft(
-                amount = expense.amount,
-                description = expense.description,
-                categoryId = expense.categoryId,
-                expenseDate = expense.expenseDate,
+        val expenseDraft = expense.toExpenseDraft(category.name)
+        val editSession =
+            ExpenseEditSession(
+                expenseId = expense.id,
+                expenseDraft = expenseDraft,
             )
 
         return handlerResponse(
@@ -50,7 +49,7 @@ class ExpenseCardActionHandler(
                 listOf(
                     outgoingMessage(
                         text =
-                            expense.toExpenseView(category),
+                            expenseDraft.toExpenseView(),
                         actions = listOf(BotAction.ClearInlineKeyboard),
                         delivery = input.callbackMessageDelivery(),
                     ),
@@ -61,9 +60,7 @@ class ExpenseCardActionHandler(
                 ),
             nextState =
                 UserState.AwaitingExpenseEditFieldSelection(
-                    expenseId = expense.id,
-                    expenseDraft = expenseDraft,
-                    categoryName = category.name,
+                    editSession = editSession,
                 ),
         )
     }
@@ -76,7 +73,7 @@ class ExpenseCardActionHandler(
             input = input,
             expenseId = expenseId,
             textFactory = { expense, category ->
-                expense.toExpenseView(category)
+                expense.toExpenseView(category.name)
             },
             actionsFactory = { listOf(BotAction.ShowExpenseDeletionConfirmation(expenseId)) },
         )
@@ -89,7 +86,7 @@ class ExpenseCardActionHandler(
             input = input,
             expenseId = expenseId,
             textFactory = { expense, category ->
-                expense.toExpenseView(category)
+                expense.toExpenseView(category.name)
             },
             actionsFactory = { listOf(BotAction.ShowExpenseCardActions(expenseId)) },
         )

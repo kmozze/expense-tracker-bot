@@ -10,6 +10,8 @@ import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseCategoryEdit
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
+import me.kmozze.expensetracker.model.domain.ExpenseEditSession
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -48,7 +50,10 @@ class AwaitingExpenseCategoryEditHandlerTest {
 
         val result = handle(UserCommand.PlainText(UPDATED_CATEGORY.name))
 
-        val updatedDraft = EXPENSE_DRAFT.copy(categoryId = UPDATED_CATEGORY_ID)
+        val updatedDraft =
+            EXPENSE_DRAFT.copy(
+                category = ExpenseDraftCategory(categoryId = UPDATED_CATEGORY_ID, name = UPDATED_CATEGORY.name),
+            )
         assertThat(result.outgoingMessages).hasSize(2)
         assertThat(result.outgoingMessages[0].text)
             .isEqualTo(
@@ -65,9 +70,7 @@ class AwaitingExpenseCategoryEditHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseEditFieldSelection(
-                    expenseId = EXPENSE_ID,
-                    expenseDraft = updatedDraft,
-                    categoryName = UPDATED_CATEGORY.name,
+                    editSession = ExpenseEditSession(expenseId = EXPENSE_ID, expenseDraft = updatedDraft),
                 ),
             )
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }
@@ -181,8 +184,13 @@ class AwaitingExpenseCategoryEditHandlerTest {
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = EXPENSE_DESCRIPTION,
-                categoryId = EXISTING_CATEGORY_ID,
+                category = ExpenseDraftCategory(categoryId = EXISTING_CATEGORY_ID, name = EXISTING_CATEGORY.name),
                 expenseDate = EXPENSE_DATE,
+            )
+        val EDIT_SESSION =
+            ExpenseEditSession(
+                expenseId = EXPENSE_ID,
+                expenseDraft = EXPENSE_DRAFT,
             )
         val EXPENSE =
             Expense(
@@ -202,9 +210,7 @@ class AwaitingExpenseCategoryEditHandlerTest {
             )
         val AWAITING_EXPENSE_CATEGORY_EDIT =
             UserState.AwaitingExpenseCategoryEdit(
-                expenseId = EXPENSE_ID,
-                expenseDraft = EXPENSE_DRAFT,
-                categoryName = EXISTING_CATEGORY.name,
+                editSession = EDIT_SESSION,
             )
     }
 }

@@ -7,6 +7,7 @@ import me.kmozze.expensetracker.handler.DialogueRouter
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
@@ -87,8 +88,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(dateSelectionResult.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
-                    expenseDraft = EXPENSE_WITH_DESCRIPTION.copy(categoryId = category.id),
-                    categoryName = category.name,
+                    expenseDraft = EXPENSE_WITH_DESCRIPTION.withCategory(category),
                 ),
             )
         assertThat(findExpenses(userId)).isEmpty()
@@ -171,8 +171,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(manualDateInputResult.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(
-                    expenseDraft = EXPENSE_WITHOUT_DESCRIPTION.copy(categoryId = category.id),
-                    categoryName = category.name,
+                    expenseDraft = EXPENSE_WITHOUT_DESCRIPTION.withCategory(category),
                 ),
             )
 
@@ -241,8 +240,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(
-                    expenseDraft = EXPENSE_WITH_DESCRIPTION.copy(categoryId = category.id),
-                    categoryName = category.name,
+                    expenseDraft = EXPENSE_WITH_DESCRIPTION.withCategory(category),
                 ),
             )
         assertThat(findExpenses(userId)).isEmpty()
@@ -508,8 +506,7 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
-                    expenseDraft = expenseDraft.copy(categoryId = category.id),
-                    categoryName = category.name,
+                    expenseDraft = expenseDraft.withCategory(category),
                 ),
             )
 
@@ -531,6 +528,15 @@ class AddExpenseFlowTest : AbstractFlowIntegrationTest() {
             userId = userId,
             from = TEST_PERIOD_FROM,
             to = TEST_PERIOD_TO,
+        )
+
+    private fun ExpenseDraft.withCategory(category: Category): ExpenseDraft =
+        copy(
+            category =
+                ExpenseDraftCategory(
+                    categoryId = category.id,
+                    name = category.name,
+                ),
         )
 
     private fun HandlerResponse.categorySelectionAction(): BotAction.ShowCategorySelection =

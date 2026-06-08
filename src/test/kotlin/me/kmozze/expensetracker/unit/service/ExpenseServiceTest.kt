@@ -11,6 +11,7 @@ import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.SystemException
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
@@ -134,7 +135,7 @@ class ExpenseServiceTest {
             ExpenseDraft(
                 amount = Money.of(BigDecimal("650.00")),
                 description = "автобус",
-                categoryId = updatedCategoryId,
+                category = draftCategory(updatedCategoryId),
                 expenseDate = LocalDate.parse("2026-05-20"),
             )
         val updated =
@@ -299,7 +300,7 @@ class ExpenseServiceTest {
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = "такси",
-                categoryId = categoryId,
+                category = draftCategory(categoryId),
                 expenseDate = expenseDate,
             )
         val expenseSlot = slot<Expense>()
@@ -342,7 +343,7 @@ class ExpenseServiceTest {
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = "такси",
-                categoryId = categoryId,
+                category = draftCategory(categoryId),
                 expenseDate = LocalDate.parse("2026-05-24"),
             )
         val cause = DataAccessException("DB connection failed")
@@ -419,7 +420,7 @@ class ExpenseServiceTest {
                     ExpenseDraft(
                         amount = EXPENSE_AMOUNT,
                         description = "такси",
-                        categoryId = UUID.randomUUID(),
+                        category = draftCategory(UUID.randomUUID()),
                     ),
             )
         }
@@ -431,8 +432,14 @@ class ExpenseServiceTest {
         ExpenseDraft(
             amount = EXPENSE_AMOUNT,
             description = "такси",
-            categoryId = categoryId,
+            category = draftCategory(categoryId),
             expenseDate = LocalDate.parse("2026-05-24"),
+        )
+
+    private fun draftCategory(categoryId: UUID): ExpenseDraftCategory =
+        ExpenseDraftCategory(
+            categoryId = categoryId,
+            name = "Транспорт",
         )
 
     private companion object {

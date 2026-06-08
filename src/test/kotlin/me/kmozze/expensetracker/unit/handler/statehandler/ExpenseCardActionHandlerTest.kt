@@ -8,6 +8,8 @@ import me.kmozze.expensetracker.handler.statehandler.ExpenseCardActionHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
+import me.kmozze.expensetracker.model.domain.ExpenseEditSession
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
@@ -147,9 +149,7 @@ class ExpenseCardActionHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseEditFieldSelection(
-                    expenseId = EXPENSE_ID,
-                    expenseDraft = EXPENSE_DRAFT,
-                    categoryName = CATEGORY.name,
+                    editSession = EDIT_SESSION,
                 ),
             )
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
@@ -171,9 +171,7 @@ class ExpenseCardActionHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseEditFieldSelection(
-                    expenseId = EXPENSE_ID,
-                    expenseDraft = EXPENSE_DRAFT,
-                    categoryName = CATEGORY.name,
+                    editSession = EDIT_SESSION,
                 ),
             )
     }
@@ -407,8 +405,13 @@ class ExpenseCardActionHandlerTest {
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = EXPENSE_DESCRIPTION,
-                categoryId = CATEGORY_ID,
+                category = ExpenseDraftCategory(categoryId = CATEGORY_ID, name = CATEGORY.name),
                 expenseDate = EXPENSE_DATE,
+            )
+        val EDIT_SESSION: ExpenseEditSession =
+            ExpenseEditSession(
+                expenseId = EXPENSE_ID,
+                expenseDraft = EXPENSE_DRAFT,
             )
         val EXPENSE_VIEW: BotText.ExpenseView =
             BotText.ExpenseView(

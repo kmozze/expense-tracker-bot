@@ -5,14 +5,12 @@ import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseEditSession
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserState
-import me.kmozze.expensetracker.model.entity.Category
-import me.kmozze.expensetracker.model.entity.Expense
 import me.kmozze.expensetracker.service.CategoryService
 import me.kmozze.expensetracker.service.ExpenseService
-import java.time.LocalDate
 import java.util.UUID
 
 internal fun buildUpdatedExpenseResult(
@@ -39,7 +37,7 @@ internal fun buildUpdatedExpenseResult(
 
             add(
                 outgoingMessage(
-                    text = expense.toExpenseView(category),
+                    text = expense.toExpenseView(category.name),
                     actions = listOf(BotAction.ShowExpenseCardActions(expense.id)),
                 ),
             )
@@ -66,16 +64,12 @@ internal fun cancelExpenseEdit(
         prefixText = BotText.Done,
     )
 
-internal fun buildDraftExpenseEditFieldSelectionResult(
-    expenseId: UUID,
-    expenseDraft: ExpenseDraft,
-    categoryName: String,
-): HandlerResponse =
+internal fun buildDraftExpenseEditFieldSelectionResult(editSession: ExpenseEditSession): HandlerResponse =
     handlerResponse(
         messages =
             listOf(
                 outgoingMessage(
-                    text = expenseDraft.toExpenseView(categoryName = categoryName),
+                    text = editSession.expenseDraft.toExpenseView(),
                     actions = emptyList(),
                 ),
                 outgoingMessage(
@@ -85,24 +79,23 @@ internal fun buildDraftExpenseEditFieldSelectionResult(
             ),
         nextState =
             UserState.AwaitingExpenseEditFieldSelection(
-                expenseId = expenseId,
-                expenseDraft = expenseDraft,
-                categoryName = categoryName,
+                editSession = editSession,
             ),
     )
+
+internal fun ExpenseEditSession.withExpenseDraft(expenseDraft: ExpenseDraft): ExpenseEditSession = copy(expenseDraft = expenseDraft)
 
 internal fun finishExpenseEdit(
     expenseService: ExpenseService,
     categoryService: CategoryService,
     userId: Long,
-    expenseId: UUID,
-    expenseDraft: ExpenseDraft,
+    editSession: ExpenseEditSession,
 ): HandlerResponse {
     val updatedExpense =
         expenseService.updateExpenseFromDraftForUser(
             userId = userId,
-            expenseId = expenseId,
-            expenseDraft = expenseDraft,
+            expenseId = editSession.expenseId,
+            expenseDraft = editSession.expenseDraft,
         ) ?: return expenseEditUnavailableResult()
 
     val category =
@@ -119,32 +112,13 @@ internal fun finishExpenseEdit(
                     actions = listOf(BotAction.RemoveReplyKeyboard),
                 ),
                 outgoingMessage(
-                    text = updatedExpense.toExpenseView(category),
+                    text = updatedExpense.toExpenseView(category.name),
                     actions = listOf(BotAction.ShowExpenseCardActions(updatedExpense.id)),
                 ),
             ),
         nextState = UserState.Idle,
     )
 }
-
-internal fun Expense.toExpenseView(category: Category): BotText.ExpenseView =
-    BotText.ExpenseView(
-        amount = amount,
-        categoryName = category.name,
-        expenseDate = expenseDate,
-        description = description,
-    )
-
-internal fun ExpenseDraft.toExpenseView(
-    categoryName: String? = null,
-    expenseDate: LocalDate? = this.expenseDate,
-): BotText.ExpenseView =
-    BotText.ExpenseView(
-        amount = amount,
-        categoryName = categoryName,
-        expenseDate = expenseDate,
-        description = description,
-    )
 
 internal fun expenseEditUnavailableResult(): HandlerResponse =
     handlerResponse(

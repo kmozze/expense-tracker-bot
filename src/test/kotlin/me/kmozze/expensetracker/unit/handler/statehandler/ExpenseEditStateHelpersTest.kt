@@ -7,8 +7,12 @@ import io.mockk.mockk
 import io.mockk.verify
 import me.kmozze.expensetracker.handler.statehandler.buildUpdatedExpenseResult
 import me.kmozze.expensetracker.handler.statehandler.expenseEditUnavailableResult
+import me.kmozze.expensetracker.handler.statehandler.finishExpenseEdit
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
+import me.kmozze.expensetracker.model.domain.ExpenseEditSession
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserState
 import me.kmozze.expensetracker.model.entity.Category
@@ -59,6 +63,57 @@ class ExpenseEditStateHelpersTest {
         assertThat(result.nextState).isEqualTo(UserState.Idle)
 
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
+        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
+        confirmVerified(expenseService, categoryService)
+    }
+
+    @Test
+    fun `finish expense edit uses fresh category name from saved expense card`() {
+        val draftCategoryName = "Старое имя в черновике"
+        val expenseDraft =
+            ExpenseDraft(
+                amount = EXPENSE.amount,
+                description = EXPENSE.description,
+                category = ExpenseDraftCategory(categoryId = CATEGORY_ID, name = draftCategoryName),
+                expenseDate = EXPENSE.expenseDate,
+            )
+        val editSession =
+            ExpenseEditSession(
+                expenseId = EXPENSE_ID,
+                expenseDraft = expenseDraft,
+            )
+        every { expenseService.updateExpenseFromDraftForUser(USER_ID, EXPENSE_ID, expenseDraft) } returns EXPENSE
+        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
+
+        val result =
+            finishExpenseEdit(
+                expenseService = expenseService,
+                categoryService = categoryService,
+                userId = USER_ID,
+                editSession = editSession,
+            )
+
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[1].text)
+            .isEqualTo(
+                BotText.ExpenseView(
+                    amount = EXPENSE.amount,
+                    categoryName = CATEGORY.name,
+                    expenseDate = EXPENSE.expenseDate,
+                    description = EXPENSE.description,
+                ),
+            )
+        assertThat(result.outgoingMessages[1].text)
+            .isNotEqualTo(
+                BotText.ExpenseView(
+                    amount = EXPENSE.amount,
+                    categoryName = draftCategoryName,
+                    expenseDate = EXPENSE.expenseDate,
+                    description = EXPENSE.description,
+                ),
+            )
+
+        verify(exactly = 1) { expenseService.updateExpenseFromDraftForUser(USER_ID, EXPENSE_ID, expenseDraft) }
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
         confirmVerified(expenseService, categoryService)
     }

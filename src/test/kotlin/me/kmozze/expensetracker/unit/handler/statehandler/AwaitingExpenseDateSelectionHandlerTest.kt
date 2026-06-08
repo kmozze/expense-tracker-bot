@@ -11,6 +11,7 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -109,7 +110,6 @@ class AwaitingExpenseDateSelectionHandlerTest {
             .isEqualTo(
                 UserState.AwaitingExpenseManualDateInput(
                     expenseDraft = EXPENSE_DRAFT_WITH_CATEGORY,
-                    categoryName = CATEGORY_NAME,
                 ),
             )
         confirmVerified(expenseService)
@@ -191,12 +191,11 @@ class AwaitingExpenseDateSelectionHandlerTest {
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = EXPENSE_DESCRIPTION,
-                categoryId = CATEGORY_ID,
+                category = ExpenseDraftCategory(categoryId = CATEGORY_ID, name = CATEGORY_NAME),
             )
         val AWAITING_EXPENSE_DATE_SELECTION: UserState.AwaitingExpenseDateSelection =
             UserState.AwaitingExpenseDateSelection(
                 expenseDraft = EXPENSE_DRAFT_WITH_CATEGORY,
-                categoryName = CATEGORY_NAME,
             )
         val CLOCK: Clock = Clock.fixed(Instant.parse("2026-05-24T12:00:00Z"), ZoneOffset.UTC)
         val TODAY: LocalDate = LocalDate.parse("2026-05-24")

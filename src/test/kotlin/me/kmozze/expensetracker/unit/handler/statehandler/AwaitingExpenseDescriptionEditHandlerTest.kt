@@ -9,6 +9,8 @@ import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseDescriptionE
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
+import me.kmozze.expensetracker.model.domain.ExpenseEditSession
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
@@ -63,9 +65,7 @@ class AwaitingExpenseDescriptionEditHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseEditFieldSelection(
-                    expenseId = EXPENSE_ID,
-                    expenseDraft = updatedDraft,
-                    categoryName = CATEGORY.name,
+                    editSession = ExpenseEditSession(expenseId = EXPENSE_ID, expenseDraft = updatedDraft),
                 ),
             )
         confirmVerified(expenseService, categoryService)
@@ -146,8 +146,13 @@ class AwaitingExpenseDescriptionEditHandlerTest {
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = EXPENSE_DESCRIPTION,
-                categoryId = CATEGORY_ID,
+                category = ExpenseDraftCategory(categoryId = CATEGORY_ID, name = CATEGORY.name),
                 expenseDate = EXPENSE_DATE,
+            )
+        val EDIT_SESSION =
+            ExpenseEditSession(
+                expenseId = EXPENSE_ID,
+                expenseDraft = EXPENSE_DRAFT,
             )
         val EXPENSE =
             Expense(
@@ -167,9 +172,7 @@ class AwaitingExpenseDescriptionEditHandlerTest {
             )
         val AWAITING_EXPENSE_DESCRIPTION_EDIT =
             UserState.AwaitingExpenseDescriptionEdit(
-                expenseId = EXPENSE_ID,
-                expenseDraft = EXPENSE_DRAFT,
-                categoryName = CATEGORY.name,
+                editSession = EDIT_SESSION,
             )
     }
 }
