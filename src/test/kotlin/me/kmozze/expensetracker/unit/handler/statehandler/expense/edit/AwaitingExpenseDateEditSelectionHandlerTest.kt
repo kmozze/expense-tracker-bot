@@ -29,6 +29,7 @@ import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.UUID
 
@@ -61,6 +62,31 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday))
 
         assertDraftDateSelectionResult(result, YESTERDAY)
+        confirmVerified(expenseService, categoryService)
+    }
+
+    @Test
+    fun `quick date selection uses Moscow date near midnight`() {
+        val moscowMidnightHandler =
+            AwaitingExpenseDateEditSelectionHandler(
+                expenseService = expenseService,
+                categoryService = categoryService,
+                clock = MOSCOW_MIDNIGHT_CLOCK,
+            )
+
+        val todayResult =
+            handle(
+                command = UserCommand.SelectExpenseDate(ExpenseDateChoice.Today),
+                handler = moscowMidnightHandler,
+            )
+        val yesterdayResult =
+            handle(
+                command = UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday),
+                handler = moscowMidnightHandler,
+            )
+
+        assertDraftDateSelectionResult(todayResult, MOSCOW_TODAY)
+        assertDraftDateSelectionResult(yesterdayResult, MOSCOW_YESTERDAY)
         confirmVerified(expenseService, categoryService)
     }
 
@@ -135,17 +161,19 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
             )
     }
 
-    private fun handle(command: UserCommand) =
-        handler.handle(
-            input =
-                makeUserInput(
-                    userId = USER_ID,
-                    chatId = CHAT_ID,
-                    text = textFor(command),
-                    command = command,
-                ),
-            currentState = AWAITING_EXPENSE_DATE_EDIT_SELECTION,
-        )
+    private fun handle(
+        command: UserCommand,
+        handler: AwaitingExpenseDateEditSelectionHandler = this.handler,
+    ) = handler.handle(
+        input =
+            makeUserInput(
+                userId = USER_ID,
+                chatId = CHAT_ID,
+                text = textFor(command),
+                command = command,
+            ),
+        currentState = AWAITING_EXPENSE_DATE_EDIT_SELECTION,
+    )
 
     private fun textFor(command: UserCommand): String? =
         when (command) {
@@ -160,8 +188,15 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
         val EXPENSE_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
         val CLOCK: Clock = Clock.fixed(Instant.parse("2026-05-24T12:00:00Z"), ZoneOffset.UTC)
+        val MOSCOW_MIDNIGHT_CLOCK: Clock =
+            Clock.fixed(
+                Instant.parse("2026-05-25T21:30:00Z"),
+                ZoneId.of("Europe/Moscow"),
+            )
         val TODAY: LocalDate = LocalDate.parse("2026-05-24")
         val YESTERDAY: LocalDate = LocalDate.parse("2026-05-23")
+        val MOSCOW_TODAY: LocalDate = LocalDate.parse("2026-05-26")
+        val MOSCOW_YESTERDAY: LocalDate = LocalDate.parse("2026-05-25")
         val EXPENSE: Expense =
             Expense(
                 id = EXPENSE_ID,
