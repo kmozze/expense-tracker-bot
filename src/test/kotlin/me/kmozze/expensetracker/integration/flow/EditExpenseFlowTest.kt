@@ -281,6 +281,80 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
     }
 
     @Test
+    fun `cancel edit after multiple draft changes keeps saved expense unchanged`() {
+        val userId = 2014L
+        val chatId = 3014L
+
+        val createdExpense = createExpense(userId, chatId)
+        val initialExpense = createdExpense.first
+        val initialCategory = createdExpense.second
+
+        requestEdit(userId = userId, chatId = chatId, expenseId = initialExpense.id, callbackMessageId = CARD_MESSAGE_ID)
+
+        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = Buttons.EDIT_EXPENSE_AMOUNT)
+        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = "650")
+
+        val categorySelectionPrompt =
+            dialogueRouter.processUserInput(
+                userId = userId,
+                chatId = chatId,
+                text = Buttons.EDIT_EXPENSE_CATEGORY,
+            )
+        val categorySelection = categorySelectionPrompt.categorySelectionAction()
+        val newCategory =
+            categoryRepository
+                .findAllByUserId(userId)
+                .single { it.name == categorySelection.categoryNames.first { categoryName -> categoryName != initialCategory.name } }
+        assertThat(newCategory.id).isNotEqualTo(initialCategory.id)
+        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = newCategory.name)
+
+        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = Buttons.EDIT_EXPENSE_DATE)
+        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = Buttons.ENTER_DATE_MANUALLY)
+        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = MANUAL_DATE_TEXT)
+
+        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = Buttons.EDIT_EXPENSE_DESCRIPTION)
+        dialogueRouter.processUserInput(userId = userId, chatId = chatId, text = DESCRIPTION_UPDATED)
+
+        val unchangedBeforeCancel = expenseById(userId, initialExpense.id)
+        assertThat(unchangedBeforeCancel.amount).isEqualTo(EXPENSE_AMOUNT)
+        assertThat(unchangedBeforeCancel.categoryId).isEqualTo(initialCategory.id)
+        assertThat(unchangedBeforeCancel.expenseDate).isEqualTo(initialExpense.expenseDate)
+        assertThat(unchangedBeforeCancel.description).isEqualTo(EXPENSE_DESCRIPTION_UPDATED)
+
+        val editCanceled =
+            dialogueRouter.processUserInput(
+                userId = userId,
+                chatId = chatId,
+                text = Buttons.CANCEL,
+            )
+
+        editCanceled.assertMessage(
+            index = 0,
+            text = BotText.Done,
+            actions = listOf(BotAction.RemoveReplyKeyboard),
+        )
+        editCanceled.assertMessage(
+            index = 1,
+            text =
+                BotText.ExpenseView(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = initialCategory.name,
+                    expenseDate = initialExpense.expenseDate,
+                    description = EXPENSE_DESCRIPTION_UPDATED,
+                ),
+            actions = listOf(BotAction.ShowExpenseCardActions(initialExpense.id)),
+        )
+        editCanceled.assertNextState(UserState.Idle)
+
+        val savedAfterCancel = expenseById(userId, initialExpense.id)
+        assertThat(savedAfterCancel.amount).isEqualTo(EXPENSE_AMOUNT)
+        assertThat(savedAfterCancel.categoryId).isEqualTo(initialCategory.id)
+        assertThat(savedAfterCancel.expenseDate).isEqualTo(initialExpense.expenseDate)
+        assertThat(savedAfterCancel.description).isEqualTo(EXPENSE_DESCRIPTION_UPDATED)
+        assertThat(savedAfterCancel.id).isEqualTo(initialExpense.id)
+    }
+
+    @Test
     fun `edit unavailable expense from card shows unavailable message and resets state`() {
         val userId = 2012L
         val chatId = 3012L
