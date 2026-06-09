@@ -35,7 +35,7 @@ class AwaitingExpenseDateEditManualInputHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
+                    expenseId = currentState.editSession.expenseId,
                 )
 
             UserCommand.FinishExpenseEdit ->
@@ -43,8 +43,7 @@ class AwaitingExpenseDateEditManualInputHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
-                    expenseDraft = currentState.expenseDraft,
+                    editSession = currentState.editSession,
                 )
 
             is UserCommand.PlainText -> updateDate(currentState, command.value)
@@ -71,9 +70,10 @@ class AwaitingExpenseDateEditManualInputHandler(
             }
 
         return buildDraftExpenseEditFieldSelectionResult(
-            expenseId = currentState.expenseId,
-            expenseDraft = currentState.expenseDraft.copy(expenseDate = expenseDate),
-            categoryName = currentState.categoryName,
+            editSession =
+                currentState.editSession.withExpenseDraft(
+                    currentState.editSession.expenseDraft.copy(expenseDate = expenseDate),
+                ),
         )
     }
 
@@ -82,7 +82,7 @@ class AwaitingExpenseDateEditManualInputHandler(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        text = currentState.editSession.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(

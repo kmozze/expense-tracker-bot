@@ -10,6 +10,7 @@ import me.kmozze.expensetracker.handler.statehandler.AwaitingCategorySelectionHa
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -59,8 +60,10 @@ class AwaitingCategorySelectionHandlerTest {
         assertThat(result.nextState)
             .isEqualTo(
                 UserState.AwaitingExpenseDateSelection(
-                    expenseDraft = EXPENSE_DRAFT.copy(categoryId = CATEGORY_ID),
-                    categoryName = category.name,
+                    expenseDraft =
+                        EXPENSE_DRAFT.copy(
+                            category = ExpenseDraftCategory(categoryId = CATEGORY_ID, name = category.name),
+                        ),
                 ),
             )
         verify(exactly = 1) { categoryService.getCategories(USER_ID) }

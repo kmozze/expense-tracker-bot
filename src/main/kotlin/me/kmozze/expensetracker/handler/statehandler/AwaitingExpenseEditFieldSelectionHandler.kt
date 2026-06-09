@@ -35,7 +35,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
+                    expenseId = currentState.editSession.expenseId,
                 )
 
             UserCommand.FinishExpenseEdit ->
@@ -43,8 +43,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
-                    expenseDraft = currentState.expenseDraft,
+                    editSession = currentState.editSession,
                 )
 
             is UserCommand.SelectExpenseEditField -> selectEditField(input, currentState, command.field)
@@ -67,9 +66,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
                         ),
                     nextState =
                         UserState.AwaitingExpenseAmountEdit(
-                            expenseId = currentState.expenseId,
-                            expenseDraft = currentState.expenseDraft,
-                            categoryName = currentState.categoryName,
+                            editSession = currentState.editSession,
                         ),
                 )
 
@@ -86,9 +83,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
                         ),
                     nextState =
                         UserState.AwaitingExpenseDescriptionEdit(
-                            expenseId = currentState.expenseId,
-                            expenseDraft = currentState.expenseDraft,
-                            categoryName = currentState.categoryName,
+                            editSession = currentState.editSession,
                         ),
                 )
         }
@@ -114,7 +109,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        text = currentState.editSession.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -124,9 +119,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
                 ),
             nextState =
                 UserState.AwaitingExpenseCategoryEdit(
-                    expenseId = currentState.expenseId,
-                    expenseDraft = currentState.expenseDraft,
-                    categoryName = currentState.categoryName,
+                    editSession = currentState.editSession,
                 ),
         )
     }
@@ -139,7 +132,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        text = currentState.editSession.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -149,9 +142,7 @@ class AwaitingExpenseEditFieldSelectionHandler(
                 ),
             nextState =
                 UserState.AwaitingExpenseDateEditSelection(
-                    expenseId = currentState.expenseId,
-                    expenseDraft = currentState.expenseDraft,
-                    categoryName = currentState.categoryName,
+                    editSession = currentState.editSession,
                 ),
         )
 

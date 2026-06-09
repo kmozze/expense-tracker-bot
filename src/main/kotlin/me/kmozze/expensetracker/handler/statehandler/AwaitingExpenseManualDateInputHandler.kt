@@ -79,8 +79,6 @@ class AwaitingExpenseManualDateInputHandler(
         return expenseSavedResult(
             expenseDraft = expenseDraft,
             expenseId = expense.id,
-            categoryName = currentState.categoryName,
-            expenseDate = expense.expenseDate,
         )
     }
 
@@ -89,7 +87,7 @@ class AwaitingExpenseManualDateInputHandler(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        text = currentState.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -126,8 +124,6 @@ class AwaitingExpenseManualDateInputHandler(
     private fun expenseSavedResult(
         expenseDraft: ExpenseDraft,
         expenseId: UUID,
-        categoryName: String,
-        expenseDate: LocalDate,
     ): HandlerResponse =
         handlerResponse(
             messages =
@@ -137,7 +133,7 @@ class AwaitingExpenseManualDateInputHandler(
                         actions = listOf(BotAction.RemoveReplyKeyboard),
                     ),
                     outgoingMessage(
-                        text = expenseDraft.toExpenseView(categoryName = categoryName, expenseDate = expenseDate),
+                        text = expenseDraft.toExpenseView(),
                         actions = listOf(BotAction.ShowExpenseCardActions(expenseId)),
                     ),
                 ),

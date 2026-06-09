@@ -39,7 +39,7 @@ class AwaitingExpenseDateEditSelectionHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
+                    expenseId = currentState.editSession.expenseId,
                 )
 
             UserCommand.FinishExpenseEdit ->
@@ -47,8 +47,7 @@ class AwaitingExpenseDateEditSelectionHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
-                    expenseDraft = currentState.expenseDraft,
+                    editSession = currentState.editSession,
                 )
 
             is UserCommand.SelectExpenseDate -> handleExpenseDateSelection(currentState, command.choice)
@@ -88,9 +87,10 @@ class AwaitingExpenseDateEditSelectionHandler(
         expenseDate: LocalDate,
     ): HandlerResponse =
         buildDraftExpenseEditFieldSelectionResult(
-            expenseId = currentState.expenseId,
-            expenseDraft = currentState.expenseDraft.copy(expenseDate = expenseDate),
-            categoryName = currentState.categoryName,
+            editSession =
+                currentState.editSession.withExpenseDraft(
+                    currentState.editSession.expenseDraft.copy(expenseDate = expenseDate),
+                ),
         )
 
     private fun requestManualDateInput(currentState: UserState.AwaitingExpenseDateEditSelection): HandlerResponse =
@@ -98,7 +98,7 @@ class AwaitingExpenseDateEditSelectionHandler(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        text = currentState.editSession.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -108,9 +108,7 @@ class AwaitingExpenseDateEditSelectionHandler(
                 ),
             nextState =
                 UserState.AwaitingExpenseDateEditManualInput(
-                    expenseId = currentState.expenseId,
-                    expenseDraft = currentState.expenseDraft,
-                    categoryName = currentState.categoryName,
+                    editSession = currentState.editSession,
                 ),
         )
 
@@ -119,7 +117,7 @@ class AwaitingExpenseDateEditSelectionHandler(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        text = currentState.editSession.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(

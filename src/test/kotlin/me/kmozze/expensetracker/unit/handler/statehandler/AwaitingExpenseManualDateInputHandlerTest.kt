@@ -11,6 +11,7 @@ import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseManualDateIn
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -166,12 +167,11 @@ class AwaitingExpenseManualDateInputHandlerTest {
             ExpenseDraft(
                 amount = EXPENSE_AMOUNT,
                 description = EXPENSE_DESCRIPTION,
-                categoryId = CATEGORY_ID,
+                category = ExpenseDraftCategory(categoryId = CATEGORY_ID, name = CATEGORY_NAME),
             )
         val AWAITING_EXPENSE_MANUAL_DATE_INPUT: UserState.AwaitingExpenseManualDateInput =
             UserState.AwaitingExpenseManualDateInput(
                 expenseDraft = EXPENSE_DRAFT_WITH_CATEGORY,
-                categoryName = CATEGORY_NAME,
             )
         val MANUAL_DATE: LocalDate = LocalDate.parse("2026-05-20")
     }

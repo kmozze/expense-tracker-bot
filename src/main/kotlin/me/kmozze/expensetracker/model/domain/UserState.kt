@@ -1,7 +1,5 @@
 package me.kmozze.expensetracker.model.domain
 
-import java.util.UUID
-
 sealed class UserState {
     data object Idle : UserState()
 
@@ -13,47 +11,33 @@ sealed class UserState {
 
     data class AwaitingExpenseDateSelection(
         val expenseDraft: ExpenseDraft,
-        val categoryName: String,
     ) : UserState()
 
     data class AwaitingExpenseManualDateInput(
         val expenseDraft: ExpenseDraft,
-        val categoryName: String,
     ) : UserState()
 
     data class AwaitingExpenseEditFieldSelection(
-        val expenseId: UUID,
-        val expenseDraft: ExpenseDraft,
-        val categoryName: String,
+        val editSession: ExpenseEditSession,
     ) : UserState()
 
     data class AwaitingExpenseAmountEdit(
-        val expenseId: UUID,
-        val expenseDraft: ExpenseDraft,
-        val categoryName: String,
+        val editSession: ExpenseEditSession,
     ) : UserState()
 
     data class AwaitingExpenseCategoryEdit(
-        val expenseId: UUID,
-        val expenseDraft: ExpenseDraft,
-        val categoryName: String,
+        val editSession: ExpenseEditSession,
     ) : UserState()
 
     data class AwaitingExpenseDateEditSelection(
-        val expenseId: UUID,
-        val expenseDraft: ExpenseDraft,
-        val categoryName: String,
+        val editSession: ExpenseEditSession,
     ) : UserState()
 
     data class AwaitingExpenseDateEditManualInput(
-        val expenseId: UUID,
-        val expenseDraft: ExpenseDraft,
-        val categoryName: String,
+        val editSession: ExpenseEditSession,
     ) : UserState()
 
     data class AwaitingExpenseDescriptionEdit(
-        val expenseId: UUID,
-        val expenseDraft: ExpenseDraft,
-        val categoryName: String,
+        val editSession: ExpenseEditSession,
     ) : UserState()
 }

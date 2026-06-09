@@ -3,15 +3,20 @@ package me.kmozze.expensetracker.model.domain
 import java.time.LocalDate
 import java.util.UUID
 
+data class ExpenseDraftCategory(
+    val categoryId: UUID,
+    val name: String,
+)
+
 data class ExpenseDraft(
     val amount: Money,
     val description: String?,
-    val categoryId: UUID? = null,
+    val category: ExpenseDraftCategory? = null,
     val expenseDate: LocalDate? = null,
 ) {
     fun requireCategoryId(): UUID =
-        requireNotNull(categoryId) {
-            "ExpenseDraft.categoryId must be set before saving"
+        requireNotNull(category?.categoryId) {
+            "ExpenseDraft.category must be set before saving"
         }
 
     fun requireExpenseDate(): LocalDate =
@@ -19,3 +24,8 @@ data class ExpenseDraft(
             "ExpenseDraft.expenseDate must be set before saving"
         }
 }
+
+data class ExpenseEditSession(
+    val expenseId: UUID,
+    val expenseDraft: ExpenseDraft,
+)

@@ -11,6 +11,7 @@ import me.kmozze.expensetracker.handler.statehandler.StateHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.ExpenseEditSession
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
@@ -198,7 +199,6 @@ class RoutingHandlerTest {
         val currentState =
             UserState.AwaitingExpenseManualDateInput(
                 expenseDraft = ExpenseDraft(Money.of(BigDecimal("500")), "такси"),
-                categoryName = "Транспорт",
             )
         val router = routerWith(awaitingManualDateHandler)
 
@@ -226,9 +226,11 @@ class RoutingHandlerTest {
         val expenseId = UUID.fromString("c3a0e10f-cf0d-4f95-8a12-123456789abc")
         val currentState =
             UserState.AwaitingExpenseAmountEdit(
-                expenseId = expenseId,
-                expenseDraft = ExpenseDraft(Money.of(BigDecimal("100.00")), "такси"),
-                categoryName = "Транспорт",
+                editSession =
+                    ExpenseEditSession(
+                        expenseId = expenseId,
+                        expenseDraft = ExpenseDraft(Money.of(BigDecimal("100.00")), "такси"),
+                    ),
             )
         val router = routerWith(awaitingAmountEditHandler)
 

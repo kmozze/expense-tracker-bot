@@ -5,6 +5,7 @@ import me.kmozze.expensetracker.handler.handlerResponse
 import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -36,7 +37,7 @@ class AwaitingExpenseCategoryEditHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
+                    expenseId = currentState.editSession.expenseId,
                 )
 
             UserCommand.FinishExpenseEdit ->
@@ -44,8 +45,7 @@ class AwaitingExpenseCategoryEditHandler(
                     expenseService = expenseService,
                     categoryService = categoryService,
                     userId = input.userId,
-                    expenseId = currentState.expenseId,
-                    expenseDraft = currentState.expenseDraft,
+                    editSession = currentState.editSession,
                 )
 
             is UserCommand.PlainText -> selectCategory(input, currentState, command.value)
@@ -67,9 +67,12 @@ class AwaitingExpenseCategoryEditHandler(
                 )
 
         return buildDraftExpenseEditFieldSelectionResult(
-            expenseId = currentState.expenseId,
-            expenseDraft = currentState.expenseDraft.copy(categoryId = category.id),
-            categoryName = category.name,
+            editSession =
+                currentState.editSession.withExpenseDraft(
+                    currentState.editSession.expenseDraft.copy(
+                        category = ExpenseDraftCategory(categoryId = category.id, name = category.name),
+                    ),
+                ),
         )
     }
 
@@ -94,7 +97,7 @@ class AwaitingExpenseCategoryEditHandler(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        text = currentState.editSession.expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
