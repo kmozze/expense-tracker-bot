@@ -4,11 +4,11 @@ import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.adapter.ui.KeyboardApplier
 import me.kmozze.expensetracker.adapter.ui.MessageFormatter
 import me.kmozze.expensetracker.handler.DialogueRouter
-import me.kmozze.expensetracker.model.domain.CallbackAnswer
-import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
-import me.kmozze.expensetracker.model.domain.ResponseDelivery
-import me.kmozze.expensetracker.model.domain.UserInput
+import me.kmozze.expensetracker.model.domain.bot.CallbackAnswer
+import me.kmozze.expensetracker.model.domain.bot.HandlerResponse
+import me.kmozze.expensetracker.model.domain.bot.OutgoingMessage
+import me.kmozze.expensetracker.model.domain.bot.ResponseDelivery
+import me.kmozze.expensetracker.model.domain.bot.UserInput
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component

@@ -3,9 +3,9 @@ package me.kmozze.expensetracker.unit.adapter.input
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.adapter.ui.Buttons
-import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
-import me.kmozze.expensetracker.model.domain.ExpenseEditField
-import me.kmozze.expensetracker.model.domain.UserCommand
+import me.kmozze.expensetracker.model.domain.bot.UserCommand
+import me.kmozze.expensetracker.model.domain.expense.ExpenseDateChoice
+import me.kmozze.expensetracker.model.domain.expense.ExpenseEditField
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

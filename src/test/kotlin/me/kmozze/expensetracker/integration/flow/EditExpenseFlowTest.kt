@@ -3,15 +3,15 @@ package me.kmozze.expensetracker.integration.flow
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.handler.DialogueRouter
-import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.ExpenseDraft
-import me.kmozze.expensetracker.model.domain.ExpenseDraftCategory
-import me.kmozze.expensetracker.model.domain.ExpenseEditSession
-import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.Money
-import me.kmozze.expensetracker.model.domain.ResponseDelivery
-import me.kmozze.expensetracker.model.domain.UserState
+import me.kmozze.expensetracker.model.domain.bot.BotAction
+import me.kmozze.expensetracker.model.domain.bot.BotText
+import me.kmozze.expensetracker.model.domain.bot.HandlerResponse
+import me.kmozze.expensetracker.model.domain.bot.ResponseDelivery
+import me.kmozze.expensetracker.model.domain.bot.UserState
+import me.kmozze.expensetracker.model.domain.expense.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.expense.ExpenseDraftCategory
+import me.kmozze.expensetracker.model.domain.expense.ExpenseEditSession
+import me.kmozze.expensetracker.model.domain.expense.Money
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
 import me.kmozze.expensetracker.repository.ICategoryRepository
@@ -46,20 +46,25 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
         val editStart =
             requestEdit(userId = userId, chatId = chatId, expenseId = createdExpense.first.id, callbackMessageId = CARD_MESSAGE_ID)
 
-        assertThat(editStart.outgoingMessages[0].text).isEqualTo(
-            BotText.ExpenseView(
-                amount = createdExpense.first.amount,
-                categoryName = createdExpense.second.name,
-                expenseDate = createdExpense.first.expenseDate,
-                description = createdExpense.first.description,
-            ),
+        editStart.assertMessage(
+            index = 0,
+            text =
+                BotText.ExpenseView(
+                    amount = createdExpense.first.amount,
+                    categoryName = createdExpense.second.name,
+                    expenseDate = createdExpense.first.expenseDate,
+                    description = createdExpense.first.description,
+                ),
+            actions = listOf(BotAction.ClearInlineKeyboard),
+            delivery = ResponseDelivery.EditMessage(CARD_MESSAGE_ID),
         )
-        assertThat(editStart.outgoingMessages[0].actions).containsExactly(BotAction.ClearInlineKeyboard)
-        assertThat(editStart.outgoingMessages[0].delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
-        assertThat(editStart.outgoingMessages[1].text).isEqualTo(BotText.EditExpenseFieldSelection)
-        assertThat(editStart.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseEditFieldSelection)
+        editStart.assertMessage(
+            index = 1,
+            text = BotText.EditExpenseFieldSelection,
+            actions = listOf(BotAction.ShowExpenseEditFieldSelection),
+        )
         val initialDraft = createdExpense.first.toDraft(initialCategory)
-        assertThat(editStart.nextState).isEqualTo(editFieldSelectionState(createdExpense.first, initialCategory))
+        editStart.assertNextState(editFieldSelectionState(createdExpense.first, initialCategory))
 
         val amountPrompt =
             dialogueRouter.processUserInput(
@@ -67,17 +72,11 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 chatId = chatId,
                 text = Buttons.EDIT_EXPENSE_AMOUNT,
             )
-        assertThat(
-            amountPrompt.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.EnterExpenseAmount)
-        assertThat(
-            amountPrompt.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCancel)
-        assertThat(amountPrompt.nextState).isEqualTo(
+        amountPrompt.assertSingleMessage(
+            text = BotText.EnterExpenseAmount,
+            actions = listOf(BotAction.ShowCancel),
+        )
+        amountPrompt.assertNextState(
             UserState.AwaitingExpenseAmountEdit(
                 editSession = editSession(createdExpense.first.id, initialDraft),
             ),
@@ -89,10 +88,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 chatId = chatId,
                 text = "650",
             )
-        assertThat(
-            amountUpdated.outgoingMessages
-                .map { it.text },
-        ).containsExactly(
+        amountUpdated.assertMessageTexts(
             BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT_UPDATED,
                 categoryName = initialCategory.name,
@@ -101,13 +97,9 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             ),
             BotText.EditExpenseFieldSelection,
         )
-        assertThat(
-            amountUpdated.outgoingMessages
-                .last()
-                .actions,
-        ).containsExactly(BotAction.ShowExpenseEditFieldSelection)
+        amountUpdated.assertLastMessageActions(BotAction.ShowExpenseEditFieldSelection)
         val amountDraft = initialDraft.copy(amount = EXPENSE_AMOUNT_UPDATED)
-        assertThat(amountUpdated.nextState).isEqualTo(
+        amountUpdated.assertNextState(
             UserState.AwaitingExpenseEditFieldSelection(
                 editSession = editSession(createdExpense.first.id, amountDraft),
             ),
@@ -121,7 +113,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 text = Buttons.EDIT_EXPENSE_CATEGORY,
             )
         val categorySelection = categorySelectionPrompt.categorySelectionAction()
-        assertThat(categorySelectionPrompt.nextState).isEqualTo(
+        categorySelectionPrompt.assertNextState(
             UserState.AwaitingExpenseCategoryEdit(
                 editSession = editSession(createdExpense.first.id, amountDraft),
             ),
@@ -136,10 +128,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 chatId = chatId,
                 text = newCategory.name,
             )
-        assertThat(
-            categoryUpdated.outgoingMessages
-                .map { it.text },
-        ).containsExactly(
+        categoryUpdated.assertMessageTexts(
             BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT_UPDATED,
                 categoryName = newCategory.name,
@@ -156,7 +145,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                         name = newCategory.name,
                     ),
             )
-        assertThat(categoryUpdated.nextState).isEqualTo(
+        categoryUpdated.assertNextState(
             UserState.AwaitingExpenseEditFieldSelection(
                 editSession = editSession(createdExpense.first.id, categoryDraft),
             ),
@@ -168,10 +157,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 chatId = chatId,
                 text = Buttons.EDIT_EXPENSE_DATE,
             )
-        assertThat(
-            dateSelectionPrompt.outgoingMessages
-                .map { it.text },
-        ).containsExactly(
+        dateSelectionPrompt.assertMessageTexts(
             BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT_UPDATED,
                 categoryName = newCategory.name,
@@ -180,12 +166,8 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             ),
             BotText.SelectExpenseDate,
         )
-        assertThat(
-            dateSelectionPrompt.outgoingMessages
-                .last()
-                .actions,
-        ).containsExactly(BotAction.ShowExpenseDateSelection)
-        assertThat(dateSelectionPrompt.nextState).isEqualTo(
+        dateSelectionPrompt.assertLastMessageActions(BotAction.ShowExpenseDateSelection)
+        dateSelectionPrompt.assertNextState(
             UserState.AwaitingExpenseDateEditSelection(
                 editSession = editSession(createdExpense.first.id, categoryDraft),
             ),
@@ -196,10 +178,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 chatId = chatId,
                 text = Buttons.ENTER_DATE_MANUALLY,
             )
-        assertThat(
-            manualDatePrompt.outgoingMessages
-                .map { it.text },
-        ).containsExactly(
+        manualDatePrompt.assertMessageTexts(
             BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT_UPDATED,
                 categoryName = newCategory.name,
@@ -208,7 +187,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             ),
             BotText.EnterExpenseDateManually,
         )
-        assertThat(manualDatePrompt.nextState).isEqualTo(
+        manualDatePrompt.assertNextState(
             UserState.AwaitingExpenseDateEditManualInput(
                 editSession = editSession(createdExpense.first.id, categoryDraft),
             ),
@@ -221,10 +200,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 text = MANUAL_DATE_TEXT,
             )
         val dateDraft = categoryDraft.copy(expenseDate = MANUAL_DATE)
-        assertThat(
-            dateUpdated.outgoingMessages
-                .map { it.text },
-        ).containsExactly(
+        dateUpdated.assertMessageTexts(
             BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT_UPDATED,
                 categoryName = newCategory.name,
@@ -233,7 +209,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             ),
             BotText.EditExpenseFieldSelection,
         )
-        assertThat(dateUpdated.nextState).isEqualTo(
+        dateUpdated.assertNextState(
             UserState.AwaitingExpenseEditFieldSelection(
                 editSession = editSession(createdExpense.first.id, dateDraft),
             ),
@@ -245,17 +221,11 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 chatId = chatId,
                 text = Buttons.EDIT_EXPENSE_DESCRIPTION,
             )
-        assertThat(
-            descriptionPrompt.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.EnterExpenseDescription)
-        assertThat(
-            descriptionPrompt.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCancel)
-        assertThat(descriptionPrompt.nextState).isEqualTo(
+        descriptionPrompt.assertSingleMessage(
+            text = BotText.EnterExpenseDescription,
+            actions = listOf(BotAction.ShowCancel),
+        )
+        descriptionPrompt.assertNextState(
             UserState.AwaitingExpenseDescriptionEdit(
                 editSession = editSession(createdExpense.first.id, dateDraft),
             ),
@@ -268,10 +238,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 text = DESCRIPTION_UPDATED,
             )
         val finalDraft = dateDraft.copy(description = DESCRIPTION_UPDATED)
-        assertThat(
-            descriptionUpdated.outgoingMessages
-                .map { it.text },
-        ).containsExactly(
+        descriptionUpdated.assertMessageTexts(
             BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT_UPDATED,
                 categoryName = newCategory.name,
@@ -280,7 +247,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
             ),
             BotText.EditExpenseFieldSelection,
         )
-        assertThat(descriptionUpdated.nextState).isEqualTo(
+        descriptionUpdated.assertNextState(
             UserState.AwaitingExpenseEditFieldSelection(
                 editSession = editSession(createdExpense.first.id, finalDraft),
             ),
@@ -302,7 +269,7 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
         assertThat(descriptionSaved.description).isEqualTo(DESCRIPTION_UPDATED)
         assertThat(descriptionSaved.expenseDate).isEqualTo(MANUAL_DATE)
         assertThat(descriptionSaved.categoryName).isEqualTo(newCategory.name)
-        assertThat(editFinished.nextState).isEqualTo(UserState.Idle)
+        editFinished.assertNextState(UserState.Idle)
         assertThat(editFinished.expenseCardAction().expenseId).isEqualTo(createdExpense.first.id)
 
         val saved = expenseById(userId, createdExpense.first.id)
@@ -326,22 +293,12 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 callbackMessageId = CARD_MESSAGE_ID,
             )
 
-        assertThat(
-            unavailableMessage.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(BotText.ExpenseUnavailable)
-        assertThat(
-            unavailableMessage.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ClearInlineKeyboard)
-        assertThat(unavailableMessage.nextState).isEqualTo(UserState.Idle)
-        assertThat(
-            unavailableMessage.outgoingMessages
-                .single()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        unavailableMessage.assertSingleMessage(
+            text = BotText.ExpenseUnavailable,
+            actions = listOf(BotAction.ClearInlineKeyboard),
+            delivery = ResponseDelivery.EditMessage(CARD_MESSAGE_ID),
+        )
+        unavailableMessage.assertNextState(UserState.Idle)
     }
 
     @Test
@@ -358,19 +315,13 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 chatId = chatId,
                 text = "Неверная кнопка",
             )
-        assertThat(invalidFieldResult.outgoingMessages).isNotEmpty
-        val firstMessage = invalidFieldResult.outgoingMessages.first()
-        assertThat(firstMessage.text).isEqualTo(BotText.EditExpenseFieldSelection)
-        assertThat(firstMessage.actions).containsExactly(BotAction.ShowExpenseEditFieldSelection)
-        assertThat(invalidFieldResult.nextState).isEqualTo(editFieldSelectionState(createdExpense.first, createdExpense.second))
-        assertThat(firstMessage.delivery)
-            .isEqualTo(ResponseDelivery.SendNewMessage)
-        assertThat(editStart.outgoingMessages).isNotEmpty
-        assertThat(
-            editStart.outgoingMessages
-                .first()
-                .delivery,
-        ).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
+        invalidFieldResult.assertSingleMessage(
+            text = BotText.EditExpenseFieldSelection,
+            actions = listOf(BotAction.ShowExpenseEditFieldSelection),
+            delivery = ResponseDelivery.SendNewMessage,
+        )
+        invalidFieldResult.assertNextState(editFieldSelectionState(createdExpense.first, createdExpense.second))
+        assertThat(editStart.outgoingMessages.first().delivery).isEqualTo(ResponseDelivery.EditMessage(CARD_MESSAGE_ID))
     }
 
     private fun createExpense(
@@ -448,24 +399,19 @@ class EditExpenseFlowTest : AbstractFlowIntegrationTest() {
                 text = category.name,
             )
 
-        assertThat(
-            result.outgoingMessages
-                .last()
-                .actions,
-        ).containsExactly(BotAction.ShowExpenseDateSelection)
-        assertThat(result.nextState)
-            .isEqualTo(
-                UserState.AwaitingExpenseDateSelection(
-                    expenseDraft =
-                        expenseDraft.copy(
-                            category =
-                                ExpenseDraftCategory(
-                                    categoryId = category.id,
-                                    name = category.name,
-                                ),
-                        ),
-                ),
-            )
+        result.assertLastMessageActions(BotAction.ShowExpenseDateSelection)
+        result.assertNextState(
+            UserState.AwaitingExpenseDateSelection(
+                expenseDraft =
+                    expenseDraft.copy(
+                        category =
+                            ExpenseDraftCategory(
+                                categoryId = category.id,
+                                name = category.name,
+                            ),
+                    ),
+            ),
+        )
 
         return result
     }

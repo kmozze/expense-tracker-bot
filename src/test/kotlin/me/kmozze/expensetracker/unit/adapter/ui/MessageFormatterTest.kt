@@ -2,8 +2,8 @@ package me.kmozze.expensetracker.unit.adapter.ui
 
 import me.kmozze.expensetracker.adapter.ui.MessageFormatter
 import me.kmozze.expensetracker.exception.BusinessErrorCode
-import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.bot.BotText
+import me.kmozze.expensetracker.model.domain.expense.Money
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal

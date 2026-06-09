@@ -3,8 +3,8 @@ package me.kmozze.expensetracker.service
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.exception
-import me.kmozze.expensetracker.model.domain.ExpenseDraft
-import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.expense.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.expense.Money
 import me.kmozze.expensetracker.model.entity.Expense
 import me.kmozze.expensetracker.repository.ICategoryRepository
 import me.kmozze.expensetracker.repository.IExpenseRepository

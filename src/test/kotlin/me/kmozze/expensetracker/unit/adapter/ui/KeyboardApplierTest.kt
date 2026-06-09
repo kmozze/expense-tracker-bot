@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.unit.adapter.ui
 
 import me.kmozze.expensetracker.adapter.ui.Buttons
 import me.kmozze.expensetracker.adapter.ui.KeyboardApplier
-import me.kmozze.expensetracker.model.domain.BotAction
+import me.kmozze.expensetracker.model.domain.bot.BotAction
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage

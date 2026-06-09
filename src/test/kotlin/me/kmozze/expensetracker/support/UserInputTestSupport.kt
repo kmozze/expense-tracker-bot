@@ -2,9 +2,9 @@ package me.kmozze.expensetracker.support
 
 import me.kmozze.expensetracker.adapter.input.UserCommandParser
 import me.kmozze.expensetracker.handler.DialogueRouter
-import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.UserCommand
-import me.kmozze.expensetracker.model.domain.UserInput
+import me.kmozze.expensetracker.model.domain.bot.HandlerResponse
+import me.kmozze.expensetracker.model.domain.bot.UserCommand
+import me.kmozze.expensetracker.model.domain.bot.UserInput
 
 fun makeUserInput(
     userId: Long,

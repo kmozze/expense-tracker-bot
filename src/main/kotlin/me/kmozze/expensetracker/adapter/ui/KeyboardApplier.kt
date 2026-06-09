@@ -1,6 +1,6 @@
 package me.kmozze.expensetracker.adapter.ui
 
-import me.kmozze.expensetracker.model.domain.BotAction
+import me.kmozze.expensetracker.model.domain.bot.BotAction
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText

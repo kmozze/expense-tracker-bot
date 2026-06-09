@@ -1,8 +1,8 @@
 package me.kmozze.expensetracker.handler
 
-import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.UserInput
+import me.kmozze.expensetracker.model.domain.bot.BotText
+import me.kmozze.expensetracker.model.domain.bot.HandlerResponse
+import me.kmozze.expensetracker.model.domain.bot.UserInput
 import org.springframework.stereotype.Component
 
 @Component

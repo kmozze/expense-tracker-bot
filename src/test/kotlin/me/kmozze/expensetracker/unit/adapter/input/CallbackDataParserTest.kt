@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.unit.adapter.input
 
 import me.kmozze.expensetracker.adapter.callback.CallbackData
 import me.kmozze.expensetracker.adapter.input.CallbackDataParser
-import me.kmozze.expensetracker.model.domain.UserCommand
+import me.kmozze.expensetracker.model.domain.bot.UserCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

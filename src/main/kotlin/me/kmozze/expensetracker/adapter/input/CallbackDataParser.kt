@@ -1,7 +1,7 @@
 package me.kmozze.expensetracker.adapter.input
 
 import me.kmozze.expensetracker.adapter.callback.CallbackData
-import me.kmozze.expensetracker.model.domain.UserCommand
+import me.kmozze.expensetracker.model.domain.bot.UserCommand
 import java.util.UUID
 
 object CallbackDataParser {

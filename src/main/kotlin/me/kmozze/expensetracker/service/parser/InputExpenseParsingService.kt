@@ -2,8 +2,8 @@ package me.kmozze.expensetracker.service.parser
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.exception
-import me.kmozze.expensetracker.model.domain.ExpenseDraft
-import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.expense.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.expense.Money
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 

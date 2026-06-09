@@ -1,6 +1,6 @@
 package me.kmozze.expensetracker.model.entity
 
-import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.expense.Money
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
