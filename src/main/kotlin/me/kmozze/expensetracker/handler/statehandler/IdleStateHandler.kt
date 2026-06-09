@@ -1,9 +1,10 @@
 package me.kmozze.expensetracker.handler.statehandler
 
+import me.kmozze.expensetracker.handler.handlerResponse
+import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -33,13 +34,11 @@ class IdleStateHandler(
 
         return when (val command = input.command) {
             UserCommand.AddExpense ->
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.AddExpenseInstructions,
-                                actions = emptyList(),
-                            ),
+                handlerResponse(
+                    message =
+                        outgoingMessage(
+                            text = BotText.AddExpenseInstructions,
+                            actions = emptyList(),
                         ),
                     nextState = UserState.AwaitingExpenseInput,
                 )
@@ -48,13 +47,11 @@ class IdleStateHandler(
             UserCommand.Categories,
             UserCommand.Statistics,
             ->
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.FeatureInProgress,
-                                actions = emptyList(),
-                            ),
+                handlerResponse(
+                    message =
+                        outgoingMessage(
+                            text = BotText.FeatureInProgress,
+                            actions = emptyList(),
                         ),
                     nextState = UserState.Idle,
                 )
@@ -74,25 +71,21 @@ class IdleStateHandler(
             UserCommand.Cancel,
             UserCommand.InvalidExpenseAction,
             ->
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.SelectionExpired,
-                                actions = listOf(BotAction.ShowMainMenu),
-                            ),
+                handlerResponse(
+                    message =
+                        outgoingMessage(
+                            text = BotText.SelectionExpired,
+                            actions = listOf(BotAction.ShowMainMenu),
                         ),
                     nextState = UserState.Idle,
                 )
 
             else ->
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.UnknownCommand,
-                                actions = listOf(BotAction.ShowMainMenu),
-                            ),
+                handlerResponse(
+                    message =
+                        outgoingMessage(
+                            text = BotText.UnknownCommand,
+                            actions = listOf(BotAction.ShowMainMenu),
                         ),
                     nextState = UserState.Idle,
                 )
@@ -115,16 +108,16 @@ class IdleStateHandler(
                 userId = input.userId,
             ) ?: return expenseUnavailableResult(input)
 
-        return HandlerResponse(
-            outgoingMessages =
+        return handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text =
                             expense.toExpenseView(category),
                         actions = listOf(BotAction.ClearInlineKeyboard),
                         delivery = input.callbackMessageDelivery(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.EditExpenseFieldSelection,
                         actions = listOf(BotAction.ShowExpenseEditFieldSelection),
                     ),
@@ -218,14 +211,12 @@ class IdleStateHandler(
         text: BotText,
         actions: List<BotAction>,
     ): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = text,
-                        actions = actions,
-                        delivery = input.callbackMessageDelivery(),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = text,
+                    actions = actions,
+                    delivery = input.callbackMessageDelivery(),
                 ),
             nextState = UserState.Idle,
         )

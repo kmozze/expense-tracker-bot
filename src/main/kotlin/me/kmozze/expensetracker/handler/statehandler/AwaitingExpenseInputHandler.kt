@@ -1,10 +1,11 @@
 package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessException
+import me.kmozze.expensetracker.handler.handlerResponse
+import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -43,13 +44,11 @@ class AwaitingExpenseInputHandler(
             try {
                 expenseService.parseExpense(text)
             } catch (e: BusinessException) {
-                return HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.Error(e.errorCode),
-                                actions = emptyList(),
-                            ),
+                return handlerResponse(
+                    message =
+                        outgoingMessage(
+                            text = BotText.Error(e.errorCode),
+                            actions = emptyList(),
                         ),
                     nextState = UserState.AwaitingExpenseInput,
                 )
@@ -60,14 +59,14 @@ class AwaitingExpenseInputHandler(
             return noCategories()
         }
 
-        return HandlerResponse(
-            outgoingMessages =
+        return handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = expenseDraft.toExpenseView(),
                         actions = emptyList(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text =
                             BotText.SelectCategory,
                         actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
@@ -78,37 +77,31 @@ class AwaitingExpenseInputHandler(
     }
 
     private fun repeatExpenseInstructions(): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.AddExpenseInstructions,
-                        actions = emptyList(),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.AddExpenseInstructions,
+                    actions = emptyList(),
                 ),
             nextState = UserState.AwaitingExpenseInput,
         )
 
     private fun featureInProgress(): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.FeatureInProgress,
-                        actions = emptyList(),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.FeatureInProgress,
+                    actions = emptyList(),
                 ),
             nextState = UserState.Idle,
         )
 
     private fun noCategories(): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.NoCategories,
-                        actions = listOf(BotAction.ShowMainMenu),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.NoCategories,
+                    actions = listOf(BotAction.ShowMainMenu),
                 ),
             nextState = UserState.Idle,
         )

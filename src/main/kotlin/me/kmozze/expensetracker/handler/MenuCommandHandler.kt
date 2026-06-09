@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component
 @Component
 class MenuCommandHandler {
     fun handle(removeReplyKeyboard: Boolean): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
+        handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.MainMenuInfo,
                         actions =
                             if (removeReplyKeyboard) {
@@ -28,7 +28,7 @@ class MenuCommandHandler {
         )
 
     private fun mainMenuActionsMessage(): OutgoingMessage =
-        OutgoingMessage(
+        outgoingMessage(
             text = BotText.MainMenuActions,
             actions = listOf(BotAction.ShowMainMenu),
         )

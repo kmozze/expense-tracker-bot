@@ -64,8 +64,7 @@ class DialogueRouter(
             currentState !is UserState.Idle
 
     private fun callbackBlockedResult(): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages = emptyList(),
+        callbackAnswerResponse(
             callbackAnswer = CallbackAnswer(text = BotText.FinishCurrentDialog, showAlert = true),
         )
 }

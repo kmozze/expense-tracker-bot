@@ -1,12 +1,13 @@
 package me.kmozze.expensetracker.handler.statehandler
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
+import me.kmozze.expensetracker.handler.handlerResponse
+import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -88,14 +89,14 @@ class AwaitingExpenseDateSelectionHandler(
     }
 
     private fun requestManualDateInput(currentState: UserState.AwaitingExpenseDateSelection): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
+        handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
                         actions = emptyList(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.EnterExpenseDateManually,
                         actions = listOf(BotAction.ShowCancel),
                     ),
@@ -108,14 +109,14 @@ class AwaitingExpenseDateSelectionHandler(
         )
 
     private fun repeatExpenseDateSelection(currentState: UserState.AwaitingExpenseDateSelection): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
+        handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
                         actions = emptyList(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.SelectExpenseDate,
                         actions = listOf(BotAction.ShowExpenseDateSelection),
                     ),
@@ -127,25 +128,21 @@ class AwaitingExpenseDateSelectionHandler(
         currentState: UserState.AwaitingExpenseDateSelection,
         errorCode: BusinessErrorCode,
     ): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.Error(errorCode),
-                        actions = listOf(BotAction.ShowExpenseDateSelection),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.Error(errorCode),
+                    actions = listOf(BotAction.ShowExpenseDateSelection),
                 ),
             nextState = currentState,
         )
 
     private fun cancelExpenseCreation(): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.ExpenseCanceled,
-                        actions = listOf(BotAction.RemoveReplyKeyboard),
-                    ),
+        handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.ExpenseCanceled,
+                    actions = listOf(BotAction.RemoveReplyKeyboard),
                 ),
             nextState = UserState.Idle,
         )
@@ -156,14 +153,14 @@ class AwaitingExpenseDateSelectionHandler(
         categoryName: String,
         expenseDate: LocalDate,
     ): HandlerResponse =
-        HandlerResponse(
-            outgoingMessages =
+        handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.ExpenseSaved,
                         actions = listOf(BotAction.RemoveReplyKeyboard),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = expenseDraft.toExpenseView(categoryName = categoryName, expenseDate = expenseDate),
                         actions = listOf(BotAction.ShowExpenseCardActions(expenseId)),
                     ),

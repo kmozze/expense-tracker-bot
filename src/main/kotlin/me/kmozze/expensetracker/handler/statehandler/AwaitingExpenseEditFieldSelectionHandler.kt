@@ -1,10 +1,11 @@
 package me.kmozze.expensetracker.handler.statehandler
 
+import me.kmozze.expensetracker.handler.handlerResponse
+import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseEditField
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -50,13 +51,11 @@ class AwaitingExpenseEditFieldSelectionHandler(
     ): HandlerResponse =
         when (selectedField) {
             ExpenseEditField.Amount ->
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.EnterExpenseAmount,
-                                actions = listOf(BotAction.ShowCancel),
-                            ),
+                handlerResponse(
+                    message =
+                        outgoingMessage(
+                            text = BotText.EnterExpenseAmount,
+                            actions = listOf(BotAction.ShowCancel),
                         ),
                     nextState = UserState.AwaitingExpenseAmountEdit(currentState.expenseId),
                 )
@@ -66,13 +65,11 @@ class AwaitingExpenseEditFieldSelectionHandler(
             ExpenseEditField.Date -> requestDateSelection(input, currentState)
 
             ExpenseEditField.Description ->
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.EnterExpenseDescription,
-                                actions = listOf(BotAction.ShowCancel),
-                            ),
+                handlerResponse(
+                    message =
+                        outgoingMessage(
+                            text = BotText.EnterExpenseDescription,
+                            actions = listOf(BotAction.ShowCancel),
                         ),
                     nextState = UserState.AwaitingExpenseDescriptionEdit(currentState.expenseId),
                 )
@@ -91,13 +88,11 @@ class AwaitingExpenseEditFieldSelectionHandler(
         val categories = categoryService.getCategories(input.userId)
 
         if (categories.isEmpty()) {
-            return HandlerResponse(
-                outgoingMessages =
-                    listOf(
-                        OutgoingMessage(
-                            text = BotText.NoCategories,
-                            actions = listOf(BotAction.ShowMainMenu),
-                        ),
+            return handlerResponse(
+                message =
+                    outgoingMessage(
+                        text = BotText.NoCategories,
+                        actions = listOf(BotAction.ShowMainMenu),
                     ),
                 nextState = UserState.Idle,
             )
@@ -109,14 +104,14 @@ class AwaitingExpenseEditFieldSelectionHandler(
                 userId = input.userId,
             ) ?: return expenseEditUnavailableResult()
 
-        return HandlerResponse(
-            outgoingMessages =
+        return handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = expense.toExpenseView(category),
                         actions = emptyList(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.SelectCategory,
                         actions = listOf(BotAction.ShowCategorySelection(categories.map { it.name })),
                     ),
@@ -141,14 +136,14 @@ class AwaitingExpenseEditFieldSelectionHandler(
                 userId = input.userId,
             ) ?: return expenseEditUnavailableResult()
 
-        return HandlerResponse(
-            outgoingMessages =
+        return handlerResponse(
+            messages =
                 listOf(
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = expense.toExpenseView(category),
                         actions = emptyList(),
                     ),
-                    OutgoingMessage(
+                    outgoingMessage(
                         text = BotText.SelectExpenseDate,
                         actions = listOf(BotAction.ShowExpenseDateSelection),
                     ),
@@ -163,13 +158,11 @@ class AwaitingExpenseEditFieldSelectionHandler(
     ): HandlerResponse {
         expenseService.findExpenseForUser(userId = userId, expenseId = expenseId) ?: return expenseEditUnavailableResult()
 
-        return HandlerResponse(
-            outgoingMessages =
-                listOf(
-                    OutgoingMessage(
-                        text = BotText.EditExpenseFieldSelection,
-                        actions = listOf(BotAction.ShowExpenseEditFieldSelection),
-                    ),
+        return handlerResponse(
+            message =
+                outgoingMessage(
+                    text = BotText.EditExpenseFieldSelection,
+                    actions = listOf(BotAction.ShowExpenseEditFieldSelection),
                 ),
             nextState = UserState.AwaitingExpenseEditFieldSelection(expenseId),
         )
