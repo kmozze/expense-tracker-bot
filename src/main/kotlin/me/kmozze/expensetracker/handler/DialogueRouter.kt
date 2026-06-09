@@ -1,12 +1,12 @@
 package me.kmozze.expensetracker.handler
 
-import me.kmozze.expensetracker.handler.statehandler.StateHandler
-import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.CallbackAnswer
-import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.UserCommand
-import me.kmozze.expensetracker.model.domain.UserInput
-import me.kmozze.expensetracker.model.domain.UserState
+import me.kmozze.expensetracker.handler.statehandler.common.StateHandler
+import me.kmozze.expensetracker.model.domain.bot.BotText
+import me.kmozze.expensetracker.model.domain.bot.CallbackAnswer
+import me.kmozze.expensetracker.model.domain.bot.HandlerResponse
+import me.kmozze.expensetracker.model.domain.bot.UserCommand
+import me.kmozze.expensetracker.model.domain.bot.UserInput
+import me.kmozze.expensetracker.model.domain.bot.UserState
 import me.kmozze.expensetracker.service.UserSessionService
 import org.springframework.stereotype.Component
 import kotlin.reflect.KClass

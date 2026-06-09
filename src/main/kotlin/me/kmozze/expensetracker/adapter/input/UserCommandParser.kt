@@ -1,9 +1,9 @@
 package me.kmozze.expensetracker.adapter.input
 
 import me.kmozze.expensetracker.adapter.ui.Buttons
-import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
-import me.kmozze.expensetracker.model.domain.ExpenseEditField
-import me.kmozze.expensetracker.model.domain.UserCommand
+import me.kmozze.expensetracker.model.domain.bot.UserCommand
+import me.kmozze.expensetracker.model.domain.expense.ExpenseDateChoice
+import me.kmozze.expensetracker.model.domain.expense.ExpenseEditField
 
 object UserCommandParser {
     fun parse(

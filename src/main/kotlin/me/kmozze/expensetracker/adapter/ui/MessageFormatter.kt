@@ -3,7 +3,7 @@ package me.kmozze.expensetracker.adapter.ui
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.ErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
-import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.bot.BotText
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

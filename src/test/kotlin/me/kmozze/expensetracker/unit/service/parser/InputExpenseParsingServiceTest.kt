@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.unit.service.parser
 
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.BusinessException
-import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.expense.Money
 import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.assertThrows

@@ -2,7 +2,7 @@ package me.kmozze.expensetracker.repository
 
 import me.kmozze.expense.tracker.jooq.tables.records.ExpenseRecord
 import me.kmozze.expense.tracker.jooq.tables.references.EXPENSE
-import me.kmozze.expensetracker.model.domain.Money
+import me.kmozze.expensetracker.model.domain.expense.Money
 import me.kmozze.expensetracker.model.entity.Expense
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository

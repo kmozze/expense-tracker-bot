@@ -1,6 +1,6 @@
 package me.kmozze.expensetracker.service
 
-import me.kmozze.expensetracker.model.domain.UserState
+import me.kmozze.expensetracker.model.domain.bot.UserState
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 

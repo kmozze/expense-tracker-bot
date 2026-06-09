@@ -1,10 +1,10 @@
 package me.kmozze.expensetracker.integration.flow
 
 import me.kmozze.expensetracker.handler.DialogueRouter
-import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.OutgoingMessage
-import me.kmozze.expensetracker.model.domain.UserState
+import me.kmozze.expensetracker.model.domain.bot.BotAction
+import me.kmozze.expensetracker.model.domain.bot.BotText
+import me.kmozze.expensetracker.model.domain.bot.OutgoingMessage
+import me.kmozze.expensetracker.model.domain.bot.UserState
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.repository.ICategoryRepository
 import me.kmozze.expensetracker.support.processUserInput

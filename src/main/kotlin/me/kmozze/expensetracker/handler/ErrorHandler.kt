@@ -2,10 +2,10 @@ package me.kmozze.expensetracker.handler
 
 import me.kmozze.expensetracker.exception.AppException
 import me.kmozze.expensetracker.exception.SystemErrorCode
-import me.kmozze.expensetracker.model.domain.BotAction
-import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.UserState
+import me.kmozze.expensetracker.model.domain.bot.BotAction
+import me.kmozze.expensetracker.model.domain.bot.BotText
+import me.kmozze.expensetracker.model.domain.bot.HandlerResponse
+import me.kmozze.expensetracker.model.domain.bot.UserState
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 

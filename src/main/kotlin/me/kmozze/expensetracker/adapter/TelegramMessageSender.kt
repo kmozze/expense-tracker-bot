@@ -1,7 +1,7 @@
 package me.kmozze.expensetracker.adapter
 
 import me.kmozze.expensetracker.adapter.ui.KeyboardApplier
-import me.kmozze.expensetracker.model.domain.BotAction
+import me.kmozze.expensetracker.model.domain.bot.BotAction
 import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
