@@ -38,13 +38,21 @@ class AwaitingExpenseAmountEditHandler(
                     expenseId = currentState.expenseId,
                 )
 
-            is UserCommand.PlainText -> saveAmount(input, currentState, command.value)
+            UserCommand.FinishExpenseEdit ->
+                finishExpenseEdit(
+                    expenseService = expenseService,
+                    categoryService = categoryService,
+                    userId = input.userId,
+                    expenseId = currentState.expenseId,
+                    expenseDraft = currentState.expenseDraft,
+                )
+
+            is UserCommand.PlainText -> saveAmount(currentState, command.value)
             else -> repeatAmountInput(currentState)
         }
     }
 
     private fun saveAmount(
-        input: UserInput,
         currentState: UserState.AwaitingExpenseAmountEdit,
         amountText: String,
     ): HandlerResponse {
@@ -58,22 +66,14 @@ class AwaitingExpenseAmountEditHandler(
                             text = BotText.Error(e.errorCode),
                             actions = listOf(BotAction.ShowCancel),
                         ),
-                    nextState = UserState.AwaitingExpenseAmountEdit(currentState.expenseId),
+                    nextState = currentState,
                 )
             }
 
-        val updatedExpense = expenseService.updateExpenseAmountForUser(input.userId, currentState.expenseId, amount)
-        if (updatedExpense == null) {
-            return expenseEditUnavailableResult()
-        }
-
-        return buildUpdatedExpenseResult(
-            expenseService = expenseService,
-            categoryService = categoryService,
-            userId = input.userId,
-            expenseId = updatedExpense.id,
-            nextState = UserState.Idle,
-            prefixText = BotText.ExpenseSaved,
+        return buildDraftExpenseEditFieldSelectionResult(
+            expenseId = currentState.expenseId,
+            expenseDraft = currentState.expenseDraft.copy(amount = amount),
+            categoryName = currentState.categoryName,
         )
     }
 

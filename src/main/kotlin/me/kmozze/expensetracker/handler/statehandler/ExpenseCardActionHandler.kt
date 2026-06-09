@@ -4,6 +4,7 @@ import me.kmozze.expensetracker.handler.handlerResponse
 import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -36,6 +37,14 @@ class ExpenseCardActionHandler(
                 userId = input.userId,
             ) ?: return expenseUnavailableResult(input)
 
+        val expenseDraft =
+            ExpenseDraft(
+                amount = expense.amount,
+                description = expense.description,
+                categoryId = expense.categoryId,
+                expenseDate = expense.expenseDate,
+            )
+
         return handlerResponse(
             messages =
                 listOf(
@@ -50,7 +59,12 @@ class ExpenseCardActionHandler(
                         actions = listOf(BotAction.ShowExpenseEditFieldSelection),
                     ),
                 ),
-            nextState = UserState.AwaitingExpenseEditFieldSelection(expense.id),
+            nextState =
+                UserState.AwaitingExpenseEditFieldSelection(
+                    expenseId = expense.id,
+                    expenseDraft = expenseDraft,
+                    categoryName = category.name,
+                ),
         )
     }
 

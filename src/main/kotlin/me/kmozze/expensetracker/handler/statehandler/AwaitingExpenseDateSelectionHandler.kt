@@ -49,6 +49,7 @@ class AwaitingExpenseDateSelectionHandler(
             UserCommand.ViewExpenses,
             UserCommand.Categories,
             UserCommand.Statistics,
+            UserCommand.FinishExpenseEdit,
             is UserCommand.RequestExpenseEdit,
             is UserCommand.RequestExpenseDeletion,
             is UserCommand.ConfirmExpenseDeletion,

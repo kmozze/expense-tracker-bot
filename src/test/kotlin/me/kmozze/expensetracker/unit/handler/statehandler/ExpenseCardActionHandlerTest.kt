@@ -7,6 +7,7 @@ import io.mockk.verify
 import me.kmozze.expensetracker.handler.statehandler.ExpenseCardActionHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.ResponseDelivery
@@ -144,7 +145,13 @@ class ExpenseCardActionHandlerTest {
         assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseEditFieldSelection)
         assertThat(result.outgoingMessages[1].delivery).isEqualTo(ResponseDelivery.SendNewMessage)
         assertThat(result.nextState)
-            .isEqualTo(UserState.AwaitingExpenseEditFieldSelection(expenseId = EXPENSE_ID))
+            .isEqualTo(
+                UserState.AwaitingExpenseEditFieldSelection(
+                    expenseId = EXPENSE_ID,
+                    expenseDraft = EXPENSE_DRAFT,
+                    categoryName = CATEGORY.name,
+                ),
+            )
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
     }
@@ -162,7 +169,13 @@ class ExpenseCardActionHandlerTest {
 
         assertThat(result.outgoingMessages[0].delivery).isEqualTo(ResponseDelivery.SendNewMessage)
         assertThat(result.nextState)
-            .isEqualTo(UserState.AwaitingExpenseEditFieldSelection(expenseId = EXPENSE_ID))
+            .isEqualTo(
+                UserState.AwaitingExpenseEditFieldSelection(
+                    expenseId = EXPENSE_ID,
+                    expenseDraft = EXPENSE_DRAFT,
+                    categoryName = CATEGORY.name,
+                ),
+            )
     }
 
     @Test
@@ -389,6 +402,13 @@ class ExpenseCardActionHandlerTest {
                 userId = USER_ID,
                 expenseDate = EXPENSE_DATE,
                 description = EXPENSE_DESCRIPTION,
+            )
+        val EXPENSE_DRAFT: ExpenseDraft =
+            ExpenseDraft(
+                amount = EXPENSE_AMOUNT,
+                description = EXPENSE_DESCRIPTION,
+                categoryId = CATEGORY_ID,
+                expenseDate = EXPENSE_DATE,
             )
         val EXPENSE_VIEW: BotText.ExpenseView =
             BotText.ExpenseView(

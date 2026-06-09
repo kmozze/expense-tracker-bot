@@ -38,13 +38,21 @@ class AwaitingExpenseDateEditManualInputHandler(
                     expenseId = currentState.expenseId,
                 )
 
-            is UserCommand.PlainText -> updateDate(input, currentState, command.value)
-            else -> repeatManualDateInput(input, currentState)
+            UserCommand.FinishExpenseEdit ->
+                finishExpenseEdit(
+                    expenseService = expenseService,
+                    categoryService = categoryService,
+                    userId = input.userId,
+                    expenseId = currentState.expenseId,
+                    expenseDraft = currentState.expenseDraft,
+                )
+
+            is UserCommand.PlainText -> updateDate(currentState, command.value)
+            else -> repeatManualDateInput(currentState)
         }
     }
 
     private fun updateDate(
-        input: UserInput,
         currentState: UserState.AwaitingExpenseDateEditManualInput,
         dateText: String,
     ): HandlerResponse {
@@ -62,42 +70,19 @@ class AwaitingExpenseDateEditManualInputHandler(
                 )
             }
 
-        val updatedExpense = expenseService.updateExpenseDateForUser(input.userId, currentState.expenseId, expenseDate)
-        if (updatedExpense == null) {
-            return expenseEditUnavailableResult()
-        }
-
-        return buildUpdatedExpenseResult(
-            expenseService = expenseService,
-            categoryService = categoryService,
-            userId = input.userId,
-            expenseId = updatedExpense.id,
-            nextState = UserState.Idle,
-            prefixText = BotText.ExpenseSaved,
+        return buildDraftExpenseEditFieldSelectionResult(
+            expenseId = currentState.expenseId,
+            expenseDraft = currentState.expenseDraft.copy(expenseDate = expenseDate),
+            categoryName = currentState.categoryName,
         )
     }
 
-    private fun repeatManualDateInput(
-        input: UserInput,
-        currentState: UserState.AwaitingExpenseDateEditManualInput,
-    ): HandlerResponse {
-        val expense =
-            expenseService.findExpenseForUser(
-                userId = input.userId,
-                expenseId = currentState.expenseId,
-            ) ?: return expenseEditUnavailableResult()
-
-        val category =
-            categoryService.findCategoryForUser(
-                categoryId = expense.categoryId,
-                userId = input.userId,
-            ) ?: return expenseEditUnavailableResult()
-
-        return handlerResponse(
+    private fun repeatManualDateInput(currentState: UserState.AwaitingExpenseDateEditManualInput): HandlerResponse =
+        handlerResponse(
             messages =
                 listOf(
                     outgoingMessage(
-                        text = expense.toExpenseView(category),
+                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
                         actions = emptyList(),
                     ),
                     outgoingMessage(
@@ -107,5 +92,4 @@ class AwaitingExpenseDateEditManualInputHandler(
                 ),
             nextState = currentState,
         )
-    }
 }

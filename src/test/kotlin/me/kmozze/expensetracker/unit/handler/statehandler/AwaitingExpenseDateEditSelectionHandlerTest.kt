@@ -10,6 +10,7 @@ import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseDateEditSele
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDateChoice
+import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -46,99 +47,55 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
     }
 
     @Test
-    fun `today selection updates date`() {
-        every { expenseService.updateExpenseDateForUser(USER_ID, EXPENSE_ID, TODAY) } returns EXPENSE.copy(expenseDate = TODAY)
-        every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE.copy(expenseDate = TODAY)
-        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
-
+    fun `today selection updates draft date`() {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Today))
 
-        assertThat(result.outgoingMessages).hasSize(2)
-        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
-        assertThat(result.outgoingMessages[1].text).isEqualTo(
-            BotText.ExpenseView(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                expenseDate = TODAY,
-                description = EXPENSE.description,
-            ),
-        )
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
-        verify(exactly = 1) { expenseService.updateExpenseDateForUser(USER_ID, EXPENSE_ID, TODAY) }
-        verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
-        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
+        assertDraftDateSelectionResult(result, TODAY)
         confirmVerified(expenseService, categoryService)
     }
 
     @Test
-    fun `yesterday selection updates date`() {
-        val yesterday = YESTERDAY
-        every { expenseService.updateExpenseDateForUser(USER_ID, EXPENSE_ID, yesterday) } returns EXPENSE.copy(expenseDate = yesterday)
-        every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE.copy(expenseDate = yesterday)
-        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
-
+    fun `yesterday selection updates draft date`() {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday))
 
-        assertThat(result.outgoingMessages[1].text)
-            .isEqualTo(
-                BotText.ExpenseView(
-                    amount = EXPENSE_AMOUNT,
-                    categoryName = CATEGORY.name,
-                    expenseDate = yesterday,
-                    description = EXPENSE.description,
-                ),
-            )
-        assertThat(result.nextState).isEqualTo(UserState.Idle)
-        verify(exactly = 1) { expenseService.updateExpenseDateForUser(USER_ID, EXPENSE_ID, yesterday) }
-        verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
-        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
+        assertDraftDateSelectionResult(result, YESTERDAY)
         confirmVerified(expenseService, categoryService)
     }
 
     @Test
-    fun `manual selection asks for manual date input`() {
-        every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
-        every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
-
+    fun `manual selection asks for manual date input with draft card`() {
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput))
 
         val outgoingMessages = result.outgoingMessages
         assertThat(outgoingMessages).hasSize(2)
-        assertThat(outgoingMessages[0].text).isEqualTo(
-            BotText.ExpenseView(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                expenseDate = TODAY,
-                description = EXPENSE.description,
-            ),
-        )
+        assertThat(outgoingMessages[0].text).isEqualTo(EXPENSE_VIEW)
         assertThat(outgoingMessages[0].actions).isEmpty()
         assertThat(outgoingMessages[1].text).isEqualTo(BotText.EnterExpenseDateManually)
         assertThat(outgoingMessages[1].actions).containsExactly(BotAction.ShowCancel)
-        assertThat(result.nextState).isEqualTo(UserState.AwaitingExpenseDateEditManualInput(expenseId = EXPENSE_ID))
-        verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
-        verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
+        assertThat(result.nextState)
+            .isEqualTo(
+                UserState.AwaitingExpenseDateEditManualInput(
+                    expenseId = EXPENSE_ID,
+                    expenseDraft = EXPENSE_DRAFT,
+                    categoryName = CATEGORY.name,
+                ),
+            )
         confirmVerified(expenseService, categoryService)
     }
 
     @Test
     fun `invalid date text repeats selection`() {
-        every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         val result = handle(UserCommand.PlainText("завтра"))
 
-        val outgoingMessages = result.outgoingMessages
-        assertThat(outgoingMessages.single().text).isEqualTo(
-            BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION),
-        )
-        assertThat(outgoingMessages.single().actions).containsExactly(BotAction.ShowExpenseDateSelection)
-        assertThat(result.nextState).isEqualTo(UserState.AwaitingExpenseDateEditSelection(expenseId = EXPENSE_ID))
-        verify(exactly = 0) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
-        verify(exactly = 0) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
+        assertThat(result.outgoingMessages.single().text)
+            .isEqualTo(BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION))
+        assertThat(result.outgoingMessages.single().actions).containsExactly(BotAction.ShowExpenseDateSelection)
+        assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_DATE_EDIT_SELECTION)
         confirmVerified(expenseService, categoryService)
     }
 
     @Test
-    fun `cancel returns expense card`() {
+    fun `cancel returns saved expense card`() {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         every { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) } returns CATEGORY
 
@@ -149,6 +106,35 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
         confirmVerified(expenseService, categoryService)
+    }
+
+    private fun assertDraftDateSelectionResult(
+        result: me.kmozze.expensetracker.model.domain.HandlerResponse,
+        expectedDate: LocalDate,
+    ) {
+        val updatedDraft = EXPENSE_DRAFT.copy(expenseDate = expectedDate)
+
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text)
+            .isEqualTo(
+                BotText.ExpenseView(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = CATEGORY.name,
+                    expenseDate = expectedDate,
+                    description = EXPENSE.description,
+                ),
+            )
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.EditExpenseFieldSelection)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowExpenseEditFieldSelection)
+        assertThat(result.nextState)
+            .isEqualTo(
+                UserState.AwaitingExpenseEditFieldSelection(
+                    expenseId = EXPENSE_ID,
+                    expenseDraft = updatedDraft,
+                    categoryName = CATEGORY.name,
+                ),
+            )
     }
 
     private fun handle(command: UserCommand) =
@@ -193,9 +179,25 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
                 name = "Транспорт",
                 userId = USER_ID,
             )
+        val EXPENSE_DRAFT =
+            ExpenseDraft(
+                amount = EXPENSE_AMOUNT,
+                description = EXPENSE.description,
+                categoryId = CATEGORY_ID,
+                expenseDate = TODAY,
+            )
+        val EXPENSE_VIEW: BotText.ExpenseView =
+            BotText.ExpenseView(
+                amount = EXPENSE_AMOUNT,
+                categoryName = CATEGORY.name,
+                expenseDate = TODAY,
+                description = EXPENSE.description,
+            )
         val AWAITING_EXPENSE_DATE_EDIT_SELECTION: UserState.AwaitingExpenseDateEditSelection =
             UserState.AwaitingExpenseDateEditSelection(
                 expenseId = EXPENSE_ID,
+                expenseDraft = EXPENSE_DRAFT,
+                categoryName = CATEGORY.name,
             )
     }
 }

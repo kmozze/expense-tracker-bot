@@ -224,7 +224,12 @@ class RoutingHandlerTest {
         val userId = 48L
         val awaitingAmountEditHandler = RecordingStateHandler(UserState.AwaitingExpenseAmountEdit::class)
         val expenseId = UUID.fromString("c3a0e10f-cf0d-4f95-8a12-123456789abc")
-        val currentState = UserState.AwaitingExpenseAmountEdit(expenseId = expenseId)
+        val currentState =
+            UserState.AwaitingExpenseAmountEdit(
+                expenseId = expenseId,
+                expenseDraft = ExpenseDraft(Money.of(BigDecimal("100.00")), "такси"),
+                categoryName = "Транспорт",
+            )
         val router = routerWith(awaitingAmountEditHandler)
 
         userSessionService.setState(userId, currentState)

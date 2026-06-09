@@ -6,6 +6,7 @@ import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.entity.Expense
+import me.kmozze.expensetracker.repository.ICategoryRepository
 import me.kmozze.expensetracker.repository.IExpenseRepository
 import me.kmozze.expensetracker.service.parser.InputExpenseDateParsingService
 import me.kmozze.expensetracker.service.parser.InputExpenseParsingService
@@ -22,6 +23,7 @@ class ExpenseService(
     private val expenseTextParser: InputExpenseParsingService,
     private val expenseDateParser: InputExpenseDateParsingService,
     private val expenseRepository: IExpenseRepository,
+    private val categoryRepository: ICategoryRepository,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -68,32 +70,35 @@ class ExpenseService(
         }
 
     @Transactional
-    fun updateExpenseAmountForUser(
+    fun updateExpenseFromDraftForUser(
         userId: Long,
         expenseId: UUID,
-        amount: Money,
-    ): Expense? = updateExpense(userId, expenseId) { it.copy(amount = amount) }
+        expenseDraft: ExpenseDraft,
+    ): Expense? {
+        try {
+            val categoryId = expenseDraft.requireCategoryId()
+            val expenseDate = expenseDraft.requireExpenseDate()
+            val existingExpense = expenseRepository.findByIdForUser(expenseId, userId) ?: return null
+            categoryRepository.findByIdForUser(categoryId, userId) ?: return null
 
-    @Transactional
-    fun updateExpenseCategoryForUser(
-        userId: Long,
-        expenseId: UUID,
-        categoryId: UUID,
-    ): Expense? = updateExpense(userId, expenseId) { it.copy(categoryId = categoryId) }
+            return expenseRepository.updateForUser(
+                existingExpense.copy(
+                    amount = expenseDraft.amount,
+                    categoryId = categoryId,
+                    expenseDate = expenseDate,
+                    description = expenseDraft.description?.trim()?.ifEmpty { null },
+                ),
+                userId,
+            )
+        } catch (e: DataAccessException) {
+            logger.error("Failed to update expense $expenseId from draft for user $userId", e)
 
-    @Transactional
-    fun updateExpenseDateForUser(
-        userId: Long,
-        expenseId: UUID,
-        expenseDate: LocalDate,
-    ): Expense? = updateExpense(userId, expenseId) { it.copy(expenseDate = expenseDate) }
-
-    @Transactional
-    fun updateExpenseDescriptionForUser(
-        userId: Long,
-        expenseId: UUID,
-        description: String?,
-    ): Expense? = updateExpense(userId, expenseId) { it.copy(description = description?.trim()?.ifEmpty { null }) }
+            throw SystemErrorCode.DATABASE_ERROR.exception(
+                customMessage = "Ошибка при обновлении расхода $expenseId",
+                cause = e,
+            )
+        }
+    }
 
     @Transactional
     fun saveExpense(
@@ -137,23 +142,6 @@ class ExpenseService(
 
             throw SystemErrorCode.DATABASE_ERROR.exception(
                 customMessage = "Ошибка при удалении расхода $expenseId",
-                cause = e,
-            )
-        }
-
-    private fun updateExpense(
-        userId: Long,
-        expenseId: UUID,
-        transform: (Expense) -> Expense,
-    ): Expense? =
-        try {
-            val existingExpense = expenseRepository.findByIdForUser(expenseId, userId) ?: return null
-            expenseRepository.updateForUser(transform(existingExpense), userId)
-        } catch (e: DataAccessException) {
-            logger.error("Failed to update expense $expenseId for user $userId", e)
-
-            throw SystemErrorCode.DATABASE_ERROR.exception(
-                customMessage = "Ошибка при обновлении расхода $expenseId",
                 cause = e,
             )
         }
