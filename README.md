@@ -59,10 +59,10 @@ src/test/kotlin/me/kmozze/expensetracker/
 
 Нужны JDK 21, Docker и Telegram bot token от BotFather.
 
-1. Поднять PostgreSQL:
+1. Поднять локальный PostgreSQL:
 
 ```bash
-docker compose up -d
+docker compose up -d postgres
 ```
 
 2. Экспортировать переменные окружения:
@@ -96,6 +96,65 @@ export BOT_TOKEN=<bot_token>
 
 Если этот же бот уже запущен в другом месте, long polling может конфликтовать. Для ручной проверки нужен один активный экземпляр.
 
+## Docker-запуск приложения
+
+Для запуска приложения в контейнере нужен реальный `BOT_TOKEN`. Локальные значения можно задать через shell или через `.env`; сам `.env` игнорируется git.
+
+Минимальный пример `.env`:
+
+```env
+BOT_TOKEN=<bot_token>
+POSTGRES_DB=expense_db
+DB_USER=user
+DB_PASSWORD=password
+```
+
+Запуск приложения вместе с PostgreSQL:
+
+```bash
+docker compose up --build
+```
+
+Если нужен только локальный PostgreSQL для запуска приложения через Gradle или для тестов:
+
+```bash
+docker compose up -d postgres
+```
+
+Health endpoint доступен на порту приложения:
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+Ожидаемый успешный ответ:
+
+```json
+{"status":"UP"}
+```
+
+Для остановки контейнеров:
+
+```bash
+docker compose down
+```
+
+Если этот же Telegram-бот уже запущен в другом месте, long polling может конфликтовать. Для smoke-check нужен один активный экземпляр с этим токеном.
+
+## Конфигурация запуска
+
+Приложение читает настройки из переменных окружения:
+
+| Переменная | Назначение | Локальное значение по умолчанию |
+| --- | --- | --- |
+| `BOT_TOKEN` | Telegram bot token; секрет, обязателен для запуска приложения | нет |
+| `DB_URL` | JDBC URL PostgreSQL без логина/пароля для обычного запуска через Gradle | нет |
+| `DB_USER` | Пользователь PostgreSQL | `user` |
+| `DB_PASSWORD` | Пароль PostgreSQL; секрет вне локального окружения | `password` |
+| `POSTGRES_DB` | Имя локальной БД в Docker Compose | `expense_db` |
+
+Docker Compose задает app-контейнеру внутренний `DB_URL` вида `jdbc:postgresql://postgres:5432/<POSTGRES_DB>`. Значения `user/password` предназначены только для локального Docker Compose. Для серверного окружения с уже развернутой БД нужен отдельный deploy-конфиг без локального `postgres` service.
+
 ## jOOQ
 
 jOOQ-код генерируется в:
@@ -125,7 +184,7 @@ build/generated-sources/jooq
 Перед полным прогоном тестов стоит поднять Docker/Postgres:
 
 ```bash
-docker compose up -d
+docker compose up -d postgres
 ./gradlew test
 ```
 
@@ -138,12 +197,18 @@ docker compose up -d
 Перед PR также стоит проверить, что приложение стартует:
 
 ```bash
-docker compose up -d
+docker compose up -d postgres
 ./gradlew jooqCodegen
 ./gradlew bootRun
 ```
 
 `jooqCodegen` нужен при первом локальном запуске, после очистки `build/` и после изменений схемы. Для этой проверки должны быть выставлены `DB_URL`, `DB_USER`, `DB_PASSWORD` и `BOT_TOKEN`. Успешный smoke-check - приложение стартовало без ошибок Spring context / Liquibase / Telegram long polling.
+
+Для проверки Docker runtime без запуска Telegram long polling можно собрать image:
+
+```bash
+docker compose build app
+```
 
 ## Текущие ограничения
 

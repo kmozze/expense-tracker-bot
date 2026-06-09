@@ -1,0 +1,16 @@
+.git
+.gradle
+build
+out
+bin
+
+.idea
+*.iws
+*.iml
+*.ipr
+
+.env
+.env.*
+
+.DS_Store
+Thumbs.db

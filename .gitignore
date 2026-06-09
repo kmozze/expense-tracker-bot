@@ -5,6 +5,11 @@ build/
 /out/
 /bin/
 
+### Local Environment ###
+.env
+.env.*
+!.env.example
+
 ### IntelliJ IDEA ###
 .idea/
 *.iws
