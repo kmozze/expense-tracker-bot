@@ -10,7 +10,7 @@ import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.handler.statehandler.AwaitingExpenseDateEditManualInputHandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
-import me.kmozze.expensetracker.model.domain.HandlerResult
+import me.kmozze.expensetracker.model.domain.HandlerResponse
 import me.kmozze.expensetracker.model.domain.Money
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserState
@@ -53,19 +53,19 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
 
         val result = handle(UserCommand.PlainText(MANUAL_DATE_TEXT))
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
-        assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.response.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
+        assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
+        assertThat(result.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY.name,
                     expenseDate = MANUAL_DATE,
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.outgoingMessages[1].actions)
+        assertThat(result.outgoingMessages[1].actions)
             .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.parseExpenseDate(MANUAL_DATE_TEXT) }
@@ -82,12 +82,12 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
         val result = handle(UserCommand.PlainText("31.02.2026"))
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.Error(BusinessErrorCode.EXPENSE_DATE_INVALID_FORMAT))
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowCancel)
@@ -103,22 +103,19 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
 
         val result = handle(UserCommand.RequestExpenseDeletion(EXPENSE_ID))
 
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .text,
-        ).isEqualTo(
-            BotText.EnterExpenseDateManually(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                description = EXPENSE_DESCRIPTION,
-            ),
-        )
-        assertThat(
-            result.response.outgoingMessages
-                .single()
-                .actions,
-        ).containsExactly(BotAction.ShowCancel)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text)
+            .isEqualTo(
+                BotText.ExpenseView(
+                    amount = EXPENSE_AMOUNT,
+                    categoryName = CATEGORY.name,
+                    expenseDate = EXPENSE_DATE,
+                    description = EXPENSE_DESCRIPTION,
+                ),
+            )
+        assertThat(result.outgoingMessages[0].actions).isEmpty()
+        assertThat(result.outgoingMessages[1].text).isEqualTo(BotText.EnterExpenseDateManually)
+        assertThat(result.outgoingMessages[1].actions).containsExactly(BotAction.ShowCancel)
         assertThat(result.nextState).isEqualTo(AWAITING_EXPENSE_DATE_EDIT_MANUAL_INPUT)
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
@@ -132,19 +129,19 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
 
         val result = handle(UserCommand.Cancel)
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
-        assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.response.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
+        assertThat(result.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY.name,
                     expenseDate = EXPENSE_DATE,
                     description = EXPENSE_DESCRIPTION,
                 ),
             )
-        assertThat(result.response.outgoingMessages[1].actions)
+        assertThat(result.outgoingMessages[1].actions)
             .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
@@ -152,7 +149,7 @@ class AwaitingExpenseDateEditManualInputHandlerTest {
         confirmVerified(expenseService, categoryService)
     }
 
-    private fun handle(command: UserCommand): HandlerResult =
+    private fun handle(command: UserCommand): HandlerResponse =
         handler.handle(
             input =
                 makeUserInput(

@@ -52,12 +52,12 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.AddExpenseInstructions)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).isEmpty()
@@ -74,12 +74,12 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.FeatureInProgress)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).isEmpty()
@@ -96,12 +96,12 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.UnknownCommand)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowMainMenu)
@@ -118,12 +118,12 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.SelectionExpired)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowMainMenu)
@@ -142,24 +142,19 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(
-            BotText.ExpenseDeletionConfirmation(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                expenseDate = EXPENSE_DATE,
-                description = EXPENSE_DESCRIPTION,
-            ),
+            EXPENSE_VIEW,
         )
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowExpenseDeletionConfirmation(EXPENSE_ID))
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .delivery,
         ).isEqualTo(ResponseDelivery.EditMessage(MESSAGE_ID))
@@ -180,30 +175,25 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages[0]
+            result.outgoingMessages[0]
                 .text,
         ).isEqualTo(
-            BotText.ExpenseEditable(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                expenseDate = EXPENSE_DATE,
-                description = EXPENSE_DESCRIPTION,
-            ),
+            EXPENSE_VIEW,
         )
         assertThat(
-            result.response.outgoingMessages[0]
+            result.outgoingMessages[0]
                 .actions,
         ).containsExactly(BotAction.ClearInlineKeyboard)
         assertThat(
-            result.response.outgoingMessages[0]
+            result.outgoingMessages[0]
                 .delivery,
         ).isEqualTo(ResponseDelivery.EditMessage(MESSAGE_ID))
         assertThat(
-            result.response.outgoingMessages[1]
+            result.outgoingMessages[1]
                 .text,
         ).isEqualTo(BotText.EditExpenseFieldSelection)
         assertThat(
-            result.response.outgoingMessages[1]
+            result.outgoingMessages[1]
                 .actions,
         ).containsExactly(BotAction.ShowExpenseEditFieldSelection)
         assertThat(result.nextState)
@@ -223,17 +213,17 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.ExpenseUnavailable)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ClearInlineKeyboard)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .delivery,
         ).isEqualTo(ResponseDelivery.EditMessage(MESSAGE_ID))
@@ -253,24 +243,19 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(
-            BotText.ExpenseSaved(
-                amount = EXPENSE_AMOUNT,
-                categoryName = CATEGORY.name,
-                expenseDate = EXPENSE_DATE,
-                description = EXPENSE_DESCRIPTION,
-            ),
+            EXPENSE_VIEW,
         )
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .delivery,
         ).isEqualTo(ResponseDelivery.EditMessage(MESSAGE_ID))
@@ -290,17 +275,17 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.ExpenseDeleted)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ClearInlineKeyboard)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .delivery,
         ).isEqualTo(ResponseDelivery.EditMessage(MESSAGE_ID))
@@ -319,17 +304,17 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.ExpenseUnavailable)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ClearInlineKeyboard)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .delivery,
         ).isEqualTo(ResponseDelivery.EditMessage(MESSAGE_ID))
@@ -348,17 +333,17 @@ class IdleStateHandlerTest {
             )
 
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .text,
         ).isEqualTo(BotText.ExpenseUnavailable)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .actions,
         ).containsExactly(BotAction.ClearInlineKeyboard)
         assertThat(
-            result.response.outgoingMessages
+            result.outgoingMessages
                 .single()
                 .delivery,
         ).isEqualTo(ResponseDelivery.EditMessage(MESSAGE_ID))
@@ -398,6 +383,13 @@ class IdleStateHandlerTest {
                 categoryId = CATEGORY_ID,
                 amount = EXPENSE_AMOUNT,
                 userId = USER_ID,
+                expenseDate = EXPENSE_DATE,
+                description = EXPENSE_DESCRIPTION,
+            )
+        val EXPENSE_VIEW: BotText.ExpenseView =
+            BotText.ExpenseView(
+                amount = EXPENSE_AMOUNT,
+                categoryName = CATEGORY.name,
                 expenseDate = EXPENSE_DATE,
                 description = EXPENSE_DESCRIPTION,
             )

@@ -3,7 +3,6 @@ package me.kmozze.expensetracker.handler.statehandler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -23,7 +22,7 @@ class AwaitingExpenseDescriptionEditHandler(
     override fun handle(
         input: UserInput,
         currentState: UserState,
-    ): HandlerResult {
+    ): HandlerResponse {
         require(currentState is UserState.AwaitingExpenseDescriptionEdit) {
             "AwaitingExpenseDescriptionEditHandler requires AwaitingExpenseDescriptionEdit state"
         }
@@ -46,7 +45,7 @@ class AwaitingExpenseDescriptionEditHandler(
         input: UserInput,
         currentState: UserState.AwaitingExpenseDescriptionEdit,
         descriptionText: String,
-    ): HandlerResult {
+    ): HandlerResponse {
         val normalizedDescription = descriptionText.trim()
         if (normalizedDescription.isEmpty()) {
             return repeatDescriptionInput(currentState)
@@ -68,21 +67,18 @@ class AwaitingExpenseDescriptionEditHandler(
             userId = input.userId,
             expenseId = updatedExpense.id,
             nextState = UserState.Idle,
-            prefixText = BotText.Done,
+            prefixText = BotText.ExpenseSaved,
         )
     }
 
-    private fun repeatDescriptionInput(currentState: UserState.AwaitingExpenseDescriptionEdit): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.EnterExpenseDescription,
-                                actions = listOf(BotAction.ShowCancel),
-                            ),
-                        ),
+    private fun repeatDescriptionInput(currentState: UserState.AwaitingExpenseDescriptionEdit): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = BotText.EnterExpenseDescription,
+                        actions = listOf(BotAction.ShowCancel),
+                    ),
                 ),
             nextState = currentState,
         )

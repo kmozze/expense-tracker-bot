@@ -3,7 +3,6 @@ package me.kmozze.expensetracker.handler
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserInput
 import me.kmozze.expensetracker.model.domain.UserState
@@ -17,7 +16,7 @@ class StartCommandHandler(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    fun handle(input: UserInput): HandlerResult {
+    fun handle(input: UserInput): HandlerResponse {
         val userId = input.userId
         logger.info("Initializing start sequence for user {}", userId)
 
@@ -25,20 +24,17 @@ class StartCommandHandler(
 
         val welcomeText = if (isFirstTime) BotText.WelcomeFirstTime else BotText.WelcomeBack
 
-        return HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = welcomeText,
-                                actions = listOf(BotAction.RemoveReplyKeyboard),
-                            ),
-                            OutgoingMessage(
-                                text = BotText.MainMenu,
-                                actions = listOf(BotAction.ShowMainMenu),
-                            ),
-                        ),
+        return HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = welcomeText,
+                        actions = listOf(BotAction.RemoveReplyKeyboard),
+                    ),
+                    OutgoingMessage(
+                        text = BotText.MainMenu,
+                        actions = listOf(BotAction.ShowMainMenu),
+                    ),
                 ),
             nextState = UserState.Idle,
         )

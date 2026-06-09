@@ -42,19 +42,19 @@ class ExpenseEditStateHelpersTest {
                 prefixText = BotText.Done,
             )
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
-        assertThat(result.response.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
-        assertThat(result.response.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.outgoingMessages[0].actions).containsExactly(BotAction.RemoveReplyKeyboard)
+        assertThat(result.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE.amount,
                     categoryName = CATEGORY.name,
                     expenseDate = EXPENSE.expenseDate,
                     description = EXPENSE.description,
                 ),
             )
-        assertThat(result.response.outgoingMessages[1].actions)
+        assertThat(result.outgoingMessages[1].actions)
             .containsExactly(BotAction.ShowExpenseCardActions(EXPENSE_ID))
         assertThat(result.nextState).isEqualTo(UserState.Idle)
 
@@ -66,7 +66,7 @@ class ExpenseEditStateHelpersTest {
     @Test
     fun `expense edit unavailable removes inline keyboard and reply keyboard`() {
         val result = expenseEditUnavailableResult()
-        val outgoingMessage = result.response.outgoingMessages.single()
+        val outgoingMessage = result.outgoingMessages.single()
 
         assertThat(outgoingMessage.text)
             .isEqualTo(BotText.ExpenseUnavailable)

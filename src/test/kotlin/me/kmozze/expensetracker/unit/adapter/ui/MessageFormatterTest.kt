@@ -53,23 +53,17 @@ class MessageFormatterTest {
     }
 
     @Test
-    fun `select category message omits description line when description is missing`() {
-        val text =
-            formatter.format(
-                BotText.SelectCategory(
-                    amount = Money.of(BigDecimal("500.00")),
-                    description = null,
-                ),
-            )
+    fun `select category prompt text`() {
+        val text = formatter.format(BotText.SelectCategory)
 
-        assertThat(text).isEqualTo("💰 *500.00 ₽*\n\nКуда запишем?")
+        assertThat(text).isEqualTo("Куда запишем?")
     }
 
     @Test
-    fun `saved expense message omits description line when description is missing`() {
+    fun `expense card omits description line when description is missing`() {
         val text =
             formatter.format(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = Money.of(BigDecimal("500.00")),
                     categoryName = "Еда",
                     expenseDate = LocalDate.parse("2026-05-24"),
@@ -78,14 +72,14 @@ class MessageFormatterTest {
             )
 
         assertThat(text)
-            .isEqualTo("✅ Сохранено!\n💰 Сумма: 500.00 ₽\n📂 Категория: Еда\n📅 Дата: 24.05.2026")
+            .isEqualTo("💰 Сумма: 500.00 ₽\n📂 Категория: Еда\n📅 Дата: 24.05.2026")
     }
 
     @Test
-    fun `expense deletion confirmation includes card and question`() {
+    fun `expense card renders non-null fields in stable order`() {
         val text =
             formatter.format(
-                BotText.ExpenseDeletionConfirmation(
+                BotText.ExpenseView(
                     amount = Money.of(BigDecimal("500.00")),
                     categoryName = "Еда",
                     expenseDate = LocalDate.parse("2026-05-24"),
@@ -95,12 +89,10 @@ class MessageFormatterTest {
 
         assertThat(text)
             .isEqualTo(
-                "✅ Сохранено!\n" +
-                    "💰 Сумма: 500.00 ₽\n" +
+                "💰 Сумма: 500.00 ₽\n" +
                     "📂 Категория: Еда\n" +
                     "📅 Дата: 24.05.2026\n" +
-                    "📝 обед\n\n" +
-                    "Точно хотите удалить расход?",
+                    "📝 обед",
             )
     }
 
@@ -111,60 +103,24 @@ class MessageFormatterTest {
     }
 
     @Test
-    fun `select expense date message includes category and description`() {
-        val text =
-            formatter.format(
-                BotText.SelectExpenseDate(
-                    amount = Money.of(BigDecimal("500.00")),
-                    categoryName = "Транспорт",
-                    description = "такси",
-                ),
-            )
+    fun `select expense date prompt text`() {
+        val text = formatter.format(BotText.SelectExpenseDate)
 
-        assertThat(text)
-            .isEqualTo("💰 Сумма: 500.00 ₽\n📂 Категория: Транспорт\n📝 такси\n\nКогда была трата?")
+        assertThat(text).isEqualTo("Когда была трата?")
     }
 
     @Test
-    fun `manual expense date message includes input format`() {
-        val text =
-            formatter.format(
-                BotText.EnterExpenseDateManually(
-                    amount = Money.of(BigDecimal("500.00")),
-                    categoryName = "Транспорт",
-                    description = null,
-                ),
-            )
+    fun `manual expense date prompt text`() {
+        val text = formatter.format(BotText.EnterExpenseDateManually)
 
-        assertThat(text)
-            .isEqualTo(
-                "💰 Сумма: 500.00 ₽\n" +
-                    "📂 Категория: Транспорт\n\n" +
-                    "Введите дату траты в формате ДД.ММ.ГГГГ.",
-            )
+        assertThat(text).isEqualTo("Введите дату траты в формате ДД.ММ.ГГГГ.")
     }
 
     @Test
-    fun `editable expense message adds edit hint`() {
-        val text =
-            formatter.format(
-                BotText.ExpenseEditable(
-                    amount = Money.of(BigDecimal("500.00")),
-                    categoryName = "Транспорт",
-                    expenseDate = LocalDate.parse("2026-05-24"),
-                    description = "такси",
-                ),
-            )
+    fun `expense saved status text`() {
+        val text = formatter.format(BotText.ExpenseSaved)
 
-        assertThat(text)
-            .isEqualTo(
-                "✅ Сохранено!\n" +
-                    "💰 Сумма: 500.00 ₽\n" +
-                    "📂 Категория: Транспорт\n" +
-                    "📅 Дата: 24.05.2026\n" +
-                    "📝 такси\n\n" +
-                    "Эта карточка открыта для редактирования ниже.",
-            )
+        assertThat(text).isEqualTo("✅ Сохранено!")
     }
 
     @Test

@@ -5,7 +5,6 @@ import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserState
 import org.slf4j.LoggerFactory
@@ -18,7 +17,7 @@ class ErrorHandler {
     fun handle(
         userId: Long,
         exception: Exception,
-    ): HandlerResult {
+    ): HandlerResponse {
         val errorMessage =
             when (exception) {
                 is AppException -> {
@@ -31,16 +30,13 @@ class ErrorHandler {
                 }
             }
 
-        return HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = errorMessage,
-                                actions = listOf(BotAction.ShowMainMenu),
-                            ),
-                        ),
+        return HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = errorMessage,
+                        actions = listOf(BotAction.ShowMainMenu),
+                    ),
                 ),
             nextState = UserState.Idle,
         )

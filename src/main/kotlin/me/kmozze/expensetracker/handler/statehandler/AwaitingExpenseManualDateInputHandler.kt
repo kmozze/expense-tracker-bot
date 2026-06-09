@@ -6,7 +6,6 @@ import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -26,7 +25,7 @@ class AwaitingExpenseManualDateInputHandler(
     override fun handle(
         input: UserInput,
         currentState: UserState,
-    ): HandlerResult {
+    ): HandlerResponse {
         require(currentState is UserState.AwaitingExpenseManualDateInput) {
             "AwaitingExpenseManualDateInputHandler requires AwaitingExpenseManualDateInput state"
         }
@@ -56,7 +55,7 @@ class AwaitingExpenseManualDateInputHandler(
         input: UserInput,
         currentState: UserState.AwaitingExpenseManualDateInput,
         dateText: String,
-    ): HandlerResult {
+    ): HandlerResponse {
         val expenseDate =
             try {
                 expenseService.parseExpenseDate(dateText)
@@ -71,7 +70,7 @@ class AwaitingExpenseManualDateInputHandler(
         input: UserInput,
         currentState: UserState.AwaitingExpenseManualDateInput,
         expenseDate: LocalDate,
-    ): HandlerResult {
+    ): HandlerResponse {
         val expenseDraft = currentState.expenseDraft.copy(expenseDate = expenseDate)
         val expense = expenseService.saveExpense(input.userId, expenseDraft)
 
@@ -83,17 +82,18 @@ class AwaitingExpenseManualDateInputHandler(
         )
     }
 
-    private fun repeatManualDateInput(currentState: UserState.AwaitingExpenseManualDateInput): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = currentState.toEnterExpenseDateManuallyMessage(),
-                                actions = listOf(BotAction.ShowCancel),
-                            ),
-                        ),
+    private fun repeatManualDateInput(currentState: UserState.AwaitingExpenseManualDateInput): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = currentState.expenseDraft.toExpenseView(categoryName = currentState.categoryName),
+                        actions = emptyList(),
+                    ),
+                    OutgoingMessage(
+                        text = BotText.EnterExpenseDateManually,
+                        actions = listOf(BotAction.ShowCancel),
+                    ),
                 ),
             nextState = currentState,
         )
@@ -101,41 +101,28 @@ class AwaitingExpenseManualDateInputHandler(
     private fun manualDateInputError(
         currentState: UserState.AwaitingExpenseManualDateInput,
         errorCode: ErrorCode,
-    ): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.Error(errorCode),
-                                actions = listOf(BotAction.ShowCancel),
-                            ),
-                        ),
+    ): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = BotText.Error(errorCode),
+                        actions = listOf(BotAction.ShowCancel),
+                    ),
                 ),
             nextState = currentState,
         )
 
-    private fun cancelExpenseCreation(): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.ExpenseCanceled,
-                                actions = listOf(BotAction.RemoveReplyKeyboard),
-                            ),
-                        ),
+    private fun cancelExpenseCreation(): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = BotText.ExpenseCanceled,
+                        actions = listOf(BotAction.RemoveReplyKeyboard),
+                    ),
                 ),
             nextState = UserState.Idle,
-        )
-
-    private fun UserState.AwaitingExpenseManualDateInput.toEnterExpenseDateManuallyMessage(): BotText.EnterExpenseDateManually =
-        BotText.EnterExpenseDateManually(
-            amount = expenseDraft.amount,
-            categoryName = categoryName,
-            description = expenseDraft.description,
         )
 
     private fun expenseSavedResult(
@@ -143,27 +130,18 @@ class AwaitingExpenseManualDateInputHandler(
         expenseId: UUID,
         categoryName: String,
         expenseDate: LocalDate,
-    ): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.Done,
-                                actions = listOf(BotAction.RemoveReplyKeyboard),
-                            ),
-                            OutgoingMessage(
-                                text =
-                                    BotText.ExpenseSaved(
-                                        amount = expenseDraft.amount,
-                                        categoryName = categoryName,
-                                        expenseDate = expenseDate,
-                                        description = expenseDraft.description,
-                                    ),
-                                actions = listOf(BotAction.ShowExpenseCardActions(expenseId)),
-                            ),
-                        ),
+    ): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = BotText.ExpenseSaved,
+                        actions = listOf(BotAction.RemoveReplyKeyboard),
+                    ),
+                    OutgoingMessage(
+                        text = expenseDraft.toExpenseView(categoryName = categoryName, expenseDate = expenseDate),
+                        actions = listOf(BotAction.ShowExpenseCardActions(expenseId)),
+                    ),
                 ),
             nextState = UserState.Idle,
         )

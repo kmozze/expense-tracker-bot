@@ -53,10 +53,10 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Today))
 
-        assertThat(result.response.outgoingMessages).hasSize(2)
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
-        assertThat(result.response.outgoingMessages[1].text).isEqualTo(
-            BotText.ExpenseSaved(
+        assertThat(result.outgoingMessages).hasSize(2)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.ExpenseSaved)
+        assertThat(result.outgoingMessages[1].text).isEqualTo(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT,
                 categoryName = CATEGORY.name,
                 expenseDate = TODAY,
@@ -79,9 +79,9 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.Yesterday))
 
-        assertThat(result.response.outgoingMessages[1].text)
+        assertThat(result.outgoingMessages[1].text)
             .isEqualTo(
-                BotText.ExpenseSaved(
+                BotText.ExpenseView(
                     amount = EXPENSE_AMOUNT,
                     categoryName = CATEGORY.name,
                     expenseDate = yesterday,
@@ -102,15 +102,19 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
 
         val result = handle(UserCommand.SelectExpenseDate(ExpenseDateChoice.ManualInput))
 
-        val outgoingMessages = result.response.outgoingMessages
-        assertThat(outgoingMessages.single().text).isEqualTo(
-            BotText.EnterExpenseDateManually(
+        val outgoingMessages = result.outgoingMessages
+        assertThat(outgoingMessages).hasSize(2)
+        assertThat(outgoingMessages[0].text).isEqualTo(
+            BotText.ExpenseView(
                 amount = EXPENSE_AMOUNT,
                 categoryName = CATEGORY.name,
+                expenseDate = TODAY,
                 description = EXPENSE.description,
             ),
         )
-        assertThat(outgoingMessages.single().actions).containsExactly(BotAction.ShowCancel)
+        assertThat(outgoingMessages[0].actions).isEmpty()
+        assertThat(outgoingMessages[1].text).isEqualTo(BotText.EnterExpenseDateManually)
+        assertThat(outgoingMessages[1].actions).containsExactly(BotAction.ShowCancel)
         assertThat(result.nextState).isEqualTo(UserState.AwaitingExpenseDateEditManualInput(expenseId = EXPENSE_ID))
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }
@@ -122,7 +126,7 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
         every { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) } returns EXPENSE
         val result = handle(UserCommand.PlainText("завтра"))
 
-        val outgoingMessages = result.response.outgoingMessages
+        val outgoingMessages = result.outgoingMessages
         assertThat(outgoingMessages.single().text).isEqualTo(
             BotText.Error(BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION),
         )
@@ -140,7 +144,7 @@ class AwaitingExpenseDateEditSelectionHandlerTest {
 
         val result = handle(UserCommand.Cancel)
 
-        assertThat(result.response.outgoingMessages[0].text).isEqualTo(BotText.Done)
+        assertThat(result.outgoingMessages[0].text).isEqualTo(BotText.Done)
         assertThat(result.nextState).isEqualTo(UserState.Idle)
         verify(exactly = 1) { expenseService.findExpenseForUser(USER_ID, EXPENSE_ID) }
         verify(exactly = 1) { categoryService.findCategoryForUser(CATEGORY_ID, USER_ID) }

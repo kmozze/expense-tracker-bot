@@ -4,7 +4,6 @@ import me.kmozze.expensetracker.exception.BusinessException
 import me.kmozze.expensetracker.model.domain.BotAction
 import me.kmozze.expensetracker.model.domain.BotText
 import me.kmozze.expensetracker.model.domain.HandlerResponse
-import me.kmozze.expensetracker.model.domain.HandlerResult
 import me.kmozze.expensetracker.model.domain.OutgoingMessage
 import me.kmozze.expensetracker.model.domain.UserCommand
 import me.kmozze.expensetracker.model.domain.UserInput
@@ -24,7 +23,7 @@ class AwaitingExpenseAmountEditHandler(
     override fun handle(
         input: UserInput,
         currentState: UserState,
-    ): HandlerResult {
+    ): HandlerResponse {
         require(currentState is UserState.AwaitingExpenseAmountEdit) {
             "AwaitingExpenseAmountEditHandler requires AwaitingExpenseAmountEdit state"
         }
@@ -47,21 +46,18 @@ class AwaitingExpenseAmountEditHandler(
         input: UserInput,
         currentState: UserState.AwaitingExpenseAmountEdit,
         amountText: String,
-    ): HandlerResult {
+    ): HandlerResponse {
         val amount =
             try {
                 expenseService.parseExpenseAmount(amountText)
             } catch (e: BusinessException) {
-                return HandlerResult(
-                    response =
-                        HandlerResponse(
-                            outgoingMessages =
-                                listOf(
-                                    OutgoingMessage(
-                                        text = BotText.Error(e.errorCode),
-                                        actions = listOf(BotAction.ShowCancel),
-                                    ),
-                                ),
+                return HandlerResponse(
+                    outgoingMessages =
+                        listOf(
+                            OutgoingMessage(
+                                text = BotText.Error(e.errorCode),
+                                actions = listOf(BotAction.ShowCancel),
+                            ),
                         ),
                     nextState = UserState.AwaitingExpenseAmountEdit(currentState.expenseId),
                 )
@@ -78,21 +74,18 @@ class AwaitingExpenseAmountEditHandler(
             userId = input.userId,
             expenseId = updatedExpense.id,
             nextState = UserState.Idle,
-            prefixText = BotText.Done,
+            prefixText = BotText.ExpenseSaved,
         )
     }
 
-    private fun repeatAmountInput(currentState: UserState.AwaitingExpenseAmountEdit): HandlerResult =
-        HandlerResult(
-            response =
-                HandlerResponse(
-                    outgoingMessages =
-                        listOf(
-                            OutgoingMessage(
-                                text = BotText.EnterExpenseAmount,
-                                actions = listOf(BotAction.ShowCancel),
-                            ),
-                        ),
+    private fun repeatAmountInput(currentState: UserState.AwaitingExpenseAmountEdit): HandlerResponse =
+        HandlerResponse(
+            outgoingMessages =
+                listOf(
+                    OutgoingMessage(
+                        text = BotText.EnterExpenseAmount,
+                        actions = listOf(BotAction.ShowCancel),
+                    ),
                 ),
             nextState = currentState,
         )
