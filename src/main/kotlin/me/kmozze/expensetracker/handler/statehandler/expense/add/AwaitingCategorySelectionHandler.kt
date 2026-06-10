@@ -39,29 +39,7 @@ class AwaitingCategorySelectionHandler(
                     currentState = currentState,
                     categoryName = command.value,
                 )
-            UserCommand.Unsupported,
-            UserCommand.Start,
-            UserCommand.Menu,
-            UserCommand.AddExpense,
-            UserCommand.ViewExpenses,
-            UserCommand.Categories,
-            UserCommand.Statistics,
-            UserCommand.FinishExpenseEdit,
-            is UserCommand.RequestExpenseEdit,
-            is UserCommand.RequestExpenseDeletion,
-            is UserCommand.ConfirmExpenseDeletion,
-            is UserCommand.CancelExpenseDeletion,
-            is UserCommand.SelectExpenseDate,
-            is UserCommand.SelectExpenseEditField,
-            is UserCommand.RequestExpenseListPeriodSelection,
-            is UserCommand.RequestExpenseListCategorySelection,
-            is UserCommand.SelectExpenseListPeriod,
-            is UserCommand.SelectExpenseListCategory,
-            is UserCommand.ShowExpenseList,
-            is UserCommand.OpenExpenseFromList,
-            UserCommand.InvalidExpenseAction,
-            UserCommand.InvalidExpenseListAction,
-            -> repeatCategorySelection(input, currentState)
+            else -> repeatCategorySelection(input, currentState)
         }
     }
 
