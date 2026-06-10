@@ -2,6 +2,7 @@ package me.kmozze.expensetracker.model.domain.bot
 
 import me.kmozze.expensetracker.model.domain.expense.ExpenseDateChoice
 import me.kmozze.expensetracker.model.domain.expense.ExpenseEditField
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListFilter
 import java.util.UUID
 
 sealed class UserCommand {
@@ -20,6 +21,32 @@ sealed class UserCommand {
     data object Cancel : UserCommand()
 
     data object FinishExpenseEdit : UserCommand()
+
+    data class RequestExpenseListPeriodSelection(
+        val filter: ExpenseListFilter,
+    ) : UserCommand()
+
+    data class RequestExpenseListCategorySelection(
+        val filter: ExpenseListFilter,
+    ) : UserCommand()
+
+    data class SelectExpenseListPeriod(
+        val filter: ExpenseListFilter,
+    ) : UserCommand()
+
+    data class SelectExpenseListCategory(
+        val filter: ExpenseListFilter,
+    ) : UserCommand()
+
+    data class ShowExpenseList(
+        val filter: ExpenseListFilter,
+        val page: Int,
+        val shouldEditCurrentMessage: Boolean = false,
+    ) : UserCommand()
+
+    data class OpenExpenseFromList(
+        val expenseId: UUID,
+    ) : UserCommand()
 
     data class RequestExpenseEdit(
         val expenseId: UUID,
@@ -46,6 +73,8 @@ sealed class UserCommand {
     ) : UserCommand()
 
     data object InvalidExpenseAction : UserCommand()
+
+    data object InvalidExpenseListAction : UserCommand()
 
     data class PlainText(
         val value: String,

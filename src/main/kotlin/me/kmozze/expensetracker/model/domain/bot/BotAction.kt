@@ -1,5 +1,8 @@
 package me.kmozze.expensetracker.model.domain.bot
 
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListCategoryOption
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListFilter
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListPage
 import java.util.UUID
 
 sealed class BotAction {
@@ -19,6 +22,23 @@ sealed class BotAction {
 
     data class ShowExpenseDeletionConfirmation(
         val expenseId: UUID,
+    ) : BotAction()
+
+    data class ShowExpenseListSettings(
+        val filter: ExpenseListFilter,
+    ) : BotAction()
+
+    data class ShowExpenseListPeriodSelection(
+        val filter: ExpenseListFilter,
+    ) : BotAction()
+
+    data class ShowExpenseListCategorySelection(
+        val filter: ExpenseListFilter,
+        val categories: List<ExpenseListCategoryOption>,
+    ) : BotAction()
+
+    data class ShowExpenseListPage(
+        val page: ExpenseListPage,
     ) : BotAction()
 
     data object ShowExpenseEditFieldSelection : BotAction()

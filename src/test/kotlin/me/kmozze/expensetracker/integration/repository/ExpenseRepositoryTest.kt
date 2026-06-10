@@ -105,4 +105,38 @@ class ExpenseRepositoryTest : AbstractIntegrationTest() {
         assertThat(deletedForOwner).isTrue()
         assertThat(expenseRepository.findByIdForUser(expenseId, 40001L)).isNull()
     }
+
+    @Test
+    fun `find list items uses expense date category filter projection and pagination`() {
+        val categoryId = UUID.fromString("00000000-0000-0000-0000-000000000003")
+
+        val result =
+            expenseRepository.findListItemsForUser(
+                userId = 40001L,
+                from = LocalDate.parse("2026-05-20"),
+                to = LocalDate.parse("2026-05-21"),
+                categoryId = categoryId,
+                limit = 1,
+                offset = 0,
+            )
+        val count =
+            expenseRepository.countListItemsForUser(
+                userId = 40001L,
+                from = LocalDate.parse("2026-05-20"),
+                to = LocalDate.parse("2026-05-21"),
+                categoryId = categoryId,
+            )
+
+        assertThat(result).hasSize(1)
+        assertThat(result.single().expenseId).isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000108"))
+        assertThat(result.single().categoryName).isEqualTo("Транспорт")
+        assertThat(
+            result
+                .single()
+                .amount
+                .value
+                .toPlainString(),
+        ).isEqualTo("800.00")
+        assertThat(count).isEqualTo(2)
+    }
 }

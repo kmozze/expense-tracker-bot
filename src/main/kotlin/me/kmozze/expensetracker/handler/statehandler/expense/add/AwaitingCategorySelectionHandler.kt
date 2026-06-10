@@ -53,7 +53,14 @@ class AwaitingCategorySelectionHandler(
             is UserCommand.CancelExpenseDeletion,
             is UserCommand.SelectExpenseDate,
             is UserCommand.SelectExpenseEditField,
+            is UserCommand.RequestExpenseListPeriodSelection,
+            is UserCommand.RequestExpenseListCategorySelection,
+            is UserCommand.SelectExpenseListPeriod,
+            is UserCommand.SelectExpenseListCategory,
+            is UserCommand.ShowExpenseList,
+            is UserCommand.OpenExpenseFromList,
             UserCommand.InvalidExpenseAction,
+            UserCommand.InvalidExpenseListAction,
             -> repeatCategorySelection(input, currentState)
         }
     }

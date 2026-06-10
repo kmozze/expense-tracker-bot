@@ -4,6 +4,8 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.exception
 import me.kmozze.expensetracker.model.domain.expense.ExpenseDraft
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListFilter
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListPage
 import me.kmozze.expensetracker.model.domain.expense.Money
 import me.kmozze.expensetracker.model.entity.Expense
 import me.kmozze.expensetracker.repository.ICategoryRepository
@@ -15,6 +17,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.LocalDate
 import java.util.UUID
 
@@ -24,6 +27,7 @@ class ExpenseService(
     private val expenseDateParser: InputExpenseDateParsingService,
     private val expenseRepository: IExpenseRepository,
     private val categoryRepository: ICategoryRepository,
+    private val clock: Clock,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -68,6 +72,65 @@ class ExpenseService(
                 cause = e,
             )
         }
+
+    fun getExpenseListPageForUser(
+        userId: Long,
+        filter: ExpenseListFilter,
+        page: Int,
+        pageSize: Int,
+    ): ExpenseListPage {
+        require(page >= 0) {
+            "Expense list page must not be negative"
+        }
+        require(pageSize > 0) {
+            "Expense list page size must be positive"
+        }
+
+        return try {
+            val dateRange = filter.period.dateRange(LocalDate.now(clock))
+            val totalCount =
+                expenseRepository.countListItemsForUser(
+                    userId = userId,
+                    from = dateRange.from,
+                    to = dateRange.to,
+                    categoryId = filter.categoryId,
+                )
+            val effectivePage =
+                if (totalCount == 0) {
+                    0
+                } else {
+                    minOf(page, (totalCount - 1) / pageSize)
+                }
+            val items =
+                if (totalCount == 0) {
+                    emptyList()
+                } else {
+                    expenseRepository.findListItemsForUser(
+                        userId = userId,
+                        from = dateRange.from,
+                        to = dateRange.to,
+                        categoryId = filter.categoryId,
+                        limit = pageSize,
+                        offset = effectivePage * pageSize,
+                    )
+                }
+
+            ExpenseListPage(
+                filter = filter,
+                items = items,
+                page = effectivePage,
+                pageSize = pageSize,
+                totalCount = totalCount,
+            )
+        } catch (e: DataAccessException) {
+            logger.error("Failed to load expense list for user $userId with filter $filter", e)
+
+            throw SystemErrorCode.DATABASE_ERROR.exception(
+                customMessage = "Ошибка при получении списка расходов пользователя $userId",
+                cause = e,
+            )
+        }
+    }
 
     @Transactional
     fun updateExpenseFromDraftForUser(

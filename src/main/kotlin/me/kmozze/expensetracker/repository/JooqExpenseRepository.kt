@@ -1,11 +1,15 @@
 package me.kmozze.expensetracker.repository
 
 import me.kmozze.expense.tracker.jooq.tables.records.ExpenseRecord
+import me.kmozze.expense.tracker.jooq.tables.references.CATEGORY
 import me.kmozze.expense.tracker.jooq.tables.references.EXPENSE
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListItem
 import me.kmozze.expensetracker.model.domain.expense.Money
 import me.kmozze.expensetracker.model.entity.Expense
+import org.jooq.Condition
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -89,10 +93,65 @@ class JooqExpenseRepository(
             .fetch()
             .map { it.toDomain() }
 
+    override fun findListItemsForUser(
+        userId: Long,
+        from: LocalDate?,
+        to: LocalDate?,
+        categoryId: UUID?,
+        limit: Int,
+        offset: Int,
+    ): List<ExpenseListItem> =
+        dsl
+            .select(
+                EXPENSE.ID,
+                EXPENSE.EXPENSE_DATE,
+                CATEGORY.NAME,
+                EXPENSE.AMOUNT,
+            ).from(EXPENSE)
+            .join(CATEGORY)
+            .on(CATEGORY.ID.eq(EXPENSE.CATEGORY_ID))
+            .where(expenseListConditions(userId, from, to, categoryId))
+            .orderBy(EXPENSE.EXPENSE_DATE.desc(), EXPENSE.CREATED_AT.desc(), EXPENSE.ID.desc())
+            .limit(limit)
+            .offset(offset)
+            .fetch { record ->
+                ExpenseListItem(
+                    expenseId = requireNotNull(record.get(EXPENSE.ID)),
+                    expenseDate = requireNotNull(record.get(EXPENSE.EXPENSE_DATE)),
+                    categoryName = requireNotNull(record.get(CATEGORY.NAME)),
+                    amount = Money.of(requireNotNull(record.get(EXPENSE.AMOUNT))),
+                )
+            }
+
+    override fun countListItemsForUser(
+        userId: Long,
+        from: LocalDate?,
+        to: LocalDate?,
+        categoryId: UUID?,
+    ): Int =
+        dsl
+            .selectCount()
+            .from(EXPENSE)
+            .where(expenseListConditions(userId, from, to, categoryId))
+            .fetchOne(0, Int::class.java) ?: 0
+
     override fun existsByCategoryId(categoryId: UUID): Boolean =
         dsl.fetchExists(
             dsl
                 .selectFrom(EXPENSE)
                 .where(EXPENSE.CATEGORY_ID.eq(categoryId)),
         )
+
+    private fun expenseListConditions(
+        userId: Long,
+        from: LocalDate?,
+        to: LocalDate?,
+        categoryId: UUID?,
+    ): List<Condition> =
+        buildList {
+            add(EXPENSE.USER_ID.eq(userId))
+            from?.let { add(EXPENSE.EXPENSE_DATE.ge(it)) }
+            to?.let { add(EXPENSE.EXPENSE_DATE.le(it)) }
+            categoryId?.let { add(EXPENSE.CATEGORY_ID.eq(it)) }
+        }
 }

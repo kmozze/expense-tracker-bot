@@ -12,6 +12,9 @@ import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.exception.SystemException
 import me.kmozze.expensetracker.model.domain.expense.ExpenseDraft
 import me.kmozze.expensetracker.model.domain.expense.ExpenseDraftCategory
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListFilter
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListItem
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListPeriod
 import me.kmozze.expensetracker.model.domain.expense.Money
 import me.kmozze.expensetracker.model.entity.Category
 import me.kmozze.expensetracker.model.entity.Expense
@@ -28,8 +31,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.math.BigDecimal
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.util.UUID
 
 @ExtendWith(MockKExtension::class)
@@ -48,6 +54,7 @@ class ExpenseServiceTest {
                 expenseDateParser = expenseDateParser,
                 expenseRepository = expenseRepository,
                 categoryRepository = categoryRepository,
+                clock = CLOCK,
             )
     }
 
@@ -114,6 +121,178 @@ class ExpenseServiceTest {
         assertEquals(cause, exception.cause)
         verify(exactly = 1) { expenseRepository.findByIdForUser(expenseId, userId) }
         confirmVerified(expenseTextParser, expenseDateParser, expenseRepository)
+    }
+
+    @Test
+    fun `get expense list page uses rolling week by expense date and requested pagination`() {
+        val userId = 123L
+        val filter =
+            ExpenseListFilter(
+                period = ExpenseListPeriod.Week,
+                categoryId = CATEGORY_ID,
+            )
+        val item =
+            ExpenseListItem(
+                expenseId = UUID.randomUUID(),
+                expenseDate = LocalDate.parse("2026-06-10"),
+                categoryName = "Транспорт",
+                amount = EXPENSE_AMOUNT,
+            )
+        every {
+            expenseRepository.countListItemsForUser(
+                userId = userId,
+                from = LocalDate.parse("2026-06-04"),
+                to = LocalDate.parse("2026-06-10"),
+                categoryId = CATEGORY_ID,
+            )
+        } returns 11
+        every {
+            expenseRepository.findListItemsForUser(
+                userId = userId,
+                from = LocalDate.parse("2026-06-04"),
+                to = LocalDate.parse("2026-06-10"),
+                categoryId = CATEGORY_ID,
+                limit = 10,
+                offset = 10,
+            )
+        } returns listOf(item)
+
+        val result =
+            service.getExpenseListPageForUser(
+                userId = userId,
+                filter = filter,
+                page = 1,
+                pageSize = 10,
+            )
+
+        assertEquals(filter, result.filter)
+        assertEquals(listOf(item), result.items)
+        assertEquals(1, result.page)
+        assertEquals(10, result.pageSize)
+        assertEquals(11, result.totalCount)
+        verify(exactly = 1) {
+            expenseRepository.countListItemsForUser(
+                userId = userId,
+                from = LocalDate.parse("2026-06-04"),
+                to = LocalDate.parse("2026-06-10"),
+                categoryId = CATEGORY_ID,
+            )
+        }
+        verify(exactly = 1) {
+            expenseRepository.findListItemsForUser(
+                userId = userId,
+                from = LocalDate.parse("2026-06-04"),
+                to = LocalDate.parse("2026-06-10"),
+                categoryId = CATEGORY_ID,
+                limit = 10,
+                offset = 10,
+            )
+        }
+    }
+
+    @Test
+    fun `get expense list page uses no date boundaries for all time and skips item query when empty`() {
+        val userId = 123L
+        val filter = ExpenseListFilter(period = ExpenseListPeriod.AllTime)
+        every {
+            expenseRepository.countListItemsForUser(
+                userId = userId,
+                from = null,
+                to = null,
+                categoryId = null,
+            )
+        } returns 0
+
+        val result =
+            service.getExpenseListPageForUser(
+                userId = userId,
+                filter = filter,
+                page = 0,
+                pageSize = 10,
+            )
+
+        assertEquals(emptyList<ExpenseListItem>(), result.items)
+        assertEquals(0, result.totalCount)
+        verify(exactly = 1) { expenseRepository.countListItemsForUser(userId, null, null, null) }
+        verify(exactly = 0) { expenseRepository.findListItemsForUser(any(), any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `get expense list page clamps stale out of range page to last available page`() {
+        val userId = 123L
+        val filter =
+            ExpenseListFilter(
+                period = ExpenseListPeriod.Week,
+                categoryId = CATEGORY_ID,
+            )
+        val item =
+            ExpenseListItem(
+                expenseId = UUID.randomUUID(),
+                expenseDate = LocalDate.parse("2026-06-04"),
+                categoryName = "Транспорт",
+                amount = EXPENSE_AMOUNT,
+            )
+        every {
+            expenseRepository.countListItemsForUser(
+                userId = userId,
+                from = LocalDate.parse("2026-06-04"),
+                to = LocalDate.parse("2026-06-10"),
+                categoryId = CATEGORY_ID,
+            )
+        } returns 11
+        every {
+            expenseRepository.findListItemsForUser(
+                userId = userId,
+                from = LocalDate.parse("2026-06-04"),
+                to = LocalDate.parse("2026-06-10"),
+                categoryId = CATEGORY_ID,
+                limit = 10,
+                offset = 10,
+            )
+        } returns listOf(item)
+
+        val result =
+            service.getExpenseListPageForUser(
+                userId = userId,
+                filter = filter,
+                page = 100,
+                pageSize = 10,
+            )
+
+        assertEquals(listOf(item), result.items)
+        assertEquals(1, result.page)
+        assertEquals(10, result.pageSize)
+        assertEquals(11, result.totalCount)
+        verify(exactly = 1) {
+            expenseRepository.findListItemsForUser(
+                userId = userId,
+                from = LocalDate.parse("2026-06-04"),
+                to = LocalDate.parse("2026-06-10"),
+                categoryId = CATEGORY_ID,
+                limit = 10,
+                offset = 10,
+            )
+        }
+    }
+
+    @Test
+    fun `get expense list page wraps DataAccessException into SystemException`() {
+        val userId = 123L
+        val cause = DataAccessException("DB connection failed")
+        every { expenseRepository.countListItemsForUser(userId, any(), any(), any()) } throws cause
+
+        val exception =
+            assertThrows<SystemException> {
+                service.getExpenseListPageForUser(
+                    userId = userId,
+                    filter = ExpenseListFilter(period = ExpenseListPeriod.Day),
+                    page = 0,
+                    pageSize = 10,
+                )
+            }
+
+        assertEquals(SystemErrorCode.DATABASE_ERROR, exception.errorCode)
+        assertEquals(cause, exception.cause)
     }
 
     @Test
@@ -444,5 +623,11 @@ class ExpenseServiceTest {
 
     private companion object {
         val EXPENSE_AMOUNT: Money = Money.of(BigDecimal("500.00"))
+        val CATEGORY_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000002")
+        val CLOCK: Clock =
+            Clock.fixed(
+                Instant.parse("2026-06-09T22:00:00Z"),
+                ZoneId.of("Europe/Moscow"),
+            )
     }
 }

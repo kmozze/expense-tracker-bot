@@ -1,12 +1,21 @@
 package me.kmozze.expensetracker.adapter.ui
 
 import me.kmozze.expensetracker.adapter.callback.CallbackData
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListCategoryOption
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListFilter
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListItem
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListPage
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListPeriod
+import me.kmozze.expensetracker.model.domain.expense.Money
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
+import java.math.BigDecimal
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 object Keyboards {
@@ -99,6 +108,124 @@ object Keyboards {
                 ),
             ).build()
 
+    fun expenseListSettings(filter: ExpenseListFilter): InlineKeyboardMarkup =
+        InlineKeyboardMarkup
+            .builder()
+            .keyboard(
+                listOf(
+                    InlineKeyboardRow(
+                        listOf(
+                            inlineButton(
+                                text = Buttons.CHANGE_EXPENSE_LIST_PERIOD,
+                                callbackData = CallbackData.requestExpenseListPeriodSelection(filter),
+                            ),
+                            inlineButton(
+                                text = Buttons.CHANGE_EXPENSE_LIST_CATEGORY,
+                                callbackData = CallbackData.requestExpenseListCategorySelection(filter),
+                            ),
+                        ),
+                    ),
+                    InlineKeyboardRow(
+                        listOf(
+                            inlineButton(
+                                text = Buttons.SHOW_EXPENSE_LIST,
+                                callbackData = CallbackData.showExpenseList(filter),
+                            ),
+                        ),
+                    ),
+                ),
+            ).build()
+
+    fun expenseListPeriodSelection(filter: ExpenseListFilter): InlineKeyboardMarkup =
+        InlineKeyboardMarkup
+            .builder()
+            .keyboard(
+                listOf(
+                    InlineKeyboardRow(
+                        listOf(
+                            expenseListPeriodButton(Buttons.EXPENSE_LIST_PERIOD_DAY, ExpenseListPeriod.Day, filter),
+                            expenseListPeriodButton(Buttons.EXPENSE_LIST_PERIOD_WEEK, ExpenseListPeriod.Week, filter),
+                        ),
+                    ),
+                    InlineKeyboardRow(
+                        listOf(
+                            expenseListPeriodButton(Buttons.EXPENSE_LIST_PERIOD_MONTH, ExpenseListPeriod.Month, filter),
+                            expenseListPeriodButton(Buttons.EXPENSE_LIST_PERIOD_ALL_TIME, ExpenseListPeriod.AllTime, filter),
+                        ),
+                    ),
+                ),
+            ).build()
+
+    fun expenseListCategorySelection(
+        filter: ExpenseListFilter,
+        categories: List<ExpenseListCategoryOption>,
+    ): InlineKeyboardMarkup {
+        val categoryButtons =
+            listOf(
+                inlineButton(
+                    text = Buttons.EXPENSE_LIST_CATEGORY_ALL,
+                    callbackData = CallbackData.selectExpenseListCategory(filter.copy(categoryId = null)),
+                ),
+            ) +
+                categories.map { category ->
+                    inlineButton(
+                        text = category.name,
+                        callbackData = CallbackData.selectExpenseListCategory(filter.copy(categoryId = category.categoryId)),
+                    )
+                }
+
+        return InlineKeyboardMarkup
+            .builder()
+            .keyboard(categoryButtons.chunked(2).map { InlineKeyboardRow(it) })
+            .build()
+    }
+
+    fun expenseListPage(page: ExpenseListPage): InlineKeyboardMarkup {
+        val expenseRows =
+            page.items.map { item ->
+                InlineKeyboardRow(
+                    listOf(
+                        inlineButton(
+                            text = item.rowText(),
+                            callbackData = CallbackData.openExpenseFromList(item.expenseId),
+                        ),
+                    ),
+                )
+            }
+
+        val paginationButtons =
+            buildList {
+                if (page.hasPreviousPage) {
+                    add(
+                        inlineButton(
+                            text = Buttons.EXPENSE_LIST_PREVIOUS,
+                            callbackData = CallbackData.expenseListPage(page.filter, page.page - 1),
+                        ),
+                    )
+                }
+                if (page.hasNextPage) {
+                    add(
+                        inlineButton(
+                            text = Buttons.EXPENSE_LIST_NEXT,
+                            callbackData = CallbackData.expenseListPage(page.filter, page.page + 1),
+                        ),
+                    )
+                }
+            }
+
+        val rows =
+            if (paginationButtons.isEmpty()) {
+                expenseRows
+            } else {
+                expenseRows + listOf(InlineKeyboardRow(paginationButtons))
+            }
+
+        return InlineKeyboardMarkup
+            .builder()
+            .keyboard(rows)
+            .build()
+    }
+
     fun expenseEditFieldSelection(): ReplyKeyboardMarkup {
         val rows =
             listOf(
@@ -138,11 +265,40 @@ object Keyboards {
     ): InlineKeyboardRow =
         InlineKeyboardRow(
             listOf(
-                InlineKeyboardButton
-                    .builder()
-                    .text(text)
-                    .callbackData(callbackData)
-                    .build(),
+                inlineButton(text, callbackData),
             ),
         )
+
+    private fun expenseListPeriodButton(
+        text: String,
+        period: ExpenseListPeriod,
+        filter: ExpenseListFilter,
+    ): InlineKeyboardButton =
+        inlineButton(
+            text = text,
+            callbackData = CallbackData.selectExpenseListPeriod(filter.copy(period = period)),
+        )
+
+    private fun inlineButton(
+        text: String,
+        callbackData: String,
+    ): InlineKeyboardButton =
+        InlineKeyboardButton
+            .builder()
+            .text(text)
+            .callbackData(callbackData)
+            .build()
+
+    private fun ExpenseListItem.rowText(): String = "${expenseDate.formatForList()} · $categoryName · ${amount.formatForList()} ₽"
+
+    private fun LocalDate.formatForList(): String = format(EXPENSE_LIST_DATE_FORMATTER)
+
+    private fun Money.formatForList(): String =
+        if (value.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0) {
+            value.setScale(0).toPlainString()
+        } else {
+            format()
+        }
+
+    private val EXPENSE_LIST_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM")
 }
