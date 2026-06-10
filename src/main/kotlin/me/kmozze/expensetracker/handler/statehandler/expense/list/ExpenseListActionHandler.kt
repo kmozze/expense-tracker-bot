@@ -28,6 +28,7 @@ class ExpenseListActionHandler(
         settingsResult(
             input = input,
             filter = ExpenseListFilter(period = ExpenseListPeriod.Month),
+            delivery = ResponseDelivery.SendNewMessage,
         )
 
     fun requestPeriodSelection(
@@ -163,6 +164,7 @@ class ExpenseListActionHandler(
     private fun settingsResult(
         input: UserInput,
         filter: ExpenseListFilter,
+        delivery: ResponseDelivery = input.callbackMessageDelivery(),
     ): HandlerResponse {
         val categoryName =
             filter.categoryId?.let { categoryId ->
@@ -178,7 +180,7 @@ class ExpenseListActionHandler(
                 outgoingMessage(
                     text = BotText.ExpenseListSettings(filter, categoryName),
                     actions = listOf(BotAction.ShowExpenseListSettings(filter)),
-                    delivery = input.callbackMessageDelivery(),
+                    delivery = delivery,
                 ),
             nextState = UserState.Idle,
         )

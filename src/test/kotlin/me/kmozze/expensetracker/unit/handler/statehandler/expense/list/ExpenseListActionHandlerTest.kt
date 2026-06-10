@@ -47,7 +47,7 @@ class ExpenseListActionHandlerTest {
     }
 
     @Test
-    fun `open settings edits callback message with default month and all categories`() {
+    fun `open settings sends new message with default month and all categories`() {
         val input = makeInput(UserCommand.ViewExpenses, callbackMessageId = MESSAGE_ID)
 
         val result = handler.openSettings(input)
@@ -56,7 +56,7 @@ class ExpenseListActionHandlerTest {
             result = result,
             text = BotText.ExpenseListSettings(DEFAULT_FILTER, categoryName = null),
             actions = listOf(BotAction.ShowExpenseListSettings(DEFAULT_FILTER)),
-            delivery = ResponseDelivery.EditMessage(MESSAGE_ID),
+            delivery = ResponseDelivery.SendNewMessage,
             nextState = UserState.Idle,
         )
     }

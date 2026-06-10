@@ -69,7 +69,7 @@ class ExpenseListFlowTest : AbstractFlowIntegrationTest() {
         settings.assertSingleMessage(
             text = BotText.ExpenseListSettings(defaultFilter, categoryName = null),
             actions = listOf(BotAction.ShowExpenseListSettings(defaultFilter)),
-            delivery = ResponseDelivery.EditMessage(MENU_MESSAGE_ID),
+            delivery = ResponseDelivery.SendNewMessage,
         )
         settings.assertNextState(UserState.Idle)
 
