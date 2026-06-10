@@ -155,6 +155,37 @@ docker compose down
 
 Docker Compose задает app-контейнеру внутренний `DB_URL` вида `jdbc:postgresql://postgres:5432/<POSTGRES_DB>`. Значения `user/password` предназначены только для локального Docker Compose. Для серверного окружения с уже развернутой БД нужен отдельный deploy-конфиг без локального `postgres` service.
 
+## Docker image
+
+Опубликованный image живет в GHCR:
+
+```text
+ghcr.io/kmozze/expense-tracker-bot
+```
+
+Публикация выполняется вручную через GitHub Actions workflow `Publish Docker Image`. Workflow публикует два тега:
+
+- `sha-<commit_sha>` - воспроизводимый тег конкретного commit;
+- `manual` - последний вручную опубликованный image.
+
+`latest` пока не используется: у проекта еще нет release/deploy-семантики для этого тега.
+
+Запуск опубликованного image предполагает уже доступную PostgreSQL БД:
+
+```bash
+export COMMIT_SHA=replace_with_commit_sha
+
+docker run --rm \
+  -e BOT_TOKEN="$BOT_TOKEN" \
+  -e DB_URL="$DB_URL" \
+  -e DB_USER="$DB_USER" \
+  -e DB_PASSWORD="$DB_PASSWORD" \
+  -p 8080:8080 \
+  ghcr.io/kmozze/expense-tracker-bot:sha-${COMMIT_SHA}
+```
+
+Реальный deploy на сервер, restart policy и отдельный compose для внешней БД будут описаны отдельным шагом.
+
 ## jOOQ
 
 jOOQ-код генерируется в:
