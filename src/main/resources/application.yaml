@@ -17,3 +17,9 @@ spring:
 
 bot:
   token: ${BOT_TOKEN}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
