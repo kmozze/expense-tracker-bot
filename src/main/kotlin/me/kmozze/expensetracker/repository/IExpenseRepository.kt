@@ -1,6 +1,8 @@
 package me.kmozze.expensetracker.repository
 
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListItem
 import me.kmozze.expensetracker.model.entity.Expense
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -32,6 +34,22 @@ interface IExpenseRepository {
         from: OffsetDateTime,
         to: OffsetDateTime,
     ): List<Expense>
+
+    fun findListItemsForUser(
+        userId: Long,
+        from: LocalDate?,
+        to: LocalDate?,
+        categoryId: UUID?,
+        limit: Int,
+        offset: Int,
+    ): List<ExpenseListItem>
+
+    fun countListItemsForUser(
+        userId: Long,
+        from: LocalDate?,
+        to: LocalDate?,
+        categoryId: UUID?,
+    ): Int
 
     fun existsByCategoryId(categoryId: UUID): Boolean
 }

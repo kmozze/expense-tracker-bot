@@ -44,21 +44,7 @@ class AwaitingExpenseDateSelectionHandler(
                     errorCode = BusinessErrorCode.INVALID_EXPENSE_DATE_SELECTION,
                 )
 
-            UserCommand.Unsupported,
-            UserCommand.Start,
-            UserCommand.Menu,
-            UserCommand.AddExpense,
-            UserCommand.ViewExpenses,
-            UserCommand.Categories,
-            UserCommand.Statistics,
-            UserCommand.FinishExpenseEdit,
-            is UserCommand.RequestExpenseEdit,
-            is UserCommand.RequestExpenseDeletion,
-            is UserCommand.ConfirmExpenseDeletion,
-            is UserCommand.CancelExpenseDeletion,
-            is UserCommand.SelectExpenseEditField,
-            UserCommand.InvalidExpenseAction,
-            -> repeatExpenseDateSelection(currentState)
+            else -> repeatExpenseDateSelection(currentState)
         }
     }
 

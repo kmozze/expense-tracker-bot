@@ -26,6 +26,14 @@ class KeyboardApplier {
                     sendMessage.replyMarkup = Keyboards.expenseCardActions(action.expenseId)
                 is BotAction.ShowExpenseDeletionConfirmation ->
                     sendMessage.replyMarkup = Keyboards.expenseDeletionConfirmation(action.expenseId)
+                is BotAction.ShowExpenseListSettings ->
+                    sendMessage.replyMarkup = Keyboards.expenseListSettings(action.filter)
+                is BotAction.ShowExpenseListPeriodSelection ->
+                    sendMessage.replyMarkup = Keyboards.expenseListPeriodSelection(action.filter)
+                is BotAction.ShowExpenseListCategorySelection ->
+                    sendMessage.replyMarkup = Keyboards.expenseListCategorySelection(action.filter, action.categories)
+                is BotAction.ShowExpenseListPage ->
+                    sendMessage.replyMarkup = Keyboards.expenseListPage(action.page)
                 is BotAction.ShowExpenseEditFieldSelection ->
                     sendMessage.replyMarkup = Keyboards.expenseEditFieldSelection()
                 is BotAction.ClearInlineKeyboard ->
@@ -54,6 +62,14 @@ class KeyboardApplier {
                     editMessage.replyMarkup = Keyboards.expenseCardActions(action.expenseId)
                 is BotAction.ShowExpenseDeletionConfirmation ->
                     editMessage.replyMarkup = Keyboards.expenseDeletionConfirmation(action.expenseId)
+                is BotAction.ShowExpenseListSettings ->
+                    editMessage.replyMarkup = Keyboards.expenseListSettings(action.filter)
+                is BotAction.ShowExpenseListPeriodSelection ->
+                    editMessage.replyMarkup = Keyboards.expenseListPeriodSelection(action.filter)
+                is BotAction.ShowExpenseListCategorySelection ->
+                    editMessage.replyMarkup = Keyboards.expenseListCategorySelection(action.filter, action.categories)
+                is BotAction.ShowExpenseListPage ->
+                    editMessage.replyMarkup = Keyboards.expenseListPage(action.page)
                 is BotAction.ShowExpenseEditFieldSelection ->
                     Unit
                 is BotAction.ClearInlineKeyboard,

@@ -1,6 +1,8 @@
 package me.kmozze.expensetracker.model.domain.bot
 
 import me.kmozze.expensetracker.exception.ErrorCode
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListFilter
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListPage
 import me.kmozze.expensetracker.model.domain.expense.Money
 import java.time.LocalDate
 
@@ -28,6 +30,19 @@ sealed class BotText {
         val categoryName: String?,
         val expenseDate: LocalDate?,
         val description: String?,
+    ) : BotText()
+
+    data class ExpenseListSettings(
+        val filter: ExpenseListFilter,
+        val categoryName: String?,
+    ) : BotText()
+
+    data object ExpenseListPeriodSelection : BotText()
+
+    data object ExpenseListCategorySelection : BotText()
+
+    data class ExpenseListView(
+        val page: ExpenseListPage,
     ) : BotText()
 
     data object SelectCategory : BotText()

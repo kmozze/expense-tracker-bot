@@ -4,6 +4,7 @@ import me.kmozze.expensetracker.handler.handlerResponse
 import me.kmozze.expensetracker.handler.outgoingMessage
 import me.kmozze.expensetracker.handler.statehandler.common.StateHandler
 import me.kmozze.expensetracker.handler.statehandler.expense.card.ExpenseCardActionHandler
+import me.kmozze.expensetracker.handler.statehandler.expense.list.ExpenseListActionHandler
 import me.kmozze.expensetracker.model.domain.bot.BotAction
 import me.kmozze.expensetracker.model.domain.bot.BotText
 import me.kmozze.expensetracker.model.domain.bot.HandlerResponse
@@ -16,6 +17,7 @@ import kotlin.reflect.KClass
 @Component
 class IdleStateHandler(
     private val expenseCardActionHandler: ExpenseCardActionHandler,
+    private val expenseListActionHandler: ExpenseListActionHandler,
 ) : StateHandler {
     override val supportedStateClass: KClass<out UserState> = UserState.Idle::class
 
@@ -38,7 +40,9 @@ class IdleStateHandler(
                     nextState = UserState.AwaitingExpenseInput,
                 )
 
-            UserCommand.ViewExpenses,
+            UserCommand.ViewExpenses ->
+                expenseListActionHandler.openSettings(input)
+
             UserCommand.Categories,
             UserCommand.Statistics,
             ->
@@ -62,6 +66,32 @@ class IdleStateHandler(
 
             is UserCommand.CancelExpenseDeletion ->
                 expenseCardActionHandler.cancelExpenseDeletion(input, command.expenseId)
+
+            is UserCommand.RequestExpenseListPeriodSelection ->
+                expenseListActionHandler.requestPeriodSelection(input, command.filter)
+
+            is UserCommand.RequestExpenseListCategorySelection ->
+                expenseListActionHandler.requestCategorySelection(input, command.filter)
+
+            is UserCommand.SelectExpenseListPeriod ->
+                expenseListActionHandler.selectPeriod(input, command.filter)
+
+            is UserCommand.SelectExpenseListCategory ->
+                expenseListActionHandler.selectCategory(input, command.filter)
+
+            is UserCommand.ShowExpenseList ->
+                expenseListActionHandler.showExpenseList(
+                    input = input,
+                    filter = command.filter,
+                    page = command.page,
+                    shouldEditCurrentMessage = command.shouldEditCurrentMessage,
+                )
+
+            is UserCommand.OpenExpenseFromList ->
+                expenseListActionHandler.openExpenseFromList(input, command.expenseId)
+
+            UserCommand.InvalidExpenseListAction ->
+                expenseListActionHandler.invalidListAction()
 
             UserCommand.Cancel,
             UserCommand.InvalidExpenseAction,

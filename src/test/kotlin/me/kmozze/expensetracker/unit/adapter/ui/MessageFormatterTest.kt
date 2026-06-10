@@ -3,11 +3,16 @@ package me.kmozze.expensetracker.unit.adapter.ui
 import me.kmozze.expensetracker.adapter.ui.MessageFormatter
 import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.model.domain.bot.BotText
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListFilter
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListItem
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListPage
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListPeriod
 import me.kmozze.expensetracker.model.domain.expense.Money
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 
 class MessageFormatterTest {
     private val formatter = MessageFormatter()
@@ -94,6 +99,76 @@ class MessageFormatterTest {
                     "📅 Дата: 24.05.2026\n" +
                     "📝 обед",
             )
+    }
+
+    @Test
+    fun `expense list settings renders selected period and all categories`() {
+        val text =
+            formatter.format(
+                BotText.ExpenseListSettings(
+                    filter = ExpenseListFilter(period = ExpenseListPeriod.Month),
+                    categoryName = null,
+                ),
+            )
+
+        assertThat(text)
+            .isEqualTo(
+                "Настройка отображения 📋\n\n" +
+                    "📅 Период: За месяц\n" +
+                    "📂 Категория: Все",
+            )
+    }
+
+    @Test
+    fun `expense list page renders heading and shown range`() {
+        val text =
+            formatter.format(
+                BotText.ExpenseListView(
+                    page =
+                        ExpenseListPage(
+                            filter = ExpenseListFilter(period = ExpenseListPeriod.Week),
+                            items =
+                                listOf(
+                                    ExpenseListItem(
+                                        expenseId = UUID.randomUUID(),
+                                        expenseDate = LocalDate.parse("2026-05-24"),
+                                        categoryName = "Еда",
+                                        amount = Money.of(BigDecimal("500.00")),
+                                    ),
+                                    ExpenseListItem(
+                                        expenseId = UUID.randomUUID(),
+                                        expenseDate = LocalDate.parse("2026-05-23"),
+                                        categoryName = "Транспорт",
+                                        amount = Money.of(BigDecimal("120.00")),
+                                    ),
+                                ),
+                            page = 1,
+                            pageSize = 10,
+                            totalCount = 14,
+                        ),
+                ),
+            )
+
+        assertThat(text).isEqualTo("📋 Расходы за неделю\nПоказано 11-12 из 14")
+    }
+
+    @Test
+    fun `empty expense list page renders zero range`() {
+        val text =
+            formatter.format(
+                BotText.ExpenseListView(
+                    page =
+                        ExpenseListPage(
+                            filter = ExpenseListFilter(period = ExpenseListPeriod.AllTime),
+                            items = emptyList(),
+                            page = 0,
+                            pageSize = 10,
+                            totalCount = 0,
+                        ),
+                ),
+            )
+
+        assertThat(text).isEqualTo("📋 Расходы за все время\nПоказано 0 из 0")
     }
 
     @Test

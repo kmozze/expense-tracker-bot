@@ -4,6 +4,7 @@ import me.kmozze.expensetracker.exception.BusinessErrorCode
 import me.kmozze.expensetracker.exception.ErrorCode
 import me.kmozze.expensetracker.exception.SystemErrorCode
 import me.kmozze.expensetracker.model.domain.bot.BotText
+import me.kmozze.expensetracker.model.domain.expense.ExpenseListPeriod
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -43,6 +44,18 @@ class MessageFormatter {
 
             is BotText.ExpenseView ->
                 formatExpenseView(message)
+
+            is BotText.ExpenseListSettings ->
+                formatExpenseListSettings(message)
+
+            is BotText.ExpenseListPeriodSelection ->
+                "Выберите период:"
+
+            is BotText.ExpenseListCategorySelection ->
+                "Выберите категорию для фильтра:"
+
+            is BotText.ExpenseListView ->
+                formatExpenseListView(message)
 
             is BotText.SelectExpenseDate ->
                 "Когда была трата?"
@@ -120,6 +133,42 @@ class MessageFormatter {
 
         return lines.joinToString("\n")
     }
+
+    private fun formatExpenseListSettings(message: BotText.ExpenseListSettings): String =
+        "Настройка отображения 📋\n\n" +
+            "📅 Период: ${message.filter.period.settingsLabel()}\n" +
+            "📂 Категория: ${message.categoryName ?: "Все"}"
+
+    private fun formatExpenseListView(message: BotText.ExpenseListView): String {
+        val page = message.page
+        val shownRange =
+            if (page.items.isEmpty()) {
+                "0"
+            } else {
+                val firstItemNumber = page.page * page.pageSize + 1
+                val lastItemNumber = firstItemNumber + page.items.size - 1
+                "$firstItemNumber-$lastItemNumber"
+            }
+
+        return "📋 Расходы ${page.filter.period.listTitle()}\n" +
+            "Показано $shownRange из ${page.totalCount}"
+    }
+
+    private fun ExpenseListPeriod.settingsLabel(): String =
+        when (this) {
+            ExpenseListPeriod.Day -> "За день"
+            ExpenseListPeriod.Week -> "За неделю"
+            ExpenseListPeriod.Month -> "За месяц"
+            ExpenseListPeriod.AllTime -> "Все время"
+        }
+
+    private fun ExpenseListPeriod.listTitle(): String =
+        when (this) {
+            ExpenseListPeriod.Day -> "за день"
+            ExpenseListPeriod.Week -> "за неделю"
+            ExpenseListPeriod.Month -> "за месяц"
+            ExpenseListPeriod.AllTime -> "за все время"
+        }
 
     private fun LocalDate.formatForUser(): String = format(USER_DATE_FORMATTER)
 

@@ -36,22 +36,7 @@ class AwaitingExpenseManualDateInputHandler(
         return when (val command = input.command) {
             UserCommand.Cancel -> cancelExpenseCreation()
             is UserCommand.PlainText -> saveExpenseWithManualDate(input, currentState, command.value)
-            UserCommand.Unsupported,
-            UserCommand.Start,
-            UserCommand.Menu,
-            UserCommand.AddExpense,
-            UserCommand.ViewExpenses,
-            UserCommand.Categories,
-            UserCommand.Statistics,
-            UserCommand.FinishExpenseEdit,
-            is UserCommand.RequestExpenseEdit,
-            is UserCommand.RequestExpenseDeletion,
-            is UserCommand.ConfirmExpenseDeletion,
-            is UserCommand.CancelExpenseDeletion,
-            is UserCommand.SelectExpenseDate,
-            is UserCommand.SelectExpenseEditField,
-            UserCommand.InvalidExpenseAction,
-            -> repeatManualDateInput(currentState)
+            else -> repeatManualDateInput(currentState)
         }
     }
 
